@@ -1,5 +1,8 @@
 using System.Text;
+using API.Applications.Services;
 using API.Contexts;
+using API.Interfaces;
+using API.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -55,6 +58,9 @@ builder.Services.AddSwaggerGen(c =>
         [new OpenApiSecuritySchemeReference("Bearer", document)] = []
     });
 });
+
+builder.Services.AddScoped<ITipoMetricaRepository, TipoMetricaRepository>();
+builder.Services.AddScoped<TipoMetricaService>();
 
 builder.Services.AddOpenApi();
 
