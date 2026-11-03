@@ -1,17 +1,17 @@
 USE master;
 GO
 
-IF EXISTS (SELECT name FROM sys.databases WHERE name = N'Skal4ble')
+IF EXISTS (SELECT name FROM sys.databases WHERE name = N'SkaL4ble')
 BEGIN
-    ALTER DATABASE Skal4ble SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-    DROP DATABASE Skal4ble;
+    ALTER DATABASE SkaL4ble SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE SkaL4ble;
 END
 GO
 
-CREATE DATABASE Skal4ble;
+CREATE DATABASE SkaL4ble;
 GO
 
-USE Skal4ble;
+USE SkaL4ble;
 GO
 
 -- =============================================================================
