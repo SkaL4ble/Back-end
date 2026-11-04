@@ -64,6 +64,7 @@ builder.Services.AddSwaggerGen(c =>
     c.IncludeXmlComments(xmlPath);
 });
 
+
 builder.Services.AddScoped<ITipoMetricaRepository, TipoMetricaRepository>();
 builder.Services.AddScoped<TipoMetricaService>();
 
@@ -72,6 +73,18 @@ builder.Services.AddScoped<CargoService>();
 
 builder.Services.AddScoped<IAtuacaoRepository, AtuacaoRepository>();
 builder.Services.AddScoped<AtuacaoService>();
+
+builder.Services.AddScoped<ITecnologiaRepository, TecnologiaRepository>();
+builder.Services.AddScoped<TecnologiaService>();
+
+builder.Services.AddScoped<ITipoProjetoRepository, TipoProjetoRepository>();
+builder.Services.AddScoped<TipoProjetoService>();
+
+builder.Services.AddScoped<IStatusProjetoRepository, StatusProjetoRepository>();
+builder.Services.AddScoped<StatusProjetoService>();
+
+builder.Services.AddScoped<ITipoTicketRepository, TipoTicketRepository>();
+builder.Services.AddScoped<TipoTicketService>();
 
 builder.Services.AddOpenApi();
 
