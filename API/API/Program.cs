@@ -1,4 +1,3 @@
-using System.Text;
 using API.Applications.Services;
 using API.Contexts;
 using API.Interfaces;
@@ -7,6 +6,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Reflection;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,6 +58,10 @@ builder.Services.AddSwaggerGen(c =>
     {
         [new OpenApiSecuritySchemeReference("Bearer", document)] = []
     });
+
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
 });
 
 builder.Services.AddScoped<ITipoMetricaRepository, TipoMetricaRepository>();
@@ -64,6 +69,9 @@ builder.Services.AddScoped<TipoMetricaService>();
 
 builder.Services.AddScoped<ICargoRepository, CargoRepository>();
 builder.Services.AddScoped<CargoService>();
+
+builder.Services.AddScoped<IAtuacaoRepository, AtuacaoRepository>();
+builder.Services.AddScoped<AtuacaoService>();
 
 builder.Services.AddOpenApi();
 
