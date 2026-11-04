@@ -62,6 +62,9 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddScoped<ITipoMetricaRepository, TipoMetricaRepository>();
 builder.Services.AddScoped<TipoMetricaService>();
 
+builder.Services.AddScoped<ICargoRepository, CargoRepository>();
+builder.Services.AddScoped<CargoService>();
+
 builder.Services.AddOpenApi();
 
 // JWT
