@@ -48,7 +48,7 @@ namespace API.Controllers
         /// <summary>
         /// Adiciona uma atuacao
         /// </summary>
-        /// <response code="200">Returna a atuacao por id</response>
+        /// <response code="201">Returna a atuacao por id</response>
         [HttpPost]
         public ActionResult Adicionar(CriarAtuacaoDto dto)
         {
@@ -66,7 +66,7 @@ namespace API.Controllers
         /// <summary>
         /// Atualiza uma atuacao
         /// </summary>
-        /// <response code="200">Atualizacao uma atuacao usando ID de referencia e mandando o corpo</response>
+        /// <response code="204">Atualizacao uma atuacao usando ID de referencia e mandando o corpo</response>
         [HttpPut("{id}")]
         public ActionResult Atualizar(int id, CriarAtuacaoDto dto)
         {
@@ -84,7 +84,7 @@ namespace API.Controllers
         /// <summary>
         /// Deleta uma atuacao
         /// </summary>
-        /// <response code="200">Deleta uma atuacao pelo ID</response>
+        /// <response code="204">Deleta uma atuacao pelo ID</response>
         [HttpDelete("{id}")]
         public ActionResult Deletar(int id)
         {

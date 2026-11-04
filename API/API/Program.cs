@@ -86,6 +86,9 @@ builder.Services.AddScoped<StatusProjetoService>();
 builder.Services.AddScoped<ITipoTicketRepository, TipoTicketRepository>();
 builder.Services.AddScoped<TipoTicketService>();
 
+builder.Services.AddScoped<IStatusTicketRepository, StatusTicketRepository>();
+builder.Services.AddScoped<StatusTicketService>();
+
 builder.Services.AddOpenApi();
 
 // JWT
