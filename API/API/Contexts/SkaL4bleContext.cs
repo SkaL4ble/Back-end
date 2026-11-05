@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API.Contexts;
 
-public partial class SkaL4bleContext : DbContext
+public partial class Skal4bleContext : DbContext
 {
-    public SkaL4bleContext()
+    public Skal4bleContext()
     {
     }
 
-    public SkaL4bleContext(DbContextOptions<SkaL4bleContext> options)
+    public Skal4bleContext(DbContextOptions<Skal4bleContext> options)
         : base(options)
     {
     }
@@ -47,6 +47,10 @@ public partial class SkaL4bleContext : DbContext
     public virtual DbSet<UsuarioEmailGit> UsuarioEmailGit { get; set; }
 
     public virtual DbSet<UsuarioIdeToken> UsuarioIdeToken { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=Skal4ble;Trusted_Connection=True;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -219,7 +223,24 @@ public partial class SkaL4bleContext : DbContext
                 .HasForeignKey(d => d.UsuarioResponsavel)
                 .HasConstraintName("FK_Ticket_UsuarioResponsavel");
 
-            entity.HasMany(d => d.Usuario).WithMany(p => p.TicketNavigation)
+            entity.HasMany(d => d.Colaborador).WithMany(p => p.TicketNavigation)
+                .UsingEntity<Dictionary<string, object>>(
+                    "TicketColaborador",
+                    r => r.HasOne<Usuario>().WithMany()
+                        .HasForeignKey("ColaboradorId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_TickeColaborador_Tecnologia"),
+                    l => l.HasOne<Ticket>().WithMany()
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_TickeColaborador_Colaborador"),
+                    j =>
+                    {
+                        j.HasKey("TicketId", "ColaboradorId");
+                        j.IndexerProperty<int>("TicketId").ValueGeneratedOnAdd();
+                    });
+
+            entity.HasMany(d => d.Usuario).WithMany(p => p.Ticket1)
                 .UsingEntity<Dictionary<string, object>>(
                     "TicketUsuario",
                     r => r.HasOne<Usuario>().WithMany()

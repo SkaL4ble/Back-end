@@ -59,6 +59,11 @@ builder.Services.AddSwaggerGen(c =>
         [new OpenApiSecuritySchemeReference("Bearer", document)] = []
     });
 
+    // Permite adicionar comentários de documentação aos métodos da API,
+    // exibindo descrições e respostas no Swagger.
+    // Configura o Swagger para ler os comentários XML gerados pelo projeto.
+    // No .csproj, GenerateDocumentationFile habilita a geração do XML.
+    // NoWarn 1591 desativa avisos sobre métodos sem comentários de documentação.
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath);

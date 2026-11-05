@@ -35,5 +35,7 @@ public partial class Ticket
 
     public virtual Usuario? UsuarioResponsavelNavigation { get; set; }
 
+    public virtual ICollection<Usuario> Colaborador { get; set; } = new List<Usuario>();
+
     public virtual ICollection<Usuario> Usuario { get; set; } = new List<Usuario>();
 }
