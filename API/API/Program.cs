@@ -94,6 +94,9 @@ builder.Services.AddScoped<TipoTicketService>();
 builder.Services.AddScoped<IStatusTicketRepository, StatusTicketRepository>();
 builder.Services.AddScoped<StatusTicketService>();
 
+builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+builder.Services.AddScoped<TicketService>();
+
 builder.Services.AddOpenApi();
 
 // JWT
