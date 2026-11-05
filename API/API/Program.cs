@@ -1,5 +1,8 @@
 using System.Text;
+using API.Applications.Services;
 using API.Contexts;
+using API.Interfaces;
+using API.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -55,6 +58,10 @@ builder.Services.AddSwaggerGen(c =>
         [new OpenApiSecuritySchemeReference("Bearer", document)] = []
     });
 });
+
+// TIPO USUARIO
+builder.Services.AddScoped<ITipoUsuarioRepository, TipoUsuarioRepository>();
+builder.Services.AddScoped<TipoUsuarioService>();
 
 builder.Services.AddOpenApi();
 

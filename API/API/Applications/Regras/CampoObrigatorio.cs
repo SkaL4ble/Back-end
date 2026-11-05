@@ -17,8 +17,8 @@ namespace API.Applications.Regras
         public static void Nome(this string nome) =>
             nome.Validar("O nome é obrigatório.");
 
-        // EXEMPLO
-        public static void Exemplo(this string exemplo) =>
-            exemplo.Validar("O exemplo é obrigatório.");
+        // TIPO USUARIO
+        public static void TipoUsuario(this string tipoUsuario) =>
+            tipoUsuario.Validar("O tipo de usuário é obrigatório.");
     }
 }
