@@ -4,263 +4,276 @@ using API.DTOs.TicketDto;
 using API.Exceptions;
 using API.Interfaces;
 
-namespace API.Applications.Services
+namespace API.Applications.Services;
+
+public class TicketService
 {
-    public class TicketService
+    private const int PrioridadeMinima = 1;
+    private const int PrioridadeMaxima = 5;
+    private const int TamanhoMaximoNome = 125;
+    private readonly ITicketRepository _repository;
+
+    public TicketService(ITicketRepository repository) => _repository = repository;
+
+    private Ticket BuscarOuFalhar(int id) =>
+        _repository.ObterPorId(id)
+        ?? throw new DomainException("Ticket não encontrado");
+
+    private static string NormalizarNome(string? nome)
     {
-        private readonly ITicketRepository _repository;
+        if (string.IsNullOrWhiteSpace(nome))
+            throw new DomainException("O nome do ticket é obrigatório");
 
-        public TicketService(ITicketRepository repository)
+        var normalizado = nome.Trim();
+        if (normalizado.Length < 3)
+            throw new DomainException("O nome do ticket não pode ter menos de 3 caracteres");
+        if (normalizado.Length > TamanhoMaximoNome)
+            throw new DomainException($"O nome do ticket não pode ter mais de {TamanhoMaximoNome} caracteres");
+
+        return normalizado;
+    }
+
+    private static void ValidarPrioridade(int prioridade)
+    {
+        if (prioridade < PrioridadeMinima || prioridade > PrioridadeMaxima)
+            throw new DomainException($"A prioridade deve estar entre {PrioridadeMinima} e {PrioridadeMaxima}");
+    }
+
+    private static void ValidarDatas(DateTime dataCriacao, DateTime? prazo, DateTime? entrega)
+    {
+        if (prazo.HasValue && prazo.Value < dataCriacao)
+            throw new DomainException("A data de prazo não pode ser anterior à data de criação");
+        if (entrega.HasValue && entrega.Value < dataCriacao)
+            throw new DomainException("A data de entrega não pode ser anterior à data de criação");
+    }
+
+    private void ValidarUsuario(Guid usuarioId)
+    {
+        if (!_repository.UsuarioExiste(usuarioId))
+            throw new DomainException("Usuário não encontrado ou inativo");
+    }
+
+    private void ValidarProjeto(Guid projetoId)
+    {
+        if (!_repository.ProjetoExiste(projetoId))
+            throw new DomainException("Projeto não encontrado ou inativo");
+    }
+
+    private void ValidarTipoTicket(int tipoTicketId)
+    {
+        if (!_repository.TipoTicketExiste(tipoTicketId))
+            throw new DomainException("Tipo de ticket não encontrado");
+    }
+
+    private void ValidarStatusTicket(int statusTicketId)
+    {
+        if (!_repository.StatusTicketExiste(statusTicketId))
+            throw new DomainException("Status de ticket não encontrado");
+    }
+
+    private void ValidarRelacionamentos(Guid projetoId, int tipoTicketId,
+        int statusTicketId, Guid? usuarioResponsavel)
+    {
+        ValidarProjeto(projetoId);
+        ValidarTipoTicket(tipoTicketId);
+        ValidarStatusTicket(statusTicketId);
+
+        if (usuarioResponsavel.HasValue)
         {
-            _repository = repository;
+            ValidarUsuario(usuarioResponsavel.Value);
+            // Para exigir participação no projeto, adicione
+            // UsuarioParticipaDoProjeto(usuarioId, projetoId) à ITicketRepository.
         }
+    }
 
-        //=============================== VALIDACOES =================================
+    private static List<ListarTicketDto> ParaDtos(IEnumerable<Ticket> tickets) =>
+        tickets.Select(ConversaoTicket.ConverterParaDto).ToList();
 
-        private Ticket BuscarOuFalhar(int id)
+    public ListarTicketDto ObterPorId(int id) =>
+        ConversaoTicket.ConverterParaDto(BuscarOuFalhar(id));
+
+    public void AdicionarTicket(CriarTicketDto dto)
+    {
+        var nome = NormalizarNome(dto.NomeTicket);
+        ValidarPrioridade(dto.Prioridade);
+        ValidarRelacionamentos(dto.ProjetoId, dto.TipoTicketId,
+            dto.StatusTicketId, dto.UsuarioResponsavel);
+
+        var agora = DateTime.UtcNow;
+        ValidarDatas(agora, dto.DataPrazo, null);
+
+        _repository.AdicionarTicket(new Ticket
         {
-            return _repository.ObterPorId(id)
-                ?? throw new DomainException("Ticket não encontrado");
-        }
+            NomeTicket = nome,
+            Prioridade = dto.Prioridade,
+            DataCriacao = agora,
+            DataPrazo = dto.DataPrazo,
+            DataEntrega = null,
+            Ativo = true,
+            UsuarioResponsavel = dto.UsuarioResponsavel,
+            ProjetoId = dto.ProjetoId,
+            TipoTicketId = dto.TipoTicketId,
+            StatusTicketId = dto.StatusTicketId
+        });
+    }
 
-        private static string NormalizarNome(string? nome)
+    public void Atualizar(int id, AtualizarTicketDto dto)
+    {
+        var ticket = BuscarOuFalhar(id);
+        var nome = NormalizarNome(dto.NomeTicket);
+        ValidarPrioridade(dto.Prioridade);
+        ValidarRelacionamentos(dto.ProjetoId, dto.TipoTicketId,
+            dto.StatusTicketId, dto.UsuarioResponsavel);
+        ValidarDatas(ticket.DataCriacao, dto.DataPrazo, dto.DataEntrega);
+
+        ConversaoTicket.AplicarAtualizacao(ticket, new AtualizarTicketDto
         {
-            if (string.IsNullOrWhiteSpace(nome))
-                throw new DomainException("O nome do ticket é obrigatório");
-            else if (nome.Length < 3)
-                throw new DomainException("O nome do ticket não pode ter menos de 3 caracteres");
-            else if(nome.Length > 125)
-                throw new DomainException("O nome do ticket não pode ter mais de 125 caracteres");
+            NomeTicket = nome,
+            Prioridade = dto.Prioridade,
+            DataPrazo = dto.DataPrazo,
+            DataEntrega = dto.DataEntrega,
+            UsuarioResponsavel = dto.UsuarioResponsavel,
+            ProjetoId = dto.ProjetoId,
+            TipoTicketId = dto.TipoTicketId,
+            StatusTicketId = dto.StatusTicketId
+        });
 
-            return nome.Trim();
-        }
+        _repository.AtualizarTicket(ticket);
+    }
 
-        private void ValidarUsuario(Guid usuarioId)
-        {
-            if (!_repository.UsuarioExiste(usuarioId))
-                throw new DomainException("Usuário não encontrado");
-        }
+    public void Deletar(int id)
+    {
+        var ticket = BuscarOuFalhar(id);
+        _repository.DeletarTicket(ticket);
+    }
 
-        private void ValidarProjeto(Guid projetoId)
-        {
-            if (!_repository.ProjetoExiste(projetoId))
-                throw new DomainException("Projeto não encontrado");
-        }
+    public void MudarEstadoTicket(int ticketId, int statusTicketId)
+    {
+        var ticket = BuscarOuFalhar(ticketId);
+        ValidarStatusTicket(statusTicketId);
 
-        private void ValidarTipoTicket(int tipoTicketId)
-        {
-            if (!_repository.TipoTicketExiste(tipoTicketId))
-                throw new DomainException("Tipo de ticket não encontrado");
-        }
+        if (!ticket.Ativo)
+            throw new DomainException("Não é possível alterar um ticket inativo");
+        if (ticket.StatusTicketId == statusTicketId)
+            throw new DomainException("O ticket já está com este status");
 
-        private void ValidarStatusTicket(int statusTicketId)
-        {
-            if (!_repository.StatusTicketExiste(statusTicketId))
-                throw new DomainException("Status de ticket não encontrado");
-        }
+        _repository.MudarEstadoTicket(ticketId, statusTicketId);
+    }
 
-        private void ValidarRelacionamentos(
-            Guid projetoId, int tipoTicketId, int statusTicketId, Guid? usuarioResponsavel)
-        {
-            ValidarProjeto(projetoId);
-            ValidarTipoTicket(tipoTicketId);
-            ValidarStatusTicket(statusTicketId);
+    public void TransferirResponsavel(int ticketId, Guid usuarioId)
+    {
+        var ticket = BuscarOuFalhar(ticketId);
+        if (!ticket.Ativo)
+            throw new DomainException("Não é possível transferir um ticket inativo");
 
-            if (usuarioResponsavel.HasValue)
-                ValidarUsuario(usuarioResponsavel.Value);
-        }
+        ValidarUsuario(usuarioId);
+        if (ticket.UsuarioResponsavel == usuarioId)
+            throw new DomainException("Este usuário já é o responsável pelo ticket");
 
-        private static List<ListarTicketDto> ParaDtos(IEnumerable<Ticket> tickets)
-        {
-            return tickets.Select(ConversaoTicket.ConverterParaDto).ToList();
-        }
+        // Para exigir participação no projeto, valide aqui com o novo método do repository.
+        _repository.TransferirResponsavel(ticketId, usuarioId);
+    }
 
-        //================================ CRUD =================================
+    public void AdicionarColaborador(int ticketId, Guid usuarioId)
+    {
+        var ticket = BuscarOuFalhar(ticketId);
+        if (!ticket.Ativo)
+            throw new DomainException("Não é possível adicionar colaborador a um ticket inativo");
 
-        public ListarTicketDto ObterPorId(int id)
-        {
-            Ticket ticket = BuscarOuFalhar(id);
-            return ConversaoTicket.ConverterParaDto(ticket);
-        }
+        ValidarUsuario(usuarioId);
+        if (ticket.UsuarioResponsavel == usuarioId)
+            throw new DomainException("O responsável não pode ser adicionado como colaborador");
+        if (_repository.ColaboradorExiste(ticketId, usuarioId))
+            throw new DomainException("Este usuário já é colaborador do ticket");
 
-        public void AdicionarTicket(CriarTicketDto ticketDto)
-        {
-            ticketDto.NomeTicket = NormalizarNome(ticketDto.NomeTicket);
+        _repository.AdicionarColaborador(ticketId, usuarioId);
+    }
 
-            if(ticketDto.Prioridade < 1)
-                throw new DomainException("A prioridade do ticket é obrigatória");
+    public void RemoverColaborador(int ticketId, Guid usuarioId)
+    {
+        BuscarOuFalhar(ticketId);
+        ValidarUsuario(usuarioId);
 
-            ValidarRelacionamentos(
-                ticketDto.ProjetoId,
-                ticketDto.TipoTicketId,
-                ticketDto.StatusTicketId,
-                ticketDto.UsuarioResponsavel);
+        if (!_repository.ColaboradorExiste(ticketId, usuarioId))
+            throw new DomainException("Este usuário não é colaborador deste ticket");
 
-            _repository.AdicionarTicket(ConversaoTicket.ConverterParaDomain(ticketDto));
-        }
+        _repository.RemoverColaborador(ticketId, usuarioId);
+    }
 
-        public void Atualizar(int id, AtualizarTicketDto ticketDto)
-        {
-            Ticket ticketBanco = BuscarOuFalhar(id);
-            ticketDto.NomeTicket = NormalizarNome(ticketDto.NomeTicket);
+    public List<ListarTicketDto> ListarTickets() => ParaDtos(_repository.ListarTickets());
 
-            ValidarRelacionamentos(
-                ticketDto.ProjetoId,
-                ticketDto.TipoTicketId,
-                ticketDto.StatusTicketId,
-                ticketDto.UsuarioResponsavel);
+    public List<ListarTicketDto> ListarTicketsPorUsuario(Guid usuarioId)
+    {
+        ValidarUsuario(usuarioId);
+        return ParaDtos(_repository.ListarTicketsPorUsuario(usuarioId));
+    }
 
-            ConversaoTicket.AplicarAtualizacao(ticketBanco, ticketDto);
-            _repository.AtualizarTicket(ticketBanco);
-        }
+    public List<ListarTicketDto> ListarTicketsPorProjeto(Guid projetoId)
+    {
+        ValidarProjeto(projetoId);
+        return ParaDtos(_repository.ListarTicketsPorProjeto(projetoId));
+    }
 
-        public void Deletar(int id)
-        {
-            Ticket ticketBanco = BuscarOuFalhar(id);
-            _repository.DeletarTicket(ticketBanco);
-        }
+    public List<ListarTicketDto> ListarTicketsPorStatus(int statusTicketId)
+    {
+        ValidarStatusTicket(statusTicketId);
+        return ParaDtos(_repository.ListarTicketsPorStatus(statusTicketId));
+    }
 
-        //================================ FUNCOES =================================
+    public List<ListarTicketDto> ListarTicketsPorTipo(int tipoTicketId)
+    {
+        ValidarTipoTicket(tipoTicketId);
+        return ParaDtos(_repository.ListarTicketsPorTipo(tipoTicketId));
+    }
 
-        public void MudarEstadoTicket(int ticketId, int statusTicketId)
-        {
-            Ticket ticket = BuscarOuFalhar(ticketId);
-            ValidarStatusTicket(statusTicketId);
+    public List<ListarTicketDto> ListarTicketsPorUsuarioEProjeto(Guid usuarioId, Guid projetoId)
+    {
+        ValidarUsuario(usuarioId);
+        ValidarProjeto(projetoId);
+        return ParaDtos(_repository.ListarTicketsPorUsuarioEProjeto(usuarioId, projetoId));
+    }
 
-            if (ticket.StatusTicketId == statusTicketId)
-                throw new DomainException("O ticket já está com este status");
+    public List<ListarTicketDto> ListarTicketsPorPrioridade(int prioridade)
+    {
+        ValidarPrioridade(prioridade);
+        return ParaDtos(_repository.ListarTicketsPorPrioridade(prioridade));
+    }
 
-            _repository.MudarEstadoTicket(ticketId, statusTicketId);
-        }
+    public List<ListarTicketDto> ListarTicketsPorPeriodo(DateTime dataInicio, DateTime dataFim)
+    {
+        if (dataInicio > dataFim)
+            throw new DomainException("A data de início não pode ser maior que a data de fim");
 
-        public void TransferirResponsavel(int ticketId, Guid usuarioId)
-        {
-            Ticket ticket = BuscarOuFalhar(ticketId);
-            ValidarUsuario(usuarioId);
+        return ParaDtos(_repository.ListarTicketsPorPeriodo(dataInicio, dataFim));
+    }
 
-            if (ticket.UsuarioResponsavel == usuarioId)
-                throw new DomainException("Este usuário já é o responsável pelo ticket");
+    public List<ListarTicketDto> ListarTicketPorDataForaDoPrazo() =>
+        ParaDtos(_repository.ListarTicketPorDataForaDoPrazo());
 
-            _repository.TransferirResponsavel(ticketId, usuarioId);
-        }
+    public List<ListarTicketDto> ListarTicketPorDataForaDoPrazoPorUsuario(Guid usuarioId)
+    {
+        ValidarUsuario(usuarioId);
+        return ParaDtos(_repository.ListarTicketPorDataForaDoPrazoPorUsuario(usuarioId));
+    }
 
-        public void AdicionarColaborador(int ticketId, Guid usuarioId)
-        {
-            BuscarOuFalhar(ticketId);
-            ValidarUsuario(usuarioId);
+    public List<ListarTicketDto> ListarTicketPorDataForaDoPrazoPorProjeto(Guid projetoId)
+    {
+        ValidarProjeto(projetoId);
+        return ParaDtos(_repository.ListarTicketPorDataForaDoPrazoPorProjeto(projetoId));
+    }
 
-            if(_repository.ColaboradorExiste(ticketId, usuarioId))
-                throw new DomainException("Este usuário já é colaborador do ticket");
+    public List<ListarTicketDto> ListarTicketPorDataDentroDoPrazo() =>
+        ParaDtos(_repository.ListarTicketPorDataDentroDoPrazo());
 
-            Usuario usuarioBanco = _repository.ObterUsuarioPorId(usuarioId)
-                ?? throw new DomainException("Usuário não encontrado");
+    public List<ListarTicketDto> ListarTicketPorDataDentroDoPrazoPorUsuario(Guid usuarioId)
+    {
+        ValidarUsuario(usuarioId);
+        return ParaDtos(_repository.ListarTicketPorDataDentroDoPrazoPorUsuario(usuarioId));
+    }
 
-            if(_repository.ObterPorId(ticketId)?.Usuario.Any(c => c.UsuarioId == usuarioId) == true)
-                throw new DomainException("Este usuário já é colaborador do ticket");
-
-            _repository.AdicionarColaborador(ticketId, usuarioId);
-        }
-
-        public void RemoverColaborador(int ticketId, Guid usuarioId)
-        {
-            BuscarOuFalhar(ticketId);
-            ValidarUsuario(usuarioId);
-
-            if (_repository.ColaboradorExiste(ticketId, usuarioId))
-                throw new DomainException("Este usuário já é colaborador do ticket");
-
-            if (_repository.ObterPorId(ticketId)?.Usuario.Any(c => c.UsuarioId == usuarioId) == false)
-                throw new DomainException("Este usuário não é colaborador deste ticket");
-
-
-            _repository.RemoverColaborador(ticketId, usuarioId);
-        }
-
-        //================================ LISTAGEM =================================
-
-        public List<ListarTicketDto> ListarTickets()
-        {
-            return ParaDtos(_repository.ListarTickets());
-        }
-
-        public List<ListarTicketDto> ListarTicketsPorUsuario(Guid usuarioId)
-        {
-            ValidarUsuario(usuarioId);
-            return ParaDtos(_repository.ListarTicketsPorUsuario(usuarioId));
-        }
-
-        public List<ListarTicketDto> ListarTicketsPorProjeto(Guid projetoId)
-        {
-            ValidarProjeto(projetoId);
-            return ParaDtos(_repository.ListarTicketsPorProjeto(projetoId));
-        }
-
-        public List<ListarTicketDto> ListarTicketsPorStatus(int statusTicketId)
-        {
-            ValidarStatusTicket(statusTicketId);
-            return ParaDtos(_repository.ListarTicketsPorStatus(statusTicketId));
-        }
-
-        public List<ListarTicketDto> ListarTicketsPorTipo(int tipoTicketId)
-        {
-            ValidarTipoTicket(tipoTicketId);
-            return ParaDtos(_repository.ListarTicketsPorTipo(tipoTicketId));
-        }
-
-        public List<ListarTicketDto> ListarTicketsPorUsuarioEProjeto(Guid usuarioId, Guid projetoId)
-        {
-            ValidarUsuario(usuarioId);
-            ValidarProjeto(projetoId);
-            return ParaDtos(_repository.ListarTicketsPorUsuarioEProjeto(usuarioId, projetoId));
-        }
-
-        public List<ListarTicketDto> ListarTicketsPorPrioridade(int prioridade)
-        {
-            return ParaDtos(_repository.ListarTicketsPorPrioridade(prioridade));
-        }
-
-        public List<ListarTicketDto> ListarTicketsPorPeriodo(DateTime dataInicio, DateTime dataFim)
-        {
-            if (dataInicio > dataFim)
-                throw new DomainException("A data de início não pode ser maior que a data de fim");
-
-            return ParaDtos(_repository.ListarTicketsPorPeriodo(dataInicio, dataFim));
-        }
-
-        //================================ PRAZO =================================
-
-        public List<ListarTicketDto> ListarTicketPorDataForaDoPrazo()
-        {
-            return ParaDtos(_repository.ListarTicketPorDataForaDoPrazo());
-        }
-
-        public List<ListarTicketDto> ListarTicketPorDataForaDoPrazoPorUsuario(Guid usuarioId)
-        {
-            ValidarUsuario(usuarioId);
-            return ParaDtos(_repository.ListarTicketPorDataForaDoPrazoPorUsuario(usuarioId));
-        }
-
-        public List<ListarTicketDto> ListarTicketPorDataForaDoPrazoPorProjeto(Guid projetoId)
-        {
-            ValidarProjeto(projetoId);
-            return ParaDtos(_repository.ListarTicketPorDataForaDoPrazoPorProjeto(projetoId));
-        }
-
-        public List<ListarTicketDto> ListarTicketPorDataDentroDoPrazo()
-        {
-            return ParaDtos(_repository.ListarTicketPorDataDentroDoPrazo());
-        }
-
-        public List<ListarTicketDto> ListarTicketPorDataDentroDoPrazoPorUsuario(Guid usuarioId)
-        {
-            ValidarUsuario(usuarioId);
-            return ParaDtos(_repository.ListarTicketPorDataDentroDoPrazoPorUsuario(usuarioId));
-        }
-
-        public List<ListarTicketDto> ListarTicketPorDataDentroDoPrazoPorProjeto(Guid projetoId)
-        {
-            ValidarProjeto(projetoId);
-            return ParaDtos(_repository.ListarTicketPorDataDentroDoPrazoPorProjeto(projetoId));
-        }
+    public List<ListarTicketDto> ListarTicketPorDataDentroDoPrazoPorProjeto(Guid projetoId)
+    {
+        ValidarProjeto(projetoId);
+        return ParaDtos(_repository.ListarTicketPorDataDentroDoPrazoPorProjeto(projetoId));
     }
 }

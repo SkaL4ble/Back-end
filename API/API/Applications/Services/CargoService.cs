@@ -57,7 +57,10 @@ namespace API.Applications.Services
             Cargo cargoBanco = BuscarOuFalhar(id);
             string novoNome = NormalizarNome(cargoDto.NomeCargo);
 
-            if (_repository.NomeCargoExiste(novoNome))
+            bool nomeMudou = !string.Equals(
+                cargoBanco.NomeCargo, novoNome, StringComparison.OrdinalIgnoreCase);
+
+            if (nomeMudou && _repository.NomeCargoExiste(novoNome))
                 throw new DomainException("Cargo já existe");
 
             cargoDto.NomeCargo = novoNome;

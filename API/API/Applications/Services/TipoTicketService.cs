@@ -4,77 +4,66 @@ using API.DTOs.TipoTicketDto;
 using API.Exceptions;
 using API.Interfaces;
 
-namespace API.Applications.Services
+namespace API.Applications.Services;
+
+public class TipoTicketService
 {
-    public class TipoTicketService
+    private const int TamanhoMaximoNome = 30;
+    private readonly ITipoTicketRepository _repository;
+
+    public TipoTicketService(ITipoTicketRepository repository) => _repository = repository;
+
+    private TipoTicket BuscarOuFalhar(int id) =>
+        _repository.ObterPorId(id)
+        ?? throw new DomainException("Tipo de ticket não encontrado");
+
+    private static string NormalizarNome(string? nome)
     {
-        private readonly ITipoTicketRepository _repository;
+        if (string.IsNullOrWhiteSpace(nome))
+            throw new DomainException("O nome do tipo de ticket é obrigatório");
 
-        public TipoTicketService(ITipoTicketRepository repository)
-        {
-            _repository = repository;
-        }
+        var normalizado = nome.Trim();
+        if (normalizado.Length > TamanhoMaximoNome)
+            throw new DomainException($"O nome do tipo de ticket deve ter no máximo {TamanhoMaximoNome} caracteres");
 
-        private TipoTicket BuscarOuFalhar(int id)
-        {
-            return _repository.ObterPorId(id)
-                ?? throw new DomainException("Tipo de ticket não encontrado");
-        }
+        return normalizado;
+    }
 
-        private static string NormalizarNome(string? nome)
-        {
-            if (string.IsNullOrWhiteSpace(nome))
-                throw new DomainException("O nome do tipo de ticket é obrigatório");
+    public List<ListarTipoTicketDto> ListarTiposTicket() =>
+        _repository.ListarTiposTicket()
+            .Select(ConversaoTipoTicket.ConverterParaDto)
+            .ToList();
 
-            return nome.Trim();
-        }
+    public ListarTipoTicketDto ObterPorId(int id) =>
+        ConversaoTipoTicket.ConverterParaDto(BuscarOuFalhar(id));
 
-        public List<ListarTipoTicketDto> ListarTiposTicket()
-        {
-            return _repository.ListarTiposTicket()
-                .Select(ConversaoTipoTicket.ConverterParaDto)
-                .ToList();
-        }
+    public void AdicionarTipoTicket(CriarTipoTicketDto dto)
+    {
+        var nome = NormalizarNome(dto.NomeTipoTicket);
+        if (_repository.NomeTipoTicketExiste(nome))
+            throw new DomainException("Tipo de ticket já existe");
 
-        public ListarTipoTicketDto ObterPorId(int id)
-        {
-            TipoTicket tipoTicket = BuscarOuFalhar(id);
-            return ConversaoTipoTicket.ConverterParaDto(tipoTicket);
-        }
+        _repository.Adicionar(new TipoTicket { NomeTipoTicket = nome });
+    }
 
-        public void AdicionarTipoTicket(CriarTipoTicketDto tipoTicketDto)
-        {
-            tipoTicketDto.NomeTipoTicket = NormalizarNome(tipoTicketDto.NomeTipoTicket);
+    public void Atualizar(int id, CriarTipoTicketDto dto)
+    {
+        var atual = BuscarOuFalhar(id);
+        var nome = NormalizarNome(dto.NomeTipoTicket);
+        var mudou = !string.Equals(atual.NomeTipoTicket, nome, StringComparison.OrdinalIgnoreCase);
 
-            if (_repository.NomeTipoTicketExiste(tipoTicketDto.NomeTipoTicket))
-                throw new DomainException("Tipo de ticket já existe");
+        if (mudou && _repository.NomeTipoTicketExiste(nome))
+            throw new DomainException("Tipo de ticket já existe");
 
-            _repository.Adicionar(ConversaoTipoTicket.ConverterParaDomain(tipoTicketDto));
-        }
+        _repository.Atualizar(id, new TipoTicket { TipoTicketId = id, NomeTipoTicket = nome });
+    }
 
-        public void Atualizar(int id, CriarTipoTicketDto tipoTicketDto)
-        {
-            TipoTicket tipoTicketBanco = BuscarOuFalhar(id);
-            string novoNome = NormalizarNome(tipoTicketDto.NomeTipoTicket);
+    public void Deletar(int id)
+    {
+        BuscarOuFalhar(id);
+        if (_repository.PossuiTickets(id))
+            throw new DomainException("Não é possível excluir: há tickets vinculados a este tipo de ticket");
 
-            bool nomeMudou = !string.Equals(
-                tipoTicketBanco.NomeTipoTicket, novoNome, StringComparison.OrdinalIgnoreCase);
-
-            if (nomeMudou && _repository.NomeTipoTicketExiste(novoNome))
-                throw new DomainException("Tipo de ticket já existe");
-
-            tipoTicketDto.NomeTipoTicket = novoNome;
-            _repository.Atualizar(id, ConversaoTipoTicket.ConverterParaDomain(tipoTicketDto));
-        }
-
-        public void Deletar(int id)
-        {
-            BuscarOuFalhar(id);
-
-            if (_repository.PossuiTickets(id))
-                throw new DomainException("Não é possível excluir: há tickets vinculados a este tipo de ticket");
-
-            _repository.Deletar(id);
-        }
+        _repository.Deletar(id);
     }
 }

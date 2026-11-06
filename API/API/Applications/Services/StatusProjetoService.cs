@@ -4,84 +4,66 @@ using API.DTOs.StatusProjetoDto;
 using API.Exceptions;
 using API.Interfaces;
 
-namespace API.Applications.Services
+namespace API.Applications.Services;
+
+public class StatusProjetoService
 {
-    public class StatusProjetoService
+    private const int TamanhoMaximoNome = 30;
+    private readonly IStatusProjetoRepository _repository;
+
+    public StatusProjetoService(IStatusProjetoRepository repository) => _repository = repository;
+
+    private StatusProjeto BuscarOuFalhar(int id) =>
+        _repository.ObterPorId(id)
+        ?? throw new DomainException("Status de projeto não encontrado");
+
+    private static string NormalizarNome(string? nome)
     {
-        private const int TamanhoMaximoNome = 30;
+        if (string.IsNullOrWhiteSpace(nome))
+            throw new DomainException("O nome do status de projeto é obrigatório");
 
-        private readonly IStatusProjetoRepository _repository;
+        var normalizado = nome.Trim();
+        if (normalizado.Length > TamanhoMaximoNome)
+            throw new DomainException($"O nome do status de projeto deve ter no máximo {TamanhoMaximoNome} caracteres");
 
-        public StatusProjetoService(IStatusProjetoRepository repository)
-        {
-            _repository = repository;
-        }
+        return normalizado;
+    }
 
-        private StatusProjeto BuscarOuFalhar(int id)
-        {
-            return _repository.ObterPorId(id)
-                ?? throw new DomainException("Status de projeto não encontrado");
-        }
+    public List<ListarStatusProjetoDto> ListarStatusProjeto() =>
+        _repository.ListarStatusProjeto()
+            .Select(ConversaoStatusProjeto.ConverterParaDto)
+            .ToList();
 
-        private static string NormalizarNome(string? nome)
-        {
-            if (string.IsNullOrWhiteSpace(nome))
-                throw new DomainException("O nome do status de projeto é obrigatório");
+    public ListarStatusProjetoDto ObterPorId(int id) =>
+        ConversaoStatusProjeto.ConverterParaDto(BuscarOuFalhar(id));
 
-            string nomeNormalizado = nome.Trim();
+    public void AdicionarStatusProjeto(CriarStatusProjetoDto dto)
+    {
+        var nome = NormalizarNome(dto.NomeStatusProjeto);
+        if (_repository.NomeStatusProjetoExiste(nome))
+            throw new DomainException("Status de projeto já existe");
 
-            if (nomeNormalizado.Length > TamanhoMaximoNome)
-                throw new DomainException($"O nome do status de projeto deve ter no máximo {TamanhoMaximoNome} caracteres");
+        _repository.Adicionar(new StatusProjeto { NomeStatusProjeto = nome });
+    }
 
-            return nomeNormalizado;
-        }
+    public void Atualizar(int id, CriarStatusProjetoDto dto)
+    {
+        var atual = BuscarOuFalhar(id);
+        var nome = NormalizarNome(dto.NomeStatusProjeto);
+        var mudou = !string.Equals(atual.NomeStatusProjeto, nome, StringComparison.OrdinalIgnoreCase);
 
-        public List<ListarStatusProjetoDto> ListarStatusProjeto()
-        {
-            return _repository.ListarStatusProjeto()
-                .Select(ConversaoStatusProjeto.ConverterParaDto)
-                .ToList();
-        }
+        if (mudou && _repository.NomeStatusProjetoExiste(nome))
+            throw new DomainException("Status de projeto já existe");
 
-        public ListarStatusProjetoDto ObterPorId(int id)
-        {
-            StatusProjeto statusProjeto = BuscarOuFalhar(id);
-            return ConversaoStatusProjeto.ConverterParaDto(statusProjeto);
-        }
+        _repository.Atualizar(id, new StatusProjeto { StatusProjetoId = id, NomeStatusProjeto = nome });
+    }
 
-        public void AdicionarStatusProjeto(CriarStatusProjetoDto statusProjetoDto)
-        {
-            statusProjetoDto.NomeStatusProjeto = NormalizarNome(statusProjetoDto.NomeStatusProjeto);
+    public void Deletar(int id)
+    {
+        BuscarOuFalhar(id);
+        if (_repository.PossuiProjetos(id))
+            throw new DomainException("Não é possível excluir: há projetos vinculados a este status de projeto");
 
-            if (_repository.NomeStatusProjetoExiste(statusProjetoDto.NomeStatusProjeto))
-                throw new DomainException("Status de projeto já existe");
-
-            _repository.Adicionar(ConversaoStatusProjeto.ConverterParaDomain(statusProjetoDto));
-        }
-
-        public void Atualizar(int id, CriarStatusProjetoDto statusProjetoDto)
-        {
-            StatusProjeto statusProjetoBanco = BuscarOuFalhar(id);
-            string novoNome = NormalizarNome(statusProjetoDto.NomeStatusProjeto);
-
-            bool nomeMudou = !string.Equals(
-                statusProjetoBanco.NomeStatusProjeto, novoNome, StringComparison.OrdinalIgnoreCase);
-
-            if (nomeMudou && _repository.NomeStatusProjetoExiste(novoNome))
-                throw new DomainException("Status de projeto já existe");
-
-            statusProjetoDto.NomeStatusProjeto = novoNome;
-            _repository.Atualizar(id, ConversaoStatusProjeto.ConverterParaDomain(statusProjetoDto));
-        }
-
-        public void Deletar(int id)
-        {
-            BuscarOuFalhar(id);
-
-            if (_repository.PossuiProjetos(id))
-                throw new DomainException("Não é possível excluir: há projetos vinculados a este status de projeto");
-
-            _repository.Deletar(id);
-        }
+        _repository.Deletar(id);
     }
 }
