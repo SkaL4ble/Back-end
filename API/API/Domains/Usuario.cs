@@ -9,9 +9,9 @@ public partial class Usuario
 
     public string NomeUsuario { get; set; } = null!;
 
-    public string? EmailPessoal { get; set; }
+    public string EmailPessoal { get; set; } = null!;
 
-    public byte[] Senha { get; set; } = null!;
+    public byte[]? Senha { get; set; }
 
     public byte[]? Imagem { get; set; }
 
