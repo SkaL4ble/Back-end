@@ -17,6 +17,7 @@ namespace API.Interfaces
         bool UsuarioExiste(Guid usuarioId);
         bool ColaboradorExiste(int ticketId, Guid usuarioId);
         public Usuario? ObterUsuarioPorId(Guid usuarioId);
+        bool UsuarioParticipaDoProjeto(Guid usuarioId, Guid projetoId);
         // ================================ LISTAGEM =================================
         public List<Ticket> ListarTickets();
         public List<Usuario> ListarColaboradores(int ticketId);

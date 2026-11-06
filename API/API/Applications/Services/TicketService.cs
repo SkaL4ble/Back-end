@@ -10,14 +10,32 @@ public class TicketService
 {
     private const int PrioridadeMinima = 1;
     private const int PrioridadeMaxima = 5;
+    private const int TamanhoMinimoNome = 3;
     private const int TamanhoMaximoNome = 125;
     private readonly ITicketRepository _repository;
 
     public TicketService(ITicketRepository repository) => _repository = repository;
 
-    private Ticket BuscarOuFalhar(int id) =>
-        _repository.ObterPorId(id)
-        ?? throw new DomainException("Ticket não encontrado");
+    // Retorna o ticket mesmo se estiver inativo (usado por operações que
+    // precisam dar mensagem específica para ticket inativo).
+    private Ticket BuscarOuFalhar(int id)
+    {
+        if (id <= 0)
+            throw new DomainException("O ID do ticket deve ser maior que zero");
+
+        return _repository.ObterPorId(id)
+            ?? throw new DomainException("Ticket não encontrado");
+    }
+
+    // Soft delete: ticket inativo é tratado como inexistente em consultas normais.
+    private Ticket BuscarAtivoOuFalhar(int id)
+    {
+        var ticket = BuscarOuFalhar(id);
+        if (!ticket.Ativo)
+            throw new DomainException   ("Ticket não encontrado");
+
+        return ticket;
+    }
 
     private static string NormalizarNome(string? nome)
     {
@@ -25,8 +43,8 @@ public class TicketService
             throw new DomainException("O nome do ticket é obrigatório");
 
         var normalizado = nome.Trim();
-        if (normalizado.Length < 3)
-            throw new DomainException("O nome do ticket não pode ter menos de 3 caracteres");
+        if (normalizado.Length < TamanhoMinimoNome)
+            throw new DomainException($"O nome do ticket não pode ter menos de {TamanhoMinimoNome} caracteres");
         if (normalizado.Length > TamanhoMaximoNome)
             throw new DomainException($"O nome do ticket não pode ter mais de {TamanhoMaximoNome} caracteres");
 
@@ -71,6 +89,12 @@ public class TicketService
             throw new DomainException("Status de ticket não encontrado");
     }
 
+    private void ValidarParticipacaoNoProjeto(Guid usuarioId, Guid projetoId)
+    {
+        if (!_repository.UsuarioParticipaDoProjeto(usuarioId, projetoId))
+            throw new DomainException("O usuário não participa do projeto do ticket");
+    }
+
     private void ValidarRelacionamentos(Guid projetoId, int tipoTicketId,
         int statusTicketId, Guid? usuarioResponsavel)
     {
@@ -81,8 +105,7 @@ public class TicketService
         if (usuarioResponsavel.HasValue)
         {
             ValidarUsuario(usuarioResponsavel.Value);
-            // Para exigir participação no projeto, adicione
-            // UsuarioParticipaDoProjeto(usuarioId, projetoId) à ITicketRepository.
+            ValidarParticipacaoNoProjeto(usuarioResponsavel.Value, projetoId);
         }
     }
 
@@ -90,7 +113,7 @@ public class TicketService
         tickets.Select(ConversaoTicket.ConverterParaDto).ToList();
 
     public ListarTicketDto ObterPorId(int id) =>
-        ConversaoTicket.ConverterParaDto(BuscarOuFalhar(id));
+        ConversaoTicket.ConverterParaDto(BuscarAtivoOuFalhar(id));
 
     public void AdicionarTicket(CriarTicketDto dto)
     {
@@ -119,7 +142,7 @@ public class TicketService
 
     public void Atualizar(int id, AtualizarTicketDto dto)
     {
-        var ticket = BuscarOuFalhar(id);
+        var ticket = BuscarAtivoOuFalhar(id);
         var nome = NormalizarNome(dto.NomeTicket);
         ValidarPrioridade(dto.Prioridade);
         ValidarRelacionamentos(dto.ProjetoId, dto.TipoTicketId,
@@ -143,7 +166,8 @@ public class TicketService
 
     public void Deletar(int id)
     {
-        var ticket = BuscarOuFalhar(id);
+        // Ticket já inativo (ou inexistente) => 404, o que torna o DELETE repetido previsível.
+        var ticket = BuscarAtivoOuFalhar(id);
         _repository.DeletarTicket(ticket);
     }
 
@@ -170,7 +194,8 @@ public class TicketService
         if (ticket.UsuarioResponsavel == usuarioId)
             throw new DomainException("Este usuário já é o responsável pelo ticket");
 
-        // Para exigir participação no projeto, valide aqui com o novo método do repository.
+        ValidarParticipacaoNoProjeto(usuarioId, ticket.ProjetoId);
+
         _repository.TransferirResponsavel(ticketId, usuarioId);
     }
 
@@ -183,6 +208,9 @@ public class TicketService
         ValidarUsuario(usuarioId);
         if (ticket.UsuarioResponsavel == usuarioId)
             throw new DomainException("O responsável não pode ser adicionado como colaborador");
+
+        ValidarParticipacaoNoProjeto(usuarioId, ticket.ProjetoId);
+
         if (_repository.ColaboradorExiste(ticketId, usuarioId))
             throw new DomainException("Este usuário já é colaborador do ticket");
 
@@ -192,8 +220,8 @@ public class TicketService
     public void RemoverColaborador(int ticketId, Guid usuarioId)
     {
         BuscarOuFalhar(ticketId);
-        ValidarUsuario(usuarioId);
 
+        // Sem ValidarUsuario: um colaborador que foi desativado ainda precisa poder ser removido.
         if (!_repository.ColaboradorExiste(ticketId, usuarioId))
             throw new DomainException("Este usuário não é colaborador deste ticket");
 
