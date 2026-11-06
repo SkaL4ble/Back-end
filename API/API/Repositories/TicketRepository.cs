@@ -86,6 +86,10 @@ namespace API.Repositories
             return _context.Ticket.Any(tu => tu.TicketId == ticketId && tu.Usuario.Any(u => u.UsuarioId == usuarioId));
         }
 
+        public bool UsuarioParticipaDoProjeto(Guid usuarioId, Guid projetoId)
+        {
+            return _context.Projeto.Any(pu => pu.ProjetoId == projetoId && pu.Usuario.Any(u => u.UsuarioId == usuarioId));
+        }
         // ================================ LISTAGEM =================================
         public List<Ticket> ListarTickets()
         {

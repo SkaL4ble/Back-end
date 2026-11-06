@@ -34,7 +34,7 @@ namespace API.Controllers
             }
             catch (DomainException ex)
             {
-                return NotFound(ex.Message);
+                return BadRequest(ex.Message);
             }
         }
 

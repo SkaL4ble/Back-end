@@ -9,6 +9,7 @@ namespace API.Applications.Services;
 public class StatusTicketService
 {
     private const int TamanhoMaximoNome = 30;
+    private const int TamanhoMinimoNome = 3;
     private readonly IStatusTicketRepository _repository;
 
     public StatusTicketService(IStatusTicketRepository repository) => _repository = repository;
@@ -25,6 +26,8 @@ public class StatusTicketService
         var normalizado = nome.Trim();
         if (normalizado.Length > TamanhoMaximoNome)
             throw new DomainException($"O nome do status de ticket deve ter no máximo {TamanhoMaximoNome} caracteres");
+        else if (normalizado.Length < TamanhoMinimoNome)
+            throw new DomainException($"O nome do status de ticket deve ter no mínimo {TamanhoMinimoNome} caracteres");
 
         return normalizado;
     }

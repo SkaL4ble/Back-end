@@ -22,7 +22,8 @@ namespace API.Applications.Conversoes
                 NomeProjeto = ticket.Projeto?.NomeProjeto ?? string.Empty,
                 TipoTicketId = ticket.TipoTicketId,
                 NomeTipoTicket = ticket.TipoTicket?.NomeTipoTicket ?? string.Empty,
-                StatusTicketId = ticket.StatusTicketId
+                StatusTicketId = ticket.StatusTicketId,
+                NomeStatusTicket = ticket.StatusTicket?.NomeStatusTicket ?? string.Empty
             };
         }
 
