@@ -1,7 +1,7 @@
 ﻿using API.Domains;
 using API.DTOs.StatusProjetoDto;
 
-namespace API.Applications.Conversoes
+namespace API.Applications.Conversoes.ConversoesDeDto
 {
     public class ConversaoStatusProjeto
     {

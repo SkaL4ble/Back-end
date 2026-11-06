@@ -1,3 +1,4 @@
+using System.Text;
 using API.Applications.Services;
 using API.Contexts;
 using API.Interfaces;
@@ -69,7 +70,6 @@ builder.Services.AddSwaggerGen(c =>
     c.IncludeXmlComments(xmlPath);
 });
 
-
 builder.Services.AddScoped<ITipoMetricaRepository, TipoMetricaRepository>();
 builder.Services.AddScoped<TipoMetricaService>();
 
@@ -93,6 +93,9 @@ builder.Services.AddScoped<TipoTicketService>();
 
 builder.Services.AddScoped<IStatusTicketRepository, StatusTicketRepository>();
 builder.Services.AddScoped<StatusTicketService>();
+
+builder.Services.AddScoped<ITipoUsuarioRepository, TipoUsuarioRepository>();
+builder.Services.AddScoped<TipoUsuarioService>();
 
 builder.Services.AddOpenApi();
 

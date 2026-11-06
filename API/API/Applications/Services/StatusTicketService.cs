@@ -1,4 +1,4 @@
-﻿using API.Applications.Conversoes;
+﻿using API.Applications.Conversoes.ConversoesDeDto;
 using API.Domains;
 using API.DTOs.StatusTicketDto;
 using API.Exceptions;
