@@ -17,11 +17,15 @@
         public bool Ativo { get; set; }
 
         public Guid? UsuarioResponsavel { get; set; }
+        public string? NomeUsuarioResponsavel { get; set; }
 
         public Guid ProjetoId { get; set; }
+        public string NomeProjeto { get; set; } = null!;
 
         public int TipoTicketId { get; set; }
+        public string NomeTipoTicket { get; set; } = null!;
 
         public int StatusTicketId { get; set; }
+        public string NomeStatusTicket { get; set; } = null!;
     }
 }

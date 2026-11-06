@@ -27,6 +27,10 @@ namespace API.Applications.Services
         {
             if (string.IsNullOrWhiteSpace(nome))
                 throw new DomainException("O nome do ticket é obrigatório");
+            else if (nome.Length < 3)
+                throw new DomainException("O nome do ticket não pode ter menos de 3 caracteres");
+            else if(nome.Length > 125)
+                throw new DomainException("O nome do ticket não pode ter mais de 125 caracteres");
 
             return nome.Trim();
         }
@@ -82,6 +86,9 @@ namespace API.Applications.Services
         public void AdicionarTicket(CriarTicketDto ticketDto)
         {
             ticketDto.NomeTicket = NormalizarNome(ticketDto.NomeTicket);
+
+            if(ticketDto.Prioridade < 1)
+                throw new DomainException("A prioridade do ticket é obrigatória");
 
             ValidarRelacionamentos(
                 ticketDto.ProjetoId,
@@ -142,6 +149,9 @@ namespace API.Applications.Services
             BuscarOuFalhar(ticketId);
             ValidarUsuario(usuarioId);
 
+            if(_repository.ColaboradorExiste(ticketId, usuarioId))
+                throw new DomainException("Este usuário já é colaborador do ticket");
+
             Usuario usuarioBanco = _repository.ObterUsuarioPorId(usuarioId)
                 ?? throw new DomainException("Usuário não encontrado");
 
@@ -155,6 +165,9 @@ namespace API.Applications.Services
         {
             BuscarOuFalhar(ticketId);
             ValidarUsuario(usuarioId);
+
+            if (_repository.ColaboradorExiste(ticketId, usuarioId))
+                throw new DomainException("Este usuário já é colaborador do ticket");
 
             if (_repository.ObterPorId(ticketId)?.Usuario.Any(c => c.UsuarioId == usuarioId) == false)
                 throw new DomainException("Este usuário não é colaborador deste ticket");

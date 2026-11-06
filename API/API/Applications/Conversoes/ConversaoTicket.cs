@@ -17,8 +17,11 @@ namespace API.Applications.Conversoes
                 DataEntrega = ticket.DataEntrega,
                 Ativo = ticket.Ativo,
                 UsuarioResponsavel = ticket.UsuarioResponsavel,
+                NomeUsuarioResponsavel = ticket.UsuarioResponsavelNavigation?.NomeUsuario,
                 ProjetoId = ticket.ProjetoId,
+                NomeProjeto = ticket.Projeto?.NomeProjeto ?? string.Empty,
                 TipoTicketId = ticket.TipoTicketId,
+                NomeTipoTicket = ticket.TipoTicket?.NomeTipoTicket ?? string.Empty,
                 StatusTicketId = ticket.StatusTicketId
             };
         }
@@ -29,7 +32,6 @@ namespace API.Applications.Conversoes
             {
                 NomeTicket = ticketDto.NomeTicket,
                 Prioridade = ticketDto.Prioridade,
-                DataCriacao = DateTime.UtcNow,
                 DataPrazo = ticketDto.DataPrazo,
                 Ativo = true,
                 UsuarioResponsavel = ticketDto.UsuarioResponsavel,
@@ -45,7 +47,6 @@ namespace API.Applications.Conversoes
             ticket.Prioridade = ticketDto.Prioridade;
             ticket.DataPrazo = ticketDto.DataPrazo;
             ticket.DataEntrega = ticketDto.DataEntrega;
-            ticket.Ativo = ticketDto.Ativo;
             ticket.UsuarioResponsavel = ticketDto.UsuarioResponsavel;
             ticket.ProjetoId = ticketDto.ProjetoId;
             ticket.TipoTicketId = ticketDto.TipoTicketId;
