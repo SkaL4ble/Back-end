@@ -4,10 +4,12 @@ namespace API.Interfaces
 {
     public interface ITipoMetricaRepository
     {
-        List<TipoMetrica> Listar();
-        TipoMetrica BuscarPorId(int id);
-        void Cadastrar(TipoMetrica tipoMetrica);
+        List<TipoMetrica> ListarTiposMetrica();
+        TipoMetrica? ObterPorId(int id);
+        bool NomeTipoMetricaExiste(string nome);
+        bool PossuiProjetos(int id);
+        void Adicionar(TipoMetrica tipoMetrica);
         void Atualizar(int id, TipoMetrica tipoMetrica);
-        void Remover(int id);
+        void Deletar(int id);   
     }
 }

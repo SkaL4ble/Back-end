@@ -5,9 +5,9 @@ namespace API.Repositories
 {
     public class ProjetoRepository
     {
-        private readonly Skal4bleContext _context;
+        private readonly SkaL4bleContext _context;
 
-        public ProjetoRepository(Skal4bleContext context)
+        public ProjetoRepository(SkaL4bleContext context)
         {
             _context = context;
         }
@@ -18,12 +18,12 @@ namespace API.Repositories
 
         public Projeto? ObterPorNome(string nome)
         {
-            return _context.Projeto.FirstOrDefault(p => p.Nome == nome);
+            return _context.Projeto.FirstOrDefault(p => p.NomeProjeto == nome);
         }
 
         public Projeto ObterPorId(Guid id)
         {
-            return _context.Projeto.FirstOrDefault(p => p.Id == id);
+            return _context.Projeto.FirstOrDefault(p => p.ProjetoId == id);
         }
 
         public void Adicionar(Projeto projeto)
@@ -32,10 +32,14 @@ namespace API.Repositories
             _context.SaveChanges();
         }
 
-        public void Atualizar(Projeto projeto)
+        public void Atualizar(Projeto projeto, Guid id)
         {
-            _context.Projeto.Update(projeto);
-            _context.SaveChanges();
+            var projetoExistente = _context.Projeto.FirstOrDefault(p => p.ProjetoId == id);
+            if (projetoExistente != null)
+            {
+                _context.Projeto.Update(projeto);
+                _context.SaveChanges();
+            }
         }
         
         public void Remover(Projeto projeto)
@@ -44,19 +48,29 @@ namespace API.Repositories
             _context.SaveChanges();
         }
 
-        public List<Projeto> ListarPorPrazo(DateTime prazo)
+        public List<Projeto> ListarPorTipo(int tipoProjetoId)
         {
-            return _context.Projeto.Where(p => p.Prazo <= prazo).ToList();
+            return _context.Projeto.Where(p => p.TipoProjetoId == tipoProjetoId).ToList();
         }
 
-        public List<Projeto> ListarPorStatus(int status, bool s)
+        public List<Projeto> ListarPorStatus(int status)
         {
-            return _context.Projeto.Where(p => s).ToList();
+            return _context.Projeto.Where(p => p.StatusProjetoId == status).ToList();
         }
 
-        public List<Projeto> ListarPorTipo(string tipo)
+        public List<Projeto> ListarPorStatusETipo(int status, int tipoProjetoId)
         {
-            return _context.Projeto.Where(p => p.Tipo == tipo).ToList();
+            return _context.Projeto.Where(p => p.StatusProjetoId == status && p.TipoProjetoId == tipoProjetoId).ToList();
+        }
+
+        public bool ProjetoAtivo(Guid projetoId)
+        {
+            var projeto = _context.Projeto.FirstOrDefault(p => p.ProjetoId == projetoId);
+            if (projeto != null)
+            {
+                return projeto.Ativo == true;
+            }
+            return false;
         }
     }
 }
