@@ -34,6 +34,8 @@ public partial class SkaL4bleContext : DbContext
 
     public virtual DbSet<Ticket> Ticket { get; set; }
 
+    public virtual DbSet<TicketUsuario> TicketUsuario { get; set; }
+
     public virtual DbSet<TipoMetrica> TipoMetrica { get; set; }
 
     public virtual DbSet<TipoProjeto> TipoProjeto { get; set; }
@@ -218,37 +220,21 @@ public partial class SkaL4bleContext : DbContext
             entity.HasOne(d => d.UsuarioResponsavelNavigation).WithMany(p => p.Ticket)
                 .HasForeignKey(d => d.UsuarioResponsavel)
                 .HasConstraintName("FK_Ticket_UsuarioResponsavel");
+        });
 
-            entity.HasMany(d => d.Colaborador).WithMany(p => p.TicketNavigation)
-                .UsingEntity<Dictionary<string, object>>(
-                    "TicketColaborador",
-                    r => r.HasOne<Usuario>().WithMany()
-                        .HasForeignKey("ColaboradorId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK_TickeColaborador_Tecnologia"),
-                    l => l.HasOne<Ticket>().WithMany()
-                        .HasForeignKey("TicketId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK_TickeColaborador_Colaborador"),
-                    j =>
-                    {
-                        j.HasKey("TicketId", "ColaboradorId");
-                        j.IndexerProperty<int>("TicketId").ValueGeneratedOnAdd();
-                    });
+        modelBuilder.Entity<TicketUsuario>(entity =>
+        {
+            entity.HasKey(e => new { e.TicketId, e.UsuarioId }).HasName("PK_TicketColaboradores");
 
-            entity.HasMany(d => d.Usuario).WithMany(p => p.Ticket1)
-                .UsingEntity<Dictionary<string, object>>(
-                    "TicketUsuario",
-                    r => r.HasOne<Usuario>().WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .HasConstraintName("FK_TicketUsuario_Usuario"),
-                    l => l.HasOne<Ticket>().WithMany()
-                        .HasForeignKey("TicketId")
-                        .HasConstraintName("FK_TicketUsuario_Ticket"),
-                    j =>
-                    {
-                        j.HasKey("TicketId", "UsuarioId").HasName("PK_TicketColaboradores");
-                    });
+            entity.Property(e => e.Autor).HasDefaultValue(true);
+
+            entity.HasOne(d => d.Ticket).WithMany(p => p.TicketUsuario)
+                .HasForeignKey(d => d.TicketId)
+                .HasConstraintName("FK_TicketUsuario_Ticket");
+
+            entity.HasOne(d => d.Usuario).WithMany(p => p.TicketUsuario)
+                .HasForeignKey(d => d.UsuarioId)
+                .HasConstraintName("FK_TicketUsuario_Usuario");
         });
 
         modelBuilder.Entity<TipoMetrica>(entity =>
@@ -292,15 +278,10 @@ public partial class SkaL4bleContext : DbContext
         {
             entity.ToTable(tb => tb.HasTrigger("TR_Usuario_SoftDeleteCascade"));
 
-            entity.HasIndex(e => e.EmailGitHub, "UQ_Usuario_EmailGitHub").IsUnique();
-
             entity.HasIndex(e => e.EmailPessoal, "UQ_Usuario_EmailPessoal").IsUnique();
 
             entity.Property(e => e.UsuarioId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Ativo).HasDefaultValue(true);
-            entity.Property(e => e.EmailGitHub)
-                .HasMaxLength(100)
-                .IsUnicode(false);
             entity.Property(e => e.EmailPessoal)
                 .HasMaxLength(100)
                 .IsUnicode(false);
