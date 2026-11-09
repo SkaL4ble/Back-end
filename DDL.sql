@@ -279,6 +279,19 @@ CREATE TABLE TicketUsuario (
 );
 GO
 
+CREATE TABLE TicketColaborador(
+    TicketId INT IDENTITY,
+    ColaboradorId UNIQUEIDENTIFIER,
+
+        CONSTRAINT PK_TicketColaborador PRIMARY KEY (TicketId, ColaboradorId),
+
+    CONSTRAINT FK_TickeColaborador_Tecnologia FOREIGN KEY (ColaboradorId) 
+        REFERENCES Usuario (UsuarioId),
+    CONSTRAINT FK_TickeColaborador_Colaborador FOREIGN KEY (TicketId) 
+        REFERENCES Ticket (TicketId) 
+);
+GO
+
 -- =============================================================================
 -- TRIGGERS
 -- =============================================================================
@@ -327,3 +340,5 @@ BEGIN
     INNER JOIN deleted d ON u.UsuarioId = d.UsuarioId;
 END;
 GO
+
+SELECT * FROM Cargo

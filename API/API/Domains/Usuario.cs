@@ -47,5 +47,7 @@ public partial class Usuario
 
     public virtual ICollection<Tecnologia> Tecnologia { get; set; } = new List<Tecnologia>();
 
+    public virtual ICollection<Ticket> Ticket1 { get; set; } = new List<Ticket>();
+
     public virtual ICollection<Ticket> TicketNavigation { get; set; } = new List<Ticket>();
 }

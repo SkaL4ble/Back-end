@@ -219,7 +219,24 @@ public partial class SkaL4bleContext : DbContext
                 .HasForeignKey(d => d.UsuarioResponsavel)
                 .HasConstraintName("FK_Ticket_UsuarioResponsavel");
 
-            entity.HasMany(d => d.Usuario).WithMany(p => p.TicketNavigation)
+            entity.HasMany(d => d.Colaborador).WithMany(p => p.TicketNavigation)
+                .UsingEntity<Dictionary<string, object>>(
+                    "TicketColaborador",
+                    r => r.HasOne<Usuario>().WithMany()
+                        .HasForeignKey("ColaboradorId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_TickeColaborador_Tecnologia"),
+                    l => l.HasOne<Ticket>().WithMany()
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_TickeColaborador_Colaborador"),
+                    j =>
+                    {
+                        j.HasKey("TicketId", "ColaboradorId");
+                        j.IndexerProperty<int>("TicketId").ValueGeneratedOnAdd();
+                    });
+
+            entity.HasMany(d => d.Usuario).WithMany(p => p.Ticket1)
                 .UsingEntity<Dictionary<string, object>>(
                     "TicketUsuario",
                     r => r.HasOne<Usuario>().WithMany()

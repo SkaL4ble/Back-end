@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Reflection;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,10 +59,43 @@ builder.Services.AddSwaggerGen(c =>
     {
         [new OpenApiSecuritySchemeReference("Bearer", document)] = []
     });
+
+    // Permite adicionar comentários de documentação aos métodos da API,
+    // exibindo descrições e respostas no Swagger.
+    // Configura o Swagger para ler os comentários XML gerados pelo projeto.
+    // No .csproj, GenerateDocumentationFile habilita a geração do XML.
+    // NoWarn 1591 desativa avisos sobre métodos sem comentários de documentação.
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
 });
 
 builder.Services.AddScoped<ITipoMetricaRepository, TipoMetricaRepository>();
 builder.Services.AddScoped<TipoMetricaService>();
+
+builder.Services.AddScoped<ICargoRepository, CargoRepository>();
+builder.Services.AddScoped<CargoService>();
+
+builder.Services.AddScoped<IAtuacaoRepository, AtuacaoRepository>();
+builder.Services.AddScoped<AtuacaoService>();
+
+builder.Services.AddScoped<ITecnologiaRepository, TecnologiaRepository>();
+builder.Services.AddScoped<TecnologiaService>();
+
+builder.Services.AddScoped<ITipoProjetoRepository, TipoProjetoRepository>();
+builder.Services.AddScoped<TipoProjetoService>();
+
+builder.Services.AddScoped<IStatusProjetoRepository, StatusProjetoRepository>();
+builder.Services.AddScoped<StatusProjetoService>();
+
+builder.Services.AddScoped<ITipoTicketRepository, TipoTicketRepository>();
+builder.Services.AddScoped<TipoTicketService>();
+
+builder.Services.AddScoped<IStatusTicketRepository, StatusTicketRepository>();
+builder.Services.AddScoped<StatusTicketService>();
+
+builder.Services.AddScoped<ITipoUsuarioRepository, TipoUsuarioRepository>();
+builder.Services.AddScoped<TipoUsuarioService>();
 
 builder.Services.AddOpenApi();
 
