@@ -97,9 +97,8 @@ GO
 CREATE TABLE Usuario (
     UsuarioId UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
     NomeUsuario VARCHAR(50) NOT NULL,
-    EmailPessoal VARCHAR(100) NULL,
-    Senha VARBINARY(MAX) NOT NULL,
-    EmailGitHub VARCHAR(100) NOT NULL,
+    EmailPessoal VARCHAR(100) NOT NULL,
+    Senha VARBINARY(MAX) NULL,
     Imagem VARBINARY(MAX) NULL,
     Ativo BIT NOT NULL DEFAULT 1,
     TipoUsuarioId UNIQUEIDENTIFIER NOT NULL,
@@ -108,7 +107,6 @@ CREATE TABLE Usuario (
     CONSTRAINT PK_Usuario PRIMARY KEY (UsuarioId),
 
     CONSTRAINT UQ_Usuario_EmailPessoal UNIQUE (EmailPessoal),
-    CONSTRAINT UQ_Usuario_EmailGitHub UNIQUE (EmailGitHub),
 
     CONSTRAINT FK_Usuario_TipoUsuario FOREIGN KEY (TipoUsuarioId) 
         REFERENCES TipoUsuario (TipoUsuarioId),
@@ -270,6 +268,7 @@ GO
 CREATE TABLE TicketUsuario (
     TicketId INT NOT NULL,
     UsuarioId UNIQUEIDENTIFIER NOT NULL,
+    Autor BIT NOT NULL DEFAULT 1, -- 1 PARA AUTOR, 0 PARA CONTRIBUINTE
     CONSTRAINT PK_TicketColaboradores PRIMARY KEY (TicketId, UsuarioId),
 
     CONSTRAINT FK_TicketUsuario_Ticket FOREIGN KEY (TicketId) 
@@ -327,5 +326,3 @@ BEGIN
     INNER JOIN deleted d ON u.UsuarioId = d.UsuarioId;
 END;
 GO
-
-SELECT * FROM Cargo

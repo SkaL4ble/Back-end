@@ -1,46 +1,69 @@
 using API.Contexts;
 using API.Domains;
 using API.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Repositories
 {
     public class TipoMetricaRepository : ITipoMetricaRepository
     {
         private readonly SkaL4bleContext _context;
+
         public TipoMetricaRepository(SkaL4bleContext context)
         {
             _context = context;
         }
-        public List<TipoMetrica> Listar()
+
+        public List<TipoMetrica> ListarTiposMetrica()
         {
-            return _context.TipoMetrica.ToList();
+            return _context.TipoMetrica
+                .AsNoTracking()
+                .OrderBy(t => t.NomeMetrica)
+                .ToList();
         }
-        public TipoMetrica BuscarPorId(int id)
+
+        public TipoMetrica? ObterPorId(int id)
         {
-            return _context.TipoMetrica.FirstOrDefault(tm => tm.TipoMetricaId == id);
+            return _context.TipoMetrica.Find(id);
         }
-        public void Cadastrar(TipoMetrica tipoMetrica)
+
+        public bool NomeTipoMetricaExiste(string nome)
+        {
+            return _context.TipoMetrica.Any(t => t.NomeMetrica == nome);
+        }
+
+        public bool PossuiProjetos(int id)
+        {
+            return _context.TipoMetrica.Any(t =>
+                t.TipoMetricaId == id && t.NomeMetrica.Any());
+        }
+
+        public void Adicionar(TipoMetrica tipoMetrica)
         {
             _context.TipoMetrica.Add(tipoMetrica);
             _context.SaveChanges();
         }
+
         public void Atualizar(int id, TipoMetrica tipoMetrica)
         {
-            var tipoMetricaExistente = _context.TipoMetrica.Find(id);
-            if (tipoMetricaExistente != null)
-            {
-                tipoMetricaExistente.NomeMetrica = tipoMetrica.NomeMetrica;
-                _context.SaveChanges();
-            }
+            TipoMetrica? tipoMetricaBanco = _context.TipoMetrica.Find(id);
+
+            if (tipoMetricaBanco is null)
+                return;
+
+            tipoMetricaBanco.NomeMetrica = tipoMetrica.NomeMetrica;
+            _context.SaveChanges();
         }
-        public void Remover(int id)
+
+        public void Deletar(int id)
         {
-            var tipoMetrica = _context.TipoMetrica.Find(id);
-            if (tipoMetrica != null)
-            {
-                _context.TipoMetrica.Remove(tipoMetrica);
-                _context.SaveChanges();
-            }
+            TipoMetrica? tipoMetricaBanco = _context.TipoMetrica.Find(id);
+
+            if (tipoMetricaBanco is null)
+                return;
+
+            _context.TipoMetrica.Remove(tipoMetricaBanco);
+            _context.SaveChanges();
         }
     }
 }
