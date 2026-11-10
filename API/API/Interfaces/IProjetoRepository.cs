@@ -22,6 +22,5 @@ namespace API.Interfaces
         public List<Projeto> ListarProjetosPorStatus(int statusId);
         public List<Projeto> ListarProjetosPorTipo(int tipoId);
         public List<Projeto> ListarProjetosPorStatusETipo(int statusId, int tipoId);
-        void DeletarProjeto(Projeto? projeto);
     }
 }
