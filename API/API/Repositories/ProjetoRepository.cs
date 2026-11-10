@@ -1,9 +1,9 @@
 ﻿using API.Contexts;
 using API.Domains;
-
+using API.Interfaces;
 namespace API.Repositories
 {
-    public class ProjetoRepository
+    public class ProjetoRepository : IProjetoRepository
     {
         private readonly SkaL4bleContext _context;
 
@@ -11,66 +11,58 @@ namespace API.Repositories
         {
             _context = context;
         }
-        public List<Projeto> Listar()
+        public List<Projeto> ListarProjetos()
         {
             return _context.Projeto.ToList();
         }
 
+        public Projeto? ObterPorId(Guid id)
+        {
+            return _context.Projeto.FirstOrDefault(p => p.ProjetoId == id);
+        }
         public Projeto? ObterPorNome(string nome)
         {
             return _context.Projeto.FirstOrDefault(p => p.NomeProjeto == nome);
         }
-
-        public Projeto ObterPorId(Guid id)
+        public bool NomeProjetoExiste(string nome)
         {
-            return _context.Projeto.FirstOrDefault(p => p.ProjetoId == id);
+            return ObterPorNome(nome) != null;
         }
-
-        public void Adicionar(Projeto projeto)
+        public bool LinkRepositorioExiste(string linkRepositorio)
+        {
+            return _context.Projeto.Any(p => p.LinkRepositorio == linkRepositorio);
+        }
+ 
+        public string? ObterLinkRepositorioPorId(Guid id)
+        {
+            var projeto = ObterPorId(id);
+            return projeto?.LinkRepositorio;
+        }
+        public void CadastrarProjeto(Projeto projeto)
         {
             _context.Projeto.Add(projeto);
             _context.SaveChanges();
         }
-
-        public void Atualizar(Projeto projeto, Guid id)
+        public void AtualizarProjeto(Guid id, Projeto projeto)
         {
-            var projetoExistente = _context.Projeto.FirstOrDefault(p => p.ProjetoId == id);
+            var projetoExistente = ObterPorId(id);
             if (projetoExistente != null)
             {
-                _context.Projeto.Update(projeto);
+                _context.Entry(projetoExistente).CurrentValues.SetValues(projeto);
                 _context.SaveChanges();
             }
         }
-        
-        public void Remover(Projeto projeto)
-        {
-            _context.Projeto.Remove(projeto);
-            _context.SaveChanges();
-        }
 
-        public List<Projeto> ListarPorTipo(int tipoProjetoId)
+        public void DeletarProjeto(Guid id)
         {
-            return _context.Projeto.Where(p => p.TipoProjetoId == tipoProjetoId).ToList();
-        }
+            Projeto projeto = _context.Projeto.Find(id);
 
-        public List<Projeto> ListarPorStatus(int status)
-        {
-            return _context.Projeto.Where(p => p.StatusProjetoId == status).ToList();
-        }
-
-        public List<Projeto> ListarPorStatusETipo(int status, int tipoProjetoId)
-        {
-            return _context.Projeto.Where(p => p.StatusProjetoId == status && p.TipoProjetoId == tipoProjetoId).ToList();
-        }
-
-        public bool ProjetoAtivo(Guid projetoId)
-        {
-            var projeto = _context.Projeto.FirstOrDefault(p => p.ProjetoId == projetoId);
-            if (projeto != null)
+            if (projeto == null)
             {
-                return projeto.Ativo == true;
+                return;
             }
-            return false;
+            _context.Projeto.Remove(projeto);
+            _context.SaveChangesAsync();
         }
     }
 }
