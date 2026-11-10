@@ -10,10 +10,10 @@ using Microsoft.OpenApi;
 using System.Reflection;
 using System.Text;
 
-var builder = WebApplication.CreateBuilder(args);
-
 // CARREGA O .env
 DotNetEnv.Env.Load();
+
+var builder = WebApplication.CreateBuilder(args);
 
 // PEGA A CONNECTION STRING DO .env
 string connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");

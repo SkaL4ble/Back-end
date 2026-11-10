@@ -93,7 +93,7 @@ public class ProjetoSonarService
         return $"{slug}-{Guid.NewGuid().ToString("N")[..8]}";
     }
 
-    private ProjetoSonarDto Converter(ProjetoSonar p) => new()
+    private ProjetoSonarDto Converter(ProjetoSonar p) => new ()
     {
         ProjetoSonarId = p.ProjetoSonarId,
         ProjetoId = p.ProjetoId,
@@ -116,12 +116,11 @@ public class ProjetoSonarService
         ValidarProjeto(dto.ProjetoId);
         var nome = NormalizarNome(dto.Nome);
         var descricao = NormalizarDescricao(dto.Descricao);
-        var tokenGithub = ExigirTexto(dto.TokenGithub, "O token do GitHub");
         var chave = GerarChave(nome);
 
         await _sonar.CriarProjetoAsync(chave, nome);
 
-        return await RegistrarAsync(dto.ProjetoId, chave, nome, descricao, "LOCAL", null, tokenGithub);
+        return await RegistrarAsync(dto.ProjetoId, chave, nome, descricao, "LOCAL", null);
     }
 
     public async Task<ProjetoSonarDto> CriarRemotoAsync(CriarProjetoSonarRemotoDto dto)
@@ -143,13 +142,13 @@ public class ProjetoSonarService
         var (chave, nome) = await _sonar.ImportarProjetoGithubAsync(
             almSetting, organizacao, repositorio, tokenGithub);
 
-        return await RegistrarAsync(dto.ProjetoId, chave, nome, descricao, "REMOTO", tipo, tokenGithub);
+        return await RegistrarAsync(dto.ProjetoId, chave, nome, descricao, "REMOTO", tipo);
     }
 
     // Gera o token de análise e salva tudo no banco. Se o salvamento falhar,
     // remove o projeto recém-criado no SonarQube para não deixar registro órfão.
     private async Task<ProjetoSonarDto> RegistrarAsync(Guid projetoId, string chave, string nome,
-        string? descricao, string origem, string? plataforma, string tokenGithub)
+        string? descricao, string origem, string? plataforma)
     {
         try
         {
@@ -164,12 +163,14 @@ public class ProjetoSonarService
                 Origem = origem,
                 Plataforma = plataforma,
                 TokenSonarCriptografado = _criptografia.Proteger(tokenSonar),
-                TokenGithubCriptografado = _criptografia.Proteger(tokenGithub),
                 DataCriacao = DateTime.UtcNow
             };
 
             _repository.Adicionar(entidade);
-            return Converter(entidade);
+
+            var dto = Converter(entidade);
+            dto.TokenAnalise = new TokenSonarDto { Token = tokenSonar };
+            return dto;
         }
         catch
         {

@@ -7,5 +7,7 @@
         public string Chave { get; set; } = null!;
 
         public string? Url { get; set; }
+
+        public bool Configurada { get; set; }
     }
 }
