@@ -19,6 +19,8 @@
         public Guid? UsuarioResponsavel { get; set; }
         public string? NomeUsuarioResponsavel { get; set; }
 
+        public List<ColaboradorTicketDto> Colaboradores { get; set; } = new();
+
         public Guid ProjetoId { get; set; }
         public string NomeProjeto { get; set; } = null!;
 
@@ -27,5 +29,6 @@
 
         public int StatusTicketId { get; set; }
         public string NomeStatusTicket { get; set; } = null!;
+
     }
 }

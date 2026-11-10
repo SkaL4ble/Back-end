@@ -11,15 +11,26 @@ namespace API.Applications.Conversoes
             {
                 TicketId = ticket.TicketId,
                 NomeTicket = ticket.NomeTicket,
+                Ativo = ticket.Ativo,
                 Prioridade = ticket.Prioridade,
+
                 DataCriacao = ticket.DataCriacao,
                 DataPrazo = ticket.DataPrazo,
                 DataEntrega = ticket.DataEntrega,
-                Ativo = ticket.Ativo,
+
                 UsuarioResponsavel = ticket.UsuarioResponsavel,
                 NomeUsuarioResponsavel = ticket.UsuarioResponsavelNavigation?.NomeUsuario,
+
+                Colaboradores = ticket.Usuario.Select(u => new ColaboradorTicketDto
+                {
+                    UsuarioId = u.UsuarioId,
+                    NomeUsuario = u.NomeUsuario,
+                    ImagemUsuario = u.Imagem is null ? null : Convert.ToBase64String(u.Imagem)
+                }).ToList(),
+
                 ProjetoId = ticket.ProjetoId,
                 NomeProjeto = ticket.Projeto?.NomeProjeto ?? string.Empty,
+
                 TipoTicketId = ticket.TipoTicketId,
                 NomeTipoTicket = ticket.TipoTicket?.NomeTipoTicket ?? string.Empty,
                 StatusTicketId = ticket.StatusTicketId,

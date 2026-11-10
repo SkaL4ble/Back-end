@@ -32,10 +32,6 @@ namespace API.Controllers
             {
                 return Ok(_service.ObterPorId(id));
             }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
             catch (DomainException ex)
             {
                 return BadRequest(ex.Message);
@@ -55,10 +51,6 @@ namespace API.Controllers
             {
                 _service.AdicionarTicket(dto);
                 return StatusCode(StatusCodes.Status201Created);
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
             }
             catch (DomainException ex)
             {
@@ -80,10 +72,6 @@ namespace API.Controllers
             {
                 _service.Atualizar(id, dto);
                 return NoContent();
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
             }
             catch (DomainException ex)
             {
@@ -128,10 +116,6 @@ namespace API.Controllers
                 _service.MudarEstadoTicket(id, statusTicketId);
                 return NoContent();
             }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
             catch (DomainException ex)
             {
                 return BadRequest(ex.Message);
@@ -152,10 +136,6 @@ namespace API.Controllers
             {
                 _service.TransferirResponsavel(id, usuarioId);
                 return NoContent();
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
             }
             catch (DomainException ex)
             {
@@ -178,10 +158,6 @@ namespace API.Controllers
                 _service.AdicionarColaborador(id, usuarioId);
                 return NoContent();
             }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
             catch (DomainException ex)
             {
                 return BadRequest(ex.Message);
@@ -202,10 +178,6 @@ namespace API.Controllers
             {
                 _service.RemoverColaborador(id, usuarioId);
                 return NoContent();
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
             }
             catch (DomainException ex)
             {
@@ -354,10 +326,6 @@ namespace API.Controllers
             try
             {
                 return Ok(_service.ListarTicketsPorPeriodo(dataInicio, dataFim));
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
             }
             catch (DomainException ex)
             {

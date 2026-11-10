@@ -24,7 +24,7 @@ public class TicketService
             throw new DomainException("O ID do ticket deve ser maior que zero");
 
         return _repository.ObterPorId(id)
-            ?? throw new NotFoundException("Ticket não encontrado");
+            ?? throw new DomainException("Ticket não encontrado");
     }
 
     // Soft delete: ticket inativo é tratado como inexistente em consultas normais.
@@ -32,7 +32,7 @@ public class TicketService
     {
         var ticket = BuscarOuFalhar(id);
         if (!ticket.Ativo)
-            throw new NotFoundException("Ticket não encontrado");
+            throw new DomainException   ("Ticket não encontrado");
 
         return ticket;
     }
