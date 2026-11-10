@@ -5,7 +5,7 @@ namespace API.Interfaces
     public interface ITicketRepository
     {
         // ================================= CRUD =================================
-        public Ticket ObterPorId(int id);
+        public Ticket? ObterPorId(int id);
         public void AdicionarTicket(Ticket ticket);
         public void AtualizarTicket(Ticket ticket);
         public void DeletarTicket(Ticket ticket);
