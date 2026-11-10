@@ -1,4 +1,5 @@
 using API.Applications.Services;
+using API.Applications.Services.SonarCube;
 using API.Contexts;
 using API.Interfaces;
 using API.Repositories;
@@ -71,7 +72,7 @@ builder.Services.AddSwaggerGen(c =>
 
 
 builder.Services.AddScoped<ITipoMetricaRepository, TipoMetricaRepository>();
-builder.Services.AddScoped<TipoMetricaService>();
+//builder.Services.AddScoped<TipoMetricaService>();
 
 builder.Services.AddScoped<ICargoRepository, CargoRepository>();
 builder.Services.AddScoped<CargoService>();
@@ -96,6 +97,12 @@ builder.Services.AddScoped<StatusTicketService>();
 
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 builder.Services.AddScoped<TicketService>();
+
+builder.Services.AddDataProtection();
+builder.Services.AddScoped<IProjetoSonarRepository, ProjetoSonarRepository>();
+builder.Services.AddScoped<ProjetoSonarService>();
+builder.Services.AddHttpClient<SonarQubeService>();
+builder.Services.AddScoped<CriptografiaService>();
 
 builder.Services.AddOpenApi();
 

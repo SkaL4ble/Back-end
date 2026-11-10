@@ -26,6 +26,8 @@ public partial class SkaL4bleContext : DbContext
 
     public virtual DbSet<Projeto> Projeto { get; set; }
 
+    public virtual DbSet<ProjetoSonar> ProjetoSonar { get; set; }
+
     public virtual DbSet<StatusProjeto> StatusProjeto { get; set; }
 
     public virtual DbSet<StatusTicket> StatusTicket { get; set; }
@@ -50,7 +52,7 @@ public partial class SkaL4bleContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=SkaL4ble;Trusted_Connection=True;TrustServerCertificate=True;");
+        => optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=SkaL4ble;Trusted_Connection=True;TrustServerCertificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -166,6 +168,40 @@ public partial class SkaL4bleContext : DbContext
                     {
                         j.HasKey("ProjetoId", "UsuarioId");
                     });
+        });
+
+        modelBuilder.Entity<ProjetoSonar>(entity =>
+        {
+            entity.HasKey(e => e.ProjetoSonarId).HasName("PK__ProjetoS__94B1675300E4BD38");
+
+            entity.HasIndex(e => e.ChaveSonar, "UQ__ProjetoS__58568D62D4147687").IsUnique();
+
+            entity.Property(e => e.ProjetoSonarId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.ChaveSonar)
+                .HasMaxLength(400)
+                .IsUnicode(false);
+            entity.Property(e => e.DataCriacao)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Descricao)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.NomeSonar)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.Origem)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.Plataforma)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.TokenGithubCriptografado).IsUnicode(false);
+            entity.Property(e => e.TokenSonarCriptografado).IsUnicode(false);
+
+            entity.HasOne(d => d.Projeto).WithMany(p => p.ProjetoSonar)
+                .HasForeignKey(d => d.ProjetoId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__ProjetoSo__Proje__55F4C372");
         });
 
         modelBuilder.Entity<StatusProjeto>(entity =>
