@@ -2,7 +2,6 @@
 using API.Exceptions;
 using System.Globalization;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
 
 namespace API.Applications.Services;
@@ -24,8 +23,8 @@ public class SonarQubeService
 
         _http = http;
         _http.BaseAddress = new Uri(urlBase.TrimEnd('/') + "/");
-        _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{token}:")));
+        _http.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
     }
 
     // ============================== HTTP ==============================
@@ -124,11 +123,13 @@ public class SonarQubeService
 
     // ============================== REMOTO ==============================
 
-    // Lista as integrações DevOps configuradas no servidor, sem o GitLab.
+    // Lista integrações configuradas e, quando não houver nenhuma,
+    // retorna também o catálogo de plataformas suportadas pela API.
     public async Task<List<PlataformaSonarDto>> ListarPlataformasAsync()
     {
         using var doc = await GetAsync("api/alm_settings/list_definitions");
         var plataformas = new List<PlataformaSonarDto>();
+        var tiposSuportados = new[] { "github", "azure", "bitbucket", "bitbucketcloud" };
 
         foreach (var tipo in doc.RootElement.EnumerateObject())
         {
@@ -143,9 +144,25 @@ public class SonarQubeService
                 {
                     Tipo = tipo.Name,
                     Chave = Texto(item, "key"),
-                    Url = item.TryGetProperty("url", out var url) ? url.GetString() : null
+                    Url = item.TryGetProperty("url", out var url) ? url.GetString() : null,
+                    Configurada = true
                 });
             }
+        }
+
+        foreach (var tipo in tiposSuportados)
+        {
+            if (plataformas.Any(p =>
+                p.Tipo.Equals(tipo, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            plataformas.Add(new PlataformaSonarDto
+            {
+                Tipo = tipo,
+                Chave = string.Empty,
+                Url = null,
+                Configurada = false
+            });
         }
 
         return plataformas;

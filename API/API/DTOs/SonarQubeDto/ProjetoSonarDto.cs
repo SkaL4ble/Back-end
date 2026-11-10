@@ -1,4 +1,6 @@
-﻿namespace API.DTOs.SonarQubeDto
+﻿using System.Text.Json.Serialization;
+
+namespace API.DTOs.SonarQubeDto
 {
     public class ProjetoSonarDto
     {
@@ -19,5 +21,8 @@
         public string UrlProjeto { get; set; } = null!;
 
         public DateTime DataCriacao { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public TokenSonarDto? TokenAnalise { get; set; }
     }
 }

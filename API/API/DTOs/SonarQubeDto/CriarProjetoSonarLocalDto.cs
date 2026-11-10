@@ -7,7 +7,5 @@
         public string Nome { get; set; } = null!;
 
         public string? Descricao { get; set; }
-
-        public string TokenGithub { get; set; } = null!;
     }
 }
