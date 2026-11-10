@@ -25,6 +25,8 @@ public partial class Projeto
 
     public virtual Usuario AutorNavigation { get; set; } = null!;
 
+    public virtual ICollection<ProjetoSonar> ProjetoSonar { get; set; } = new List<ProjetoSonar>();
+
     public virtual StatusProjeto StatusProjeto { get; set; } = null!;
 
     public virtual ICollection<Ticket> Ticket { get; set; } = new List<Ticket>();
