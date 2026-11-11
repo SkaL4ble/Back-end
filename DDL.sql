@@ -140,6 +140,20 @@ CREATE TABLE Projeto (
 );
 GO
 
+CREATE TABLE ProjetoSonar (
+    ProjetoSonarId           UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY,
+    ProjetoId                UNIQUEIDENTIFIER NOT NULL REFERENCES Projeto(ProjetoId),
+    ChaveSonar               VARCHAR(400)     NOT NULL UNIQUE,
+    NomeSonar                VARCHAR(255)     NOT NULL,
+    Descricao                VARCHAR(500)     NULL,
+    Origem                   VARCHAR(10)      NOT NULL CHECK (Origem IN ('LOCAL', 'REMOTO')),
+    Plataforma               VARCHAR(50)      NULL,
+    TokenSonarCriptografado  VARCHAR(MAX)     NOT NULL,
+    TokenGithubCriptografado VARCHAR(MAX)     NULL,
+    DataCriacao              DATETIME         NOT NULL DEFAULT GETUTCDATE()
+);
+GO
+
 CREATE TABLE Ticket (
     TicketId INT IDENTITY(1,1) NOT NULL,
     NomeTicket VARCHAR(125) NOT NULL,
