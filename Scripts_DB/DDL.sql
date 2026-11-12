@@ -20,11 +20,14 @@ GO
 
 CREATE TABLE TipoUsuario (
     TipoUsuarioId UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
+    CodigoTipoUsuario VARCHAR(30) NOT NULL,
     NomeTipoUsuario VARCHAR(30) NOT NULL,
     CONSTRAINT PK_TipoUsuario PRIMARY KEY (TipoUsuarioId),
+    CONSTRAINT UQ_TipoUsuario_Codigo UNIQUE (CodigoTipoUsuario),
     CONSTRAINT UQ_TipoUsuario_Nome UNIQUE (NomeTipoUsuario)
 );
 GO
+
 
 CREATE TABLE Cargo (
     CargoId INT IDENTITY(1,1) NOT NULL,

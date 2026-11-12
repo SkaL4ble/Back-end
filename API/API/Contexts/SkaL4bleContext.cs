@@ -50,6 +50,10 @@ public partial class SkaL4bleContext : DbContext
 
     public virtual DbSet<UsuarioIdeToken> UsuarioIdeToken { get; set; }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=SkaL4ble;Trusted_Connection=True;TrustServerCertificate=True");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Atuacao>(entity =>
@@ -266,9 +270,14 @@ public partial class SkaL4bleContext : DbContext
 
         modelBuilder.Entity<TipoUsuario>(entity =>
         {
+            entity.HasIndex(e => e.CodigoTipoUsuario, "UQ_TipoUsuario_Codigo").IsUnique();
+
             entity.HasIndex(e => e.NomeTipoUsuario, "UQ_TipoUsuario_Nome").IsUnique();
 
             entity.Property(e => e.TipoUsuarioId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CodigoTipoUsuario)
+                .HasMaxLength(30)
+                .IsUnicode(false);
             entity.Property(e => e.NomeTipoUsuario)
                 .HasMaxLength(30)
                 .IsUnicode(false);
