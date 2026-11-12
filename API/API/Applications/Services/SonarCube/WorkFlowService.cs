@@ -98,7 +98,7 @@ public static class ModeloWorkflowSonar
         jobs:
           build:
             name: Build and analyze
-            runs-on: ubuntu-latest
+            runs-on: windows-latest
 
             steps:
               - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
