@@ -18,6 +18,8 @@ namespace API.Interfaces
 
         void Atualizar(Usuario usuario, Guid id);
 
+        void AtualizarSenha(Guid id, byte[] senha);
+
         void Inativar(Guid id);
     }
 }

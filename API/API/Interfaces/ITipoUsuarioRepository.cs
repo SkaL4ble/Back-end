@@ -12,6 +12,8 @@ namespace API.Interfaces
 
         bool TipoUsuarioComMesmoNomeExistente(string nome, Guid id);
 
+        TipoUsuario BuscarPorCodigo(string codigo);
+
         void Cadastrar(TipoUsuario tipoUsuario);
 
         void Atualizar(TipoUsuario tipoUsuario, Guid id);

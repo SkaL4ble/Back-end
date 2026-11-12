@@ -1,10 +1,11 @@
 ﻿using API.Contexts;
 using API.Domains;
+using API.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Repositories
 {
-    public class UsuarioRepository
+    public class UsuarioRepository : IUsuarioRepository
     {
         private readonly SkaL4bleContext _context;
 
@@ -13,15 +14,30 @@ namespace API.Repositories
             _context = context;
         }
 
+        private IQueryable<Usuario> UsuariosComRelacoes()
+        {
+            return _context.Usuario
+                .Include(u => u.TipoUsuario)
+                .Include(u => u.Cargo)
+                .Include(u => u.Atuacao)
+                .Include(u => u.UsuarioEmailGit)
+                .Include(u => u.Projeto)
+                .Include(u => u.Ticket)
+                .Include(u => u.Tecnologia);
+        }
+
         public List<Usuario> Listar()
         {
-            return _context.Usuario.AsNoTracking()
-                .OrderBy(u => u.NomeUsuario).ToList();
+            return UsuariosComRelacoes()
+                .AsNoTracking()
+                .OrderBy(u => u.NomeUsuario)
+                .ToList();
         }
 
         public Usuario BuscarPorId(Guid id)
         {
-            return _context.Usuario.AsNoTracking()
+            return UsuariosComRelacoes()
+                .AsNoTracking()
                 .FirstOrDefault(u => u.UsuarioId == id);
         }
 
@@ -56,7 +72,7 @@ namespace API.Repositories
             {
                 return;
             }
-            Usuario usuarioBanco = _context.Usuario.Find(usuario.UsuarioId);
+            Usuario usuarioBanco = _context.Usuario.Find(id);
             if (usuarioBanco == null)
             {
                 return;
@@ -64,6 +80,19 @@ namespace API.Repositories
             _context.Entry(usuarioBanco).CurrentValues.SetValues(usuario);
             _context.SaveChanges();
         }
+
+        public void AtualizarSenha(Guid id, byte[] senha)
+        {
+            Usuario usuario = _context.Usuario.Find(id);
+            if (usuario == null)
+            {
+                return;
+            }
+
+            usuario.Senha = senha;
+            _context.SaveChanges();
+        }
+
 
         public void Inativar(Guid id)
         {

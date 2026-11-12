@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Reflection;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,6 +69,12 @@ builder.Services.AddSwaggerGen(c =>
     c.IncludeXmlComments(xmlPath);
 });
 
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<UsuarioService>();
+
+builder.Services.AddScoped<ITipoUsuarioRepository, TipoUsuarioRepository>();
+builder.Services.AddScoped<TipoUsuarioService>();
+
 builder.Services.AddScoped<ITipoMetricaRepository, TipoMetricaRepository>();
 builder.Services.AddScoped<TipoMetricaService>();
 
@@ -93,9 +98,6 @@ builder.Services.AddScoped<TipoTicketService>();
 
 builder.Services.AddScoped<IStatusTicketRepository, StatusTicketRepository>();
 builder.Services.AddScoped<StatusTicketService>();
-
-builder.Services.AddScoped<ITipoUsuarioRepository, TipoUsuarioRepository>();
-builder.Services.AddScoped<TipoUsuarioService>();
 
 builder.Services.AddOpenApi();
 
