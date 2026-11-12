@@ -181,29 +181,4 @@ public class SonarQubeController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
-
-    /// <summary>
-    /// Busca o autor e o committer do commit que escreveu a linha de código de uma issue.
-    /// </summary>
-    /// <param name="id">Identificador do projeto do SonarQube.</param>
-    /// <param name="chaveIssue">Chave da issue, a mesma retornada na listagem de issues.</param>
-    /// <returns>Dados do commit: hash, mensagem, link, autor e committer.</returns>
-    /// <response code="200">Commit encontrado com sucesso.</response>
-    /// <response code="400">Issue sem linha, projeto sem repositório ou token, ou erro do SonarQube ou do GitHub.</response>
-    /// <response code="404">Projeto não encontrado.</response>
-    [HttpGet("projetos/{id:guid}/issues/{chaveIssue}/commit")]
-    [ProducesResponseType(typeof(CommitIssueDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> ObterCommitDaIssue(Guid id, string chaveIssue)
-    {
-        try
-        {
-            return Ok(await _service.ObterCommitDaIssueAsync(id, chaveIssue));
-        }
-        catch (DomainException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
 }
