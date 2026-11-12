@@ -10,9 +10,9 @@ namespace API.Applications.Services
 {
     public class ProjetoService
     {
-        private readonly ProjetoRepository _repository;
+        private readonly IProjetoRepository _repository;
 
-        public ProjetoService(ProjetoRepository repository)
+        public ProjetoService(IProjetoRepository repository)
         {
             _repository = repository;
         }
@@ -31,12 +31,6 @@ namespace API.Applications.Services
             return nome.Trim();
         }
 
-        public List<ListarProjetoDto> ListarProjetos()
-        {
-            return _repository.Listar()
-                .Select(ConversaoProjeto.ConverterParaDto)
-                .ToList();
-        }
 
         public ListarProjetoDto ObterPorId(Guid id)
         {
@@ -49,8 +43,6 @@ namespace API.Applications.Services
             projetoDto.Nome = NormalizarNome(projetoDto.Nome);
 
 
-
-            _repository.Adicionar(ConversaoProjeto.ConverterParaDomain(projetoDto));
         }
 
     }

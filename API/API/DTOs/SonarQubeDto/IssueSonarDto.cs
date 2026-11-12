@@ -3,6 +3,8 @@
     public class IssueSonarDto
     {
         public string Chave { get; set; } = null!;
+        public string? Autor { get; set; }
+        public string? Responsavel { get; set; }
 
         public string Regra { get; set; } = null!;
 

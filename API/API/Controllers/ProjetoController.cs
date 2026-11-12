@@ -18,17 +18,6 @@ namespace API.Controllers
         }
 
         /// <summary>
-        /// Lista os projetos
-        /// </summary>
-        /// <returns>Todos os projetos cadastrados</returns>
-        /// <response code="200">Retorna todos os projetos do banco</response>
-        [HttpGet]
-        public ActionResult<List<ListarProjetoDto>> Listar()
-        {
-            return Ok(_service.ListarProjetos());
-        }
-
-        /// <summary>
         /// Retorna um projeto por ID
         /// </summary>
         /// <param name="id">ID do projeto</param>

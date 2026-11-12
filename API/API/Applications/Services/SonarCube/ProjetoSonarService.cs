@@ -3,6 +3,7 @@ using API.Domains;
 using API.DTOs.SonarQubeDto;
 using API.DTOs.SonarQubeDto.CommitDto;
 using API.Exceptions;
+using API.Interfaces;
 using API.Repositories;
 using System.Globalization;
 using System.Security.Cryptography;
@@ -23,21 +24,19 @@ public class ProjetoSonarService
         @"^(?:(?:https?://)?(?:www\.)?github\.com/|git@github\.com:)?(?<dono>[A-Za-z0-9-]+)/(?<repo>[A-Za-z0-9._-]+?)(?:\.git)?(?:[/?#].*)?$",
         RegexOptions.IgnoreCase);
 
-    private readonly ProjetoSonarRepository _repository;
+    private readonly IProjetoSonarRepository _repository;
     private readonly SonarQubeService _sonar;
     private readonly CriptografiaService _criptografia;
     private readonly string _urlBase;
-    private readonly GitHubService _github;
     private readonly ProjetoService _serviceProjeto;
 
-    public ProjetoSonarService(ProjetoSonarRepository repository, SonarQubeService sonar,
-        CriptografiaService criptografia, IConfiguration config, GitHubService github, ProjetoService serviceProjeto)
+    public ProjetoSonarService(IProjetoSonarRepository repository, SonarQubeService sonar,
+        CriptografiaService criptografia, IConfiguration config, ProjetoService serviceProjeto)
     {
         _repository = repository;
         _sonar = sonar;
         _criptografia = criptografia;
         _urlBase = (config["SonarQube:UrlBase"] ?? string.Empty).TrimEnd('/');
-        _github = github;
         _serviceProjeto = serviceProjeto;
     }
 
@@ -241,21 +240,5 @@ public class ProjetoSonarService
         var token = LerTokenGithub(projetoSonar);
 
         return (repositorio, token);
-    }
-
-    public async Task<CommitIssueDto> ObterCommitDaIssueAsync(Guid id, string chaveIssue)
-    {
-        var projetoSonar = BuscarOuFalharSonar(id);
-        var (repositorio, tokenGithub) = ObterAcessoGithub(projetoSonar);
-
-        var issue = await _sonar.ObterIssueAsync(projetoSonar.ChaveSonar, chaveIssue);
-        if (issue.Linha is null)
-            throw new DomainException("Esta issue não está ligada a uma linha de código");
-
-        var scm = await _sonar.ObterScmLinhaAsync(issue.Componente, issue.Linha.Value);
-        if (scm is null || string.IsNullOrWhiteSpace(scm.Revisao))
-            throw new DomainException("O SonarQube não tem informação de commit para esta linha");
-
-        return await _github.ObterCommitAsync(repositorio, scm.Revisao, tokenGithub);
     }
 }

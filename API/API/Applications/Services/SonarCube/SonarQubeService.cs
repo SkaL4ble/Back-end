@@ -1,4 +1,5 @@
-﻿using API.DTOs.SonarQubeDto;
+﻿using API.Applications.Conversoes.ConversoesDeDto;
+using API.DTOs.SonarQubeDto;
 using API.Exceptions;
 using System.Globalization;
 using System.Net.Http.Headers;
@@ -13,6 +14,7 @@ public class SonarQubeService
     private const int LimiteBuscaSonar = 10_000;
 
     private readonly HttpClient _http;
+
 
     public SonarQubeService(HttpClient http, IConfiguration config)
     {
@@ -78,14 +80,6 @@ public class SonarQubeService
         }
     }
 
-    private static string Texto(JsonElement e, string propriedade) =>
-        e.TryGetProperty(propriedade, out var valor) ? valor.GetString() ?? string.Empty : string.Empty;
-
-    private static DateTime? Data(JsonElement e, string propriedade) =>
-        DateTimeOffset.TryParse(Texto(e, propriedade), CultureInfo.InvariantCulture,
-            DateTimeStyles.None, out var data)
-            ? data.UtcDateTime
-            : null;
 
     // ============================== PROJETOS ==============================
 
@@ -121,10 +115,6 @@ public class SonarQubeService
         return doc.RootElement.GetProperty("token").GetString()!;
     }
 
-    // ============================== REMOTO ==============================
-
-    // Lista integrações configuradas e, quando não houver nenhuma,
-    // retorna também o catálogo de plataformas suportadas pela API.
     public async Task<List<PlataformaSonarDto>> ListarPlataformasAsync()
     {
         using var doc = await GetAsync("api/alm_settings/list_definitions");
@@ -143,7 +133,7 @@ public class SonarQubeService
                 plataformas.Add(new PlataformaSonarDto
                 {
                     Tipo = tipo.Name,
-                    Chave = Texto(item, "key"),
+                    Chave = ConverterSonarQube.Texto(item, "key"),
                     Url = item.TryGetProperty("url", out var url) ? url.GetString() : null,
                     Configurada = true
                 });
@@ -168,25 +158,6 @@ public class SonarQubeService
         return plataformas;
     }
 
-    public async Task<(string Chave, string Nome)> ImportarProjetoGithubAsync(
-        string almSetting, string organizacao, string repositorio, string tokenGithub)
-    {
-        (await PostAsync("api/alm_integrations/set_pat", new()
-        {
-            ["almSetting"] = almSetting,
-            ["pat"] = tokenGithub
-        })).Dispose();
-
-        using var doc = await PostAsync("api/alm_integrations/import_github_project", new()
-        {
-            ["almSetting"] = almSetting,
-            ["organization"] = organizacao,
-            ["repositoryKey"] = repositorio
-        });
-
-        var projeto = doc.RootElement.GetProperty("project");
-        return (Texto(projeto, "key"), Texto(projeto, "name"));
-    }
 
     // ============================== ISSUES ==============================
 
@@ -227,7 +198,7 @@ public class SonarQubeService
 
             foreach (var item in doc.RootElement.GetProperty("issues").EnumerateArray())
             {
-                var issue = ConverterIssue(item);
+                var issue = ConverterSonarQube.ConverterIssueParaDto(item);
                 destino[issue.Chave] = issue;
             }
         }
@@ -248,18 +219,6 @@ public class SonarQubeService
     private static string FormatarData(DateTime data) =>
         data.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss", CultureInfo.InvariantCulture) + "+0000";
 
-    private static IssueSonarDto ConverterIssue(JsonElement e) => new()
-    {
-        Chave = Texto(e, "key"),
-        Regra = Texto(e, "rule"),
-        Severidade = Texto(e, "severity"),
-        Tipo = Texto(e, "type"),
-        Status = Texto(e, "status"),
-        Mensagem = Texto(e, "message"),
-        Componente = Texto(e, "component"),
-        Linha = e.TryGetProperty("line", out var linha) ? linha.GetInt32() : null,
-        DataCriacao = Data(e, "creationDate")
-    };
 
     // ============================== ATIVIDADES (bônus) ==============================
 
@@ -275,13 +234,13 @@ public class SonarQubeService
             foreach (var analise in doc.RootElement.GetProperty("analyses").EnumerateArray())
             {
                 var eventos = analise.TryGetProperty("events", out var ev)
-                    ? ev.EnumerateArray().Select(x => Texto(x, "name")).ToList()
+                    ? ev.EnumerateArray().Select(x => ConverterSonarQube.Texto(x, "name")).ToList()
                     : new List<string>();
 
                 atividades.Add(new AtividadeSonarDto
                 {
-                    Chave = Texto(analise, "key"),
-                    Data = Data(analise, "date"),
+                    Chave = ConverterSonarQube.Texto(analise, "key"),
+                    Data = ConverterSonarQube.Data(analise, "date"),
                     Eventos = eventos
                 });
             }
@@ -305,7 +264,7 @@ public class SonarQubeService
         if (issues.GetArrayLength() == 0)
             throw new DomainException("Issue não encontrada neste projeto");
 
-        return ConverterIssue(issues[0]);
+        return ConverterSonarQube.ConverterIssueParaDto(issues[0]);
     }
 
     // Passo 1: autor, data e hash do commit da linha (git blame do SonarQube).
