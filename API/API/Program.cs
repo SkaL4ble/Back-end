@@ -98,11 +98,16 @@ builder.Services.AddScoped<StatusTicketService>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 builder.Services.AddScoped<TicketService>();
 
+builder.Services.AddScoped<ProjetoRepository>();
+builder.Services.AddScoped<ProjetoService>();
+
+//======================= SONARQUBE =======================
 builder.Services.AddDataProtection();
 builder.Services.AddScoped<IProjetoSonarRepository, ProjetoSonarRepository>();
 builder.Services.AddScoped<ProjetoSonarService>();
 builder.Services.AddHttpClient<SonarQubeService>();
 builder.Services.AddScoped<CriptografiaService>();
+builder.Services.AddScoped<GitHubService>();
 
 builder.Services.AddOpenApi();
 

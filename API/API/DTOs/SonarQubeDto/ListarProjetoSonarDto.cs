@@ -2,7 +2,7 @@
 
 namespace API.DTOs.SonarQubeDto
 {
-    public class ProjetoSonarDto
+    public class ListarProjetoSonarDto
     {
         public Guid ProjetoSonarId { get; set; }
 

@@ -293,4 +293,45 @@ public class SonarQubeService
 
         return atividades;
     }
+
+    // Issue de um projeto pela chave. Só acha se pertencer ao projeto informado.
+    public async Task<IssueSonarDto> ObterIssueAsync(string chaveProjeto, string chaveIssue)
+    {
+        using var doc = await GetAsync(
+            $"api/issues/search?issues={Uri.EscapeDataString(chaveIssue)}" +
+            $"&componentKeys={Uri.EscapeDataString(chaveProjeto)}&ps=1");
+
+        var issues = doc.RootElement.GetProperty("issues");
+        if (issues.GetArrayLength() == 0)
+            throw new DomainException("Issue não encontrada neste projeto");
+
+        return ConverterIssue(issues[0]);
+    }
+
+    // Passo 1: autor, data e hash do commit da linha (git blame do SonarQube).
+    public async Task<ScmLinhaSonarDto?> ObterScmLinhaAsync(string componente, int linha)
+    {
+        using var doc = await GetAsync(
+            $"api/sources/scm?key={Uri.EscapeDataString(componente)}&from={linha}&to={linha}&commits_by_line=true");
+
+        var scm = doc.RootElement.GetProperty("scm");
+        if (scm.GetArrayLength() == 0)
+            return null;
+
+        // Cada item é um array: [linha, autor, data, revisão]
+        var item = scm[0];
+
+        DateTime? data = null;
+        if (item.GetArrayLength() > 2 &&
+            DateTimeOffset.TryParse(item[2].GetString(), CultureInfo.InvariantCulture,
+                DateTimeStyles.None, out var dt))
+            data = dt.UtcDateTime;
+
+        return new ScmLinhaSonarDto
+        {
+            Autor = item.GetArrayLength() > 1 ? item[1].GetString() : null,
+            Data = data,
+            Revisao = item.GetArrayLength() > 3 ? item[3].GetString() : null
+        };
+    }
 }

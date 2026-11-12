@@ -25,5 +25,7 @@ public partial class ProjetoSonar
 
     public DateTime DataCriacao { get; set; }
 
+    public string? Repositorio { get; set; }
+
     public virtual Projeto Projeto { get; set; } = null!;
 }

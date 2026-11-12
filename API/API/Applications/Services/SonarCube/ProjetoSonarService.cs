@@ -1,8 +1,9 @@
 ﻿using API.Applications.Services.SonarCube;
 using API.Domains;
 using API.DTOs.SonarQubeDto;
+using API.DTOs.SonarQubeDto.CommitDto;
 using API.Exceptions;
-using API.Interfaces;
+using API.Repositories;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -16,25 +17,35 @@ public class ProjetoSonarService
     private const int TamanhoMaximoNome = 255;
     private const int TamanhoMaximoDescricao = 500;
 
-    private readonly IProjetoSonarRepository _repository;
+    // Aceita: https://github.com/dono/repo, https://github.com/dono/repo.git, github.com/dono/repo,
+    // git@github.com:dono/repo.git e o formato curto dono/repo. Qualquer outro host é recusado.
+    private static readonly Regex PadraoRepositorioGithub = new(
+        @"^(?:(?:https?://)?(?:www\.)?github\.com/|git@github\.com:)?(?<dono>[A-Za-z0-9-]+)/(?<repo>[A-Za-z0-9._-]+?)(?:\.git)?(?:[/?#].*)?$",
+        RegexOptions.IgnoreCase);
+
+    private readonly ProjetoSonarRepository _repository;
     private readonly SonarQubeService _sonar;
     private readonly CriptografiaService _criptografia;
     private readonly string _urlBase;
+    private readonly GitHubService _github;
+    private readonly ProjetoService _serviceProjeto;
 
-    public ProjetoSonarService(IProjetoSonarRepository repository, SonarQubeService sonar,
-        CriptografiaService criptografia, IConfiguration config)
+    public ProjetoSonarService(ProjetoSonarRepository repository, SonarQubeService sonar,
+        CriptografiaService criptografia, IConfiguration config, GitHubService github, ProjetoService serviceProjeto)
     {
         _repository = repository;
         _sonar = sonar;
         _criptografia = criptografia;
         _urlBase = (config["SonarQube:UrlBase"] ?? string.Empty).TrimEnd('/');
+        _github = github;
+        _serviceProjeto = serviceProjeto;
     }
 
     // ============================== VALIDACOES ==============================
 
-    private ProjetoSonar BuscarOuFalhar(Guid id) =>
+    private ProjetoSonar BuscarOuFalharSonar(Guid id) =>
         _repository.ObterPorId(id)
-        ?? throw new DomainException    ("Projeto do SonarQube não encontrado");
+        ?? throw new DomainException("Projeto do SonarQube não encontrado");
 
     private void ValidarProjeto(Guid projetoId)
     {
@@ -93,7 +104,7 @@ public class ProjetoSonarService
         return $"{slug}-{Guid.NewGuid().ToString("N")[..8]}";
     }
 
-    private ProjetoSonarDto Converter(ProjetoSonar p) => new ()
+    private ListarProjetoSonarDto Converter(ProjetoSonar p) => new()
     {
         ProjetoSonarId = p.ProjetoSonarId,
         ProjetoId = p.ProjetoId,
@@ -111,7 +122,7 @@ public class ProjetoSonarService
     public async Task<List<PlataformaSonarDto>> ListarPlataformasAsync() =>
         await _sonar.ListarPlataformasAsync();
 
-    public async Task<ProjetoSonarDto> CriarLocalAsync(CriarProjetoSonarLocalDto dto)
+    public async Task<ListarProjetoSonarDto> CriarProjetoAsync(CriarProjetoSonarDto dto)
     {
         ValidarProjeto(dto.ProjetoId);
         var nome = NormalizarNome(dto.Nome);
@@ -123,31 +134,9 @@ public class ProjetoSonarService
         return await RegistrarAsync(dto.ProjetoId, chave, nome, descricao, "LOCAL", null);
     }
 
-    public async Task<ProjetoSonarDto> CriarRemotoAsync(CriarProjetoSonarRemotoDto dto)
-    {
-        ValidarProjeto(dto.ProjetoId);
-
-        var tipo = ExigirTexto(dto.Plataforma, "A plataforma").ToLowerInvariant();
-        if (tipo == "gitlab")
-            throw new DomainException("A plataforma GitLab não é suportada");
-        if (tipo != "github")
-            throw new DomainException("Plataforma ainda não suportada pela API");
-
-        var almSetting = ExigirTexto(dto.Chave, "A chave da plataforma");
-        var organizacao = ExigirTexto(dto.Organizacao, "A organização");
-        var repositorio = ExigirTexto(dto.Repositorio, "O repositório");
-        var tokenGithub = ExigirTexto(dto.TokenGithub, "O token do GitHub");
-        var descricao = NormalizarDescricao(dto.Descricao);
-
-        var (chave, nome) = await _sonar.ImportarProjetoGithubAsync(
-            almSetting, organizacao, repositorio, tokenGithub);
-
-        return await RegistrarAsync(dto.ProjetoId, chave, nome, descricao, "REMOTO", tipo);
-    }
-
     // Gera o token de análise e salva tudo no banco. Se o salvamento falhar,
     // remove o projeto recém-criado no SonarQube para não deixar registro órfão.
-    private async Task<ProjetoSonarDto> RegistrarAsync(Guid projetoId, string chave, string nome,
+    private async Task<ListarProjetoSonarDto> RegistrarAsync(Guid projetoId, string chave, string nome,
         string? descricao, string origem, string? plataforma)
     {
         try
@@ -181,15 +170,15 @@ public class ProjetoSonarService
 
     // ============================== CONSULTAS E TOKENS ==============================
 
-    public ProjetoSonarDto ObterPorId(Guid id) => Converter(BuscarOuFalhar(id));
+    public ListarProjetoSonarDto ObterPorId(Guid id) => Converter(BuscarOuFalharSonar(id));
 
     public string ObterTokenSonar(Guid id)
     {
-        var projeto = BuscarOuFalhar(id);
+        var projetoSonar = BuscarOuFalharSonar(id);
 
         try
         {
-            return _criptografia.Desproteger(projeto.TokenSonarCriptografado);
+            return _criptografia.Desproteger(projetoSonar.TokenSonarCriptografado);
         }
         catch (CryptographicException)
         {
@@ -199,16 +188,74 @@ public class ProjetoSonarService
 
     public void AtualizarTokenGithub(Guid id, string? novoToken)
     {
-        var projeto = BuscarOuFalhar(id);
+        var projetoSonar = BuscarOuFalharSonar(id);
         var token = ExigirTexto(novoToken, "O token do GitHub");
 
-        projeto.TokenGithubCriptografado = _criptografia.Proteger(token);
-        _repository.Atualizar(projeto);
+        projetoSonar.TokenGithubCriptografado = _criptografia.Proteger(token);
+        _repository.Atualizar(projetoSonar);
     }
 
     public async Task<List<IssueSonarDto>> ListarIssuesAsync(Guid id) =>
-        await _sonar.ListarIssuesAsync(BuscarOuFalhar(id).ChaveSonar);
+        await _sonar.ListarIssuesAsync(BuscarOuFalharSonar(id).ChaveSonar);
 
     public async Task<List<AtividadeSonarDto>> ListarAtividadesAsync(Guid id) =>
-        await _sonar.ListarAtividadesAsync(BuscarOuFalhar(id).ChaveSonar);
+        await _sonar.ListarAtividadesAsync(BuscarOuFalharSonar(id).ChaveSonar);
+
+    // ============================== INTEGRACAO COM GITHUB ==============================
+
+    // O token do GitHub fica no ProjetoSonar.
+    private string LerTokenGithub(ProjetoSonar projetoSonar)
+    {
+        if (projetoSonar.TokenGithubCriptografado is null)
+            throw new DomainException("Este projeto não tem token do GitHub cadastrado");
+
+        try
+        {
+            return _criptografia.Desproteger(projetoSonar.TokenGithubCriptografado);
+        }
+        catch (CryptographicException)
+        {
+            throw new DomainException("Não foi possível ler o token do GitHub salvo (a chave de criptografia mudou)");
+        }
+    }
+
+    // Transforma o LinkRepositorio do Projeto (uma URL) no formato "dono/repo" que a API do GitHub usa.
+    private static string ExtrairRepositorio(string? link)
+    {
+        if (string.IsNullOrWhiteSpace(link))
+            throw new DomainException("Este projeto não tem o link do repositório cadastrado");
+
+        var resultado = PadraoRepositorioGithub.Match(link.Trim());
+        if (!resultado.Success)
+            throw new DomainException("O link do repositório não é um repositório válido do GitHub");
+
+        return $"{resultado.Groups["dono"].Value}/{resultado.Groups["repo"].Value}";
+    }
+
+    // Repositório vem do Projeto (LinkRepositorio); o token vem do ProjetoSonar.
+    private (string Repositorio, string Token) ObterAcessoGithub(ProjetoSonar projetoSonar)
+    {
+        var projeto = _serviceProjeto.BuscarOuFalhar(projetoSonar.ProjetoId);
+
+        var repositorio = ExtrairRepositorio(projeto.LinkRepositorio);
+        var token = LerTokenGithub(projetoSonar);
+
+        return (repositorio, token);
+    }
+
+    public async Task<CommitIssueDto> ObterCommitDaIssueAsync(Guid id, string chaveIssue)
+    {
+        var projetoSonar = BuscarOuFalharSonar(id);
+        var (repositorio, tokenGithub) = ObterAcessoGithub(projetoSonar);
+
+        var issue = await _sonar.ObterIssueAsync(projetoSonar.ChaveSonar, chaveIssue);
+        if (issue.Linha is null)
+            throw new DomainException("Esta issue não está ligada a uma linha de código");
+
+        var scm = await _sonar.ObterScmLinhaAsync(issue.Componente, issue.Linha.Value);
+        if (scm is null || string.IsNullOrWhiteSpace(scm.Revisao))
+            throw new DomainException("O SonarQube não tem informação de commit para esta linha");
+
+        return await _github.ObterCommitAsync(repositorio, scm.Revisao, tokenGithub);
+    }
 }

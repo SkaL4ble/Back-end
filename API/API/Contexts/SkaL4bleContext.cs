@@ -195,6 +195,9 @@ public partial class SkaL4bleContext : DbContext
             entity.Property(e => e.Plataforma)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+            entity.Property(e => e.Repositorio)
+                .HasMaxLength(300)
+                .IsUnicode(false);
             entity.Property(e => e.TokenGithubCriptografado).IsUnicode(false);
             entity.Property(e => e.TokenSonarCriptografado).IsUnicode(false);
 

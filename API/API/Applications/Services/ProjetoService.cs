@@ -4,14 +4,15 @@ using API.DTOs.ProjetoDto;
 using API.DTOs.StatusTicketDto;
 using API.Exceptions;
 using API.Interfaces;
+using API.Repositories;
 
 namespace API.Applications.Services
 {
     public class ProjetoService
     {
-        private readonly IProjetoRepository _repository;
+        private readonly ProjetoRepository _repository;
 
-        public ProjetoService(IProjetoRepository repository)
+        public ProjetoService(ProjetoRepository repository)
         {
             _repository = repository;
         }
@@ -32,7 +33,7 @@ namespace API.Applications.Services
 
         public List<ListarProjetoDto> ListarProjetos()
         {
-            return _repository.ListarProjetos()
+            return _repository.Listar()
                 .Select(ConversaoProjeto.ConverterParaDto)
                 .ToList();
         }
@@ -47,32 +48,10 @@ namespace API.Applications.Services
         {
             projetoDto.Nome = NormalizarNome(projetoDto.Nome);
 
-            if (_repository.NomeProjetoExiste(projetoDto.Nome))
-                throw new DomainException("Projeto já existe");
 
 
-            _repository.CadastrarProjeto(ConversaoProjeto.ConverterParaDomain(projetoDto));
+            _repository.Adicionar(ConversaoProjeto.ConverterParaDomain(projetoDto));
         }
 
-        public void Atualizar(Guid id, CriarProjetoDto projetoDto)
-        {
-            Projeto? projetoBanco = BuscarOuFalhar(id);
-            string novoNome = NormalizarNome(projetoDto.Nome);
-
-            bool nomeMudou = !string.Equals(
-                projetoBanco?.NomeProjeto, novoNome, StringComparison.OrdinalIgnoreCase);
-
-            if (nomeMudou && _repository.NomeProjetoExiste(novoNome))
-                throw new DomainException("Projeto já existe");
-
-            projetoDto.Nome = novoNome;
-            _repository.AtualizarProjeto(id, ConversaoProjeto.ConverterParaDomain(projetoDto));
-        }
-
-        public void Remover(Guid id)
-        {
-            Projeto? projeto = BuscarOuFalhar(id);
-            _repository.DeletarProjeto(projeto);
-        }
     }
 }
