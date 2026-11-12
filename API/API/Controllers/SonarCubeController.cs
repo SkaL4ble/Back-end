@@ -1,5 +1,6 @@
 ﻿using API.Applications.Services;
 using API.DTOs.SonarQubeDto;
+using API.DTOs.SonarQubeDto.CommitDto;
 using API.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
@@ -45,36 +46,13 @@ public class SonarQubeController : ControllerBase
     /// <response code="201">Projeto criado com sucesso.</response>
     /// <response code="400">Dados inválidos ou erro retornado pelo SonarQube.</response>
     [HttpPost("projetos/local")]
-    [ProducesResponseType(typeof(ProjetoSonarDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ListarProjetoSonarDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CriarLocal([FromBody] CriarProjetoSonarLocalDto dto)
+    public async Task<IActionResult> CriarProjeto([FromBody] CriarProjetoSonarDto dto)
     {
         try
         {
-            var projeto = await _service.CriarLocalAsync(dto);
-            return CreatedAtAction(nameof(ObterPorId), new { id = projeto.ProjetoSonarId }, projeto);
-        }
-        catch (DomainException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
-
-    /// <summary>
-    /// Importa um repositório remoto (GitHub) como projeto no SonarQube e gera o token de análise.
-    /// </summary>
-    /// <param name="dto">Plataforma escolhida, organização, repositório e token do GitHub.</param>
-    /// <returns>O projeto criado, sem expor os tokens.</returns>
-    /// <response code="201">Projeto importado com sucesso.</response>
-    /// <response code="400">Dados inválidos, plataforma não suportada ou erro do SonarQube.</response>
-    [HttpPost("projetos/remoto")]
-    [ProducesResponseType(typeof(ProjetoSonarDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CriarRemoto([FromBody] CriarProjetoSonarRemotoDto dto)
-    {
-        try
-        {
-            var projeto = await _service.CriarRemotoAsync(dto);
+            var projeto = await _service.CriarProjetoAsync(dto);
             return CreatedAtAction(nameof(ObterPorId), new { id = projeto.ProjetoSonarId }, projeto);
         }
         catch (DomainException ex)
@@ -91,7 +69,7 @@ public class SonarQubeController : ControllerBase
     /// <response code="200">Projeto encontrado.</response>
     /// <response code="404">Projeto não encontrado.</response>
     [HttpGet("projetos/{id:guid}")]
-    [ProducesResponseType(typeof(ProjetoSonarDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ListarProjetoSonarDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult ObterPorId(Guid id)
     {
@@ -197,6 +175,31 @@ public class SonarQubeController : ControllerBase
         try
         {
             return Ok(await _service.ListarAtividadesAsync(id));
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Busca o autor e o committer do commit que escreveu a linha de código de uma issue.
+    /// </summary>
+    /// <param name="id">Identificador do projeto do SonarQube.</param>
+    /// <param name="chaveIssue">Chave da issue, a mesma retornada na listagem de issues.</param>
+    /// <returns>Dados do commit: hash, mensagem, link, autor e committer.</returns>
+    /// <response code="200">Commit encontrado com sucesso.</response>
+    /// <response code="400">Issue sem linha, projeto sem repositório ou token, ou erro do SonarQube ou do GitHub.</response>
+    /// <response code="404">Projeto não encontrado.</response>
+    [HttpGet("projetos/{id:guid}/issues/{chaveIssue}/commit")]
+    [ProducesResponseType(typeof(CommitIssueDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ObterCommitDaIssue(Guid id, string chaveIssue)
+    {
+        try
+        {
+            return Ok(await _service.ObterCommitDaIssueAsync(id, chaveIssue));
         }
         catch (DomainException ex)
         {

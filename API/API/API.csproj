@@ -12,6 +12,7 @@
   <ItemGroup>
     <Compile Remove="Applications\Services\SubirPastaVazia2.cs" />
     <Compile Remove="Controllers\SubirPastaVazia3.cs" />
+    <Compile Remove="DTOs\SonarQubeDto\CriarProjetoSonarRemotoDto.cs" />
     <Compile Remove="DTOs\SubirPastaVazia4.cs" />
     <Compile Remove="Interfaces\SubirPastaVazia5.cs" />
   </ItemGroup>

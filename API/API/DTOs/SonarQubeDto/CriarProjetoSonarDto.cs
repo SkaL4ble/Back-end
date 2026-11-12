@@ -1,6 +1,6 @@
 ﻿namespace API.DTOs.SonarQubeDto
 {
-    public class CriarProjetoSonarLocalDto
+    public class CriarProjetoSonarDto
     {
         public Guid ProjetoId { get; set; }
 

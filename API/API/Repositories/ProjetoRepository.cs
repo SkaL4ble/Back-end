@@ -1,9 +1,10 @@
 ﻿using API.Contexts;
 using API.Domains;
+using API.Interfaces;
 
 namespace API.Repositories
 {
-    public class ProjetoRepository
+    public class ProjetoRepository 
     {
         private readonly SkaL4bleContext _context;
 
