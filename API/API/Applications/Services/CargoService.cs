@@ -49,6 +49,9 @@ namespace API.Applications.Services
             if (_repository.NomeCargoExiste(cargoDto.NomeCargo))
                 throw new DomainException("Cargo já existe");
 
+            if(cargoDto.NomeCargo.Length > 30 || cargoDto.NomeCargo.Length < 3)
+                throw new DomainException("O nome do cargo deve ter entre 3 e 30 caracteres");
+
             _repository.Adicionar(ConversaoCargo.ConverterParaDomain(cargoDto));
         }
 
@@ -57,7 +60,10 @@ namespace API.Applications.Services
             Cargo cargoBanco = BuscarOuFalhar(id);
             string novoNome = NormalizarNome(cargoDto.NomeCargo);
 
-            if (_repository.NomeCargoExiste(novoNome))
+            bool nomeMudou = !string.Equals(
+                cargoBanco.NomeCargo, novoNome, StringComparison.OrdinalIgnoreCase);
+
+            if (nomeMudou && _repository.NomeCargoExiste(novoNome))
                 throw new DomainException("Cargo já existe");
 
             cargoDto.NomeCargo = novoNome;

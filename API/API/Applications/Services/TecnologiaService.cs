@@ -4,77 +4,66 @@ using API.DTOs.TecnologiaDto;
 using API.Exceptions;
 using API.Interfaces;
 
-namespace API.Applications.Services
+namespace API.Applications.Services;
+
+public class TecnologiaService
 {
-    public class TecnologiaService
+    private const int TamanhoMaximoNome = 50;
+    private readonly ITecnologiaRepository _repository;
+
+    public TecnologiaService(ITecnologiaRepository repository) => _repository = repository;
+
+    private Tecnologia BuscarOuFalhar(int id) =>
+        _repository.ObterPorId(id)
+        ?? throw new DomainException("Tecnologia não encontrada");
+
+    private static string NormalizarNome(string? nome)
     {
-        private readonly ITecnologiaRepository _repository;
+        if (string.IsNullOrWhiteSpace(nome))
+            throw new DomainException("O nome da tecnologia é obrigatório");
 
-        public TecnologiaService(ITecnologiaRepository repository)
-        {
-            _repository = repository;
-        }
+        var normalizado = nome.Trim();
+        if (normalizado.Length > TamanhoMaximoNome)
+            throw new DomainException($"O nome da tecnologia deve ter no máximo {TamanhoMaximoNome} caracteres");
 
-        private Tecnologia BuscarOuFalhar(int id)
-        {
-            return _repository.ObterPorId(id)
-                ?? throw new DomainException("Tecnologia não encontrada");
-        }
+        return normalizado;
+    }
 
-        private static string NormalizarNome(string? nome)
-        {
-            if (string.IsNullOrWhiteSpace(nome))
-                throw new DomainException("O nome da tecnologia é obrigatório");
+    public List<ListarTecnologiaDto> ListarTecnologias() =>
+        _repository.ListarTecnologias()
+            .Select(ConversaoTecnologia.ConverterParaDto)
+            .ToList();
 
-            return nome.Trim();
-        }
+    public ListarTecnologiaDto ObterPorId(int id) =>
+        ConversaoTecnologia.ConverterParaDto(BuscarOuFalhar(id));
 
-        public List<ListarTecnologiaDto> ListarTecnologias()
-        {
-            return _repository.ListarTecnologias()
-                .Select(ConversaoTecnologia.ConverterParaDto)
-                .ToList();
-        }
+    public void AdicionarTecnologia(CriarTecnologiaDto dto)
+    {
+        var nome = NormalizarNome(dto.NomeTecnologia);
+        if (_repository.NomeTecnologiaExiste(nome))
+            throw new DomainException("Tecnologia já existe");
 
-        public ListarTecnologiaDto ObterPorId(int id)
-        {
-            Tecnologia tecnologia = BuscarOuFalhar(id);
-            return ConversaoTecnologia.ConverterParaDto(tecnologia);
-        }
+        _repository.Adicionar(new Tecnologia { NomeTecnologia = nome });
+    }
 
-        public void AdicionarTecnologia(CriarTecnologiaDto tecnologiaDto)
-        {
-            tecnologiaDto.NomeTecnologia = NormalizarNome(tecnologiaDto.NomeTecnologia);
+    public void Atualizar(int id, CriarTecnologiaDto dto)
+    {
+        var atual = BuscarOuFalhar(id);
+        var nome = NormalizarNome(dto.NomeTecnologia);
+        var mudou = !string.Equals(atual.NomeTecnologia, nome, StringComparison.OrdinalIgnoreCase);
 
-            if (_repository.NomeTecnologiaExiste(tecnologiaDto.NomeTecnologia))
-                throw new DomainException("Tecnologia já existe");
+        if (mudou && _repository.NomeTecnologiaExiste(nome))
+            throw new DomainException("Tecnologia já existe");
 
-            _repository.Adicionar(ConversaoTecnologia.ConverterParaDomain(tecnologiaDto));
-        }
+        _repository.Atualizar(id, new Tecnologia { TecnologiaId = id, NomeTecnologia = nome });
+    }
 
-        public void Atualizar(int id, CriarTecnologiaDto tecnologiaDto)
-        {
-            Tecnologia tecnologiaBanco = BuscarOuFalhar(id);
-            string novoNome = NormalizarNome(tecnologiaDto.NomeTecnologia);
+    public void Deletar(int id)
+    {
+        BuscarOuFalhar(id);
+        if (_repository.PossuiVinculos(id))
+            throw new DomainException("Não é possível excluir: há usuários, métricas ou histórico vinculados a esta tecnologia");
 
-            bool nomeMudou = !string.Equals(
-                tecnologiaBanco.NomeTecnologia, novoNome, StringComparison.OrdinalIgnoreCase);
-
-            if (nomeMudou && _repository.NomeTecnologiaExiste(novoNome))
-                throw new DomainException("Tecnologia já existe");
-
-            tecnologiaDto.NomeTecnologia = novoNome;
-            _repository.Atualizar(id, ConversaoTecnologia.ConverterParaDomain(tecnologiaDto));
-        }
-
-        public void Deletar(int id)
-        {
-            BuscarOuFalhar(id);
-
-            if (_repository.PossuiVinculos(id))
-                throw new DomainException("Não é possível excluir: há usuários, métricas ou histórico vinculados a esta tecnologia");
-
-            _repository.Deletar(id);
-        }
+        _repository.Deletar(id);
     }
 }

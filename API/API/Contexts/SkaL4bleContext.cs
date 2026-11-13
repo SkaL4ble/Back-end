@@ -52,7 +52,11 @@ public partial class SkaL4bleContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+<<<<<<< HEAD
         => optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=SkaL4ble;Trusted_Connection=True;TrustServerCertificate=True");
+=======
+        => optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=SkaL4ble;Trusted_Connection=True;TrustServerCertificate=True;");
+>>>>>>> fce64ec2d6d75cf75b8d1c0bcf73ce76e6e43367
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -226,6 +230,7 @@ public partial class SkaL4bleContext : DbContext
                 .HasConstraintName("FK_Ticket_UsuarioResponsavel");
         });
 
+<<<<<<< HEAD
         modelBuilder.Entity<TicketUsuario>(entity =>
         {
             entity.HasKey(e => new { e.TicketId, e.UsuarioId }).HasName("PK_TicketColaboradores");
@@ -239,6 +244,21 @@ public partial class SkaL4bleContext : DbContext
             entity.HasOne(d => d.Usuario).WithMany(p => p.TicketUsuario)
                 .HasForeignKey(d => d.UsuarioId)
                 .HasConstraintName("FK_TicketUsuario_Usuario");
+=======
+            entity.HasMany(d => d.Usuario).WithMany(p => p.TicketNavigation)
+                .UsingEntity<Dictionary<string, object>>(
+                    "TicketUsuario",
+                    r => r.HasOne<Usuario>().WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .HasConstraintName("FK_TicketUsuario_Usuario"),
+                    l => l.HasOne<Ticket>().WithMany()
+                        .HasForeignKey("TicketId")
+                        .HasConstraintName("FK_TicketUsuario_Ticket"),
+                    j =>
+                    {
+                        j.HasKey("TicketId", "UsuarioId").HasName("PK_TicketColaboradores");
+                    });
+>>>>>>> fce64ec2d6d75cf75b8d1c0bcf73ce76e6e43367
         });
 
         modelBuilder.Entity<TipoMetrica>(entity =>

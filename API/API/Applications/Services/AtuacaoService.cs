@@ -44,6 +44,9 @@ namespace API.Applications.Services
 
         public void AdicionarAtuacao(CriarAtuacaoDto atuacaoDto)
         {
+            if (atuacaoDto.NomeAtuacao.Length > 30 || atuacaoDto.NomeAtuacao.Length < 3)
+                throw new DomainException("O nome da atuação deve ter entre 3 e 30 caracteres");
+
             atuacaoDto.NomeAtuacao = NormalizarNome(atuacaoDto.NomeAtuacao);
 
             if (_repository.NomeAtuacaoExiste(atuacaoDto.NomeAtuacao))
@@ -54,6 +57,9 @@ namespace API.Applications.Services
 
         public void Atualizar(int id, CriarAtuacaoDto atuacaoDto)
         {
+            if (atuacaoDto.NomeAtuacao.Length > 30 || atuacaoDto.NomeAtuacao.Length < 3)
+                throw new DomainException("O nome da atuação deve ter entre 3 e 30 caracteres");
+
             Atuacao atuacaoBanco = BuscarOuFalhar(id);
             string novoNome = NormalizarNome(atuacaoDto.NomeAtuacao);
 
