@@ -2,9 +2,8 @@
 using API.DTOs.SonarQubeDto.WorkFlowDto;
 using API.Exceptions;
 
-namespace API.Applications.Services.SonarCube;
+namespace API.Applications.GerarYml;
 
-// Gera o .yml do GitHub Actions para cada tipo de projeto, no estilo das telas do SonarQube.
 public static class ModeloWorkflowSonar
 {
     // Confira a versão mais recente em https://github.com/marketplace/actions/official-sonarqube-scan
@@ -21,14 +20,13 @@ public static class ModeloWorkflowSonar
         new() { Valor = "outro",  Nome = "Other (Go, PHP, ...)" }
     };
 
-    // "tipo" precisa ser um dos valores de Tipos; "branch" precisa já estar validada por quem chama.
-    public static string Gerar(string tipo, string chaveProjeto, string branch)
+    public static string Gerar(int workflowId, string chaveProjeto, string branch)
     {
-        var corpo = tipo switch
+        var corpo = workflowId switch
         {
-            "dotnet" => CorpoDotnet,
-            "maven" => CorpoMaven,
-            "js" or "python" or "rust" or "outro" => CorpoScanAction,
+            1 => CorpoDotnet,
+            2 => CorpoMaven,
+            3 => CorpoScanAction,
             _ => throw new DomainException("Tipo de projeto inválido")
         };
 
@@ -92,7 +90,7 @@ public static class ModeloWorkflowSonar
         on:
           push:
             branches:
-              - main
+              - __BRANCH__
 
 
         jobs:
@@ -125,7 +123,7 @@ public static class ModeloWorkflowSonar
                 env:
                   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
                   SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-                run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=T__CHAVE__ -Dsonar.projectName='__PROJETO__'
+                run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=__CHAVE__ -Dsonar.projectName='__CHAVE__'
         """;
 
 

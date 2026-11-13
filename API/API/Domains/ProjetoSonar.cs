@@ -8,6 +8,7 @@ public partial class ProjetoSonar
     public Guid ProjetoSonarId { get; set; }
 
     public Guid ProjetoId { get; set; }
+    public int WorkflowId { get; set; } = 1;
 
     public string ChaveSonar { get; set; } = null!;
 
@@ -17,15 +18,9 @@ public partial class ProjetoSonar
 
     public string Origem { get; set; } = null!;
 
-    public string? Plataforma { get; set; }
-
     public string TokenSonarCriptografado { get; set; } = null!;
 
-    public string? TokenGithubCriptografado { get; set; }
-
     public DateTime DataCriacao { get; set; }
-
-    public string? Repositorio { get; set; }
 
     public virtual Projeto Projeto { get; set; } = null!;
 }

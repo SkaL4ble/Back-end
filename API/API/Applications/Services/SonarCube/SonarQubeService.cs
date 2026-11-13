@@ -115,50 +115,6 @@ public class SonarQubeService
         return doc.RootElement.GetProperty("token").GetString()!;
     }
 
-    public async Task<List<PlataformaSonarDto>> ListarPlataformasAsync()
-    {
-        using var doc = await GetAsync("api/alm_settings/list_definitions");
-        var plataformas = new List<PlataformaSonarDto>();
-        var tiposSuportados = new[] { "github", "azure", "bitbucket", "bitbucketcloud" };
-
-        foreach (var tipo in doc.RootElement.EnumerateObject())
-        {
-            if (tipo.Name.Equals("gitlab", StringComparison.OrdinalIgnoreCase))
-                continue;
-            if (tipo.Value.ValueKind != JsonValueKind.Array)
-                continue;
-
-            foreach (var item in tipo.Value.EnumerateArray())
-            {
-                plataformas.Add(new PlataformaSonarDto
-                {
-                    Tipo = tipo.Name,
-                    Chave = ConverterSonarQube.Texto(item, "key"),
-                    Url = item.TryGetProperty("url", out var url) ? url.GetString() : null,
-                    Configurada = true
-                });
-            }
-        }
-
-        foreach (var tipo in tiposSuportados)
-        {
-            if (plataformas.Any(p =>
-                p.Tipo.Equals(tipo, StringComparison.OrdinalIgnoreCase)))
-                continue;
-
-            plataformas.Add(new PlataformaSonarDto
-            {
-                Tipo = tipo,
-                Chave = string.Empty,
-                Url = null,
-                Configurada = false
-            });
-        }
-
-        return plataformas;
-    }
-
-
     // ============================== ISSUES ==============================
 
     public async Task<List<IssueSonarDto>> ListarIssuesAsync(string chave)
