@@ -17,15 +17,11 @@ public partial class ProjetoSonar
 
     public string Origem { get; set; } = null!;
 
-    public string? Plataforma { get; set; }
-
     public string TokenSonarCriptografado { get; set; } = null!;
-
-    public string? TokenGithubCriptografado { get; set; }
 
     public DateTime DataCriacao { get; set; }
 
-    public string? Repositorio { get; set; }
+    public int WorkflowId { get; set; }
 
     public virtual Projeto Projeto { get; set; } = null!;
 }

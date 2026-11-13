@@ -16,6 +16,8 @@ public class ProjetoSonarRepository : IProjetoSonarRepository
     public ProjetoSonar? ObterPorId(Guid projetoSonarId) =>
         _context.ProjetoSonar.FirstOrDefault(p => p.ProjetoSonarId == projetoSonarId);
 
+    public List<Workflow> ObterWorkflows() => _context.Workflow.ToList();
+
     public bool ProjetoExiste(Guid projetoId) =>
         _context.Projeto.Any(p => p.ProjetoId == projetoId && p.Ativo);
 

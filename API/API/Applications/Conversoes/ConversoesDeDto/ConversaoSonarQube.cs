@@ -1,10 +1,12 @@
-﻿using API.DTOs.SonarQubeDto;
+﻿using API.Domains;
+using API.DTOs.SonarQubeDto;
+using API.DTOs.SonarQubeDto.WorkFlowDto;
 using System.Globalization;
 using System.Text.Json;
 
 namespace API.Applications.Conversoes.ConversoesDeDto
 {
-    public class ConverterSonarQube
+    public class ConversaoSonarQube
     {
         public static string Texto(JsonElement e, string propriedade) =>
         e.TryGetProperty(propriedade, out var valor) ? valor.GetString() ?? string.Empty : string.Empty;
@@ -29,6 +31,14 @@ namespace API.Applications.Conversoes.ConversoesDeDto
                 Componente = Texto(e, "component"),
                 Linha = e.TryGetProperty("line", out var linha) ? linha.GetInt32() : null,
                 DataCriacao = Data(e, "creationDate")
+            };
+        }
+        public static ListarWorkFlowDto ConverterWorkFlowParaDto(Workflow e)
+        {
+            return new ListarWorkFlowDto
+            {
+                WorkflowId = e.WorkflowId,
+                Nome = e.NomeWorkflow
             };
         }
     }

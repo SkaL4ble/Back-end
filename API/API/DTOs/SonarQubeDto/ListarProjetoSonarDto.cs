@@ -7,7 +7,7 @@ namespace API.DTOs.SonarQubeDto
         public Guid ProjetoSonarId { get; set; }
 
         public Guid ProjetoId { get; set; }
-
+        public int WorkflowId { get; set; } = 1;
         public string ChaveSonar { get; set; } = null!;
 
         public string NomeSonar { get; set; } = null!;

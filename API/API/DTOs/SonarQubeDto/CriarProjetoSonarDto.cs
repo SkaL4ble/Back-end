@@ -7,5 +7,7 @@
         public string Nome { get; set; } = null!;
 
         public string? Descricao { get; set; }
+
+        public int WorkflowId { get; set; } = 1;
     }
 }

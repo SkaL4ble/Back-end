@@ -115,50 +115,6 @@ public class SonarQubeService
         return doc.RootElement.GetProperty("token").GetString()!;
     }
 
-    public async Task<List<PlataformaSonarDto>> ListarPlataformasAsync()
-    {
-        using var doc = await GetAsync("api/alm_settings/list_definitions");
-        var plataformas = new List<PlataformaSonarDto>();
-        var tiposSuportados = new[] { "github", "azure", "bitbucket", "bitbucketcloud" };
-
-        foreach (var tipo in doc.RootElement.EnumerateObject())
-        {
-            if (tipo.Name.Equals("gitlab", StringComparison.OrdinalIgnoreCase))
-                continue;
-            if (tipo.Value.ValueKind != JsonValueKind.Array)
-                continue;
-
-            foreach (var item in tipo.Value.EnumerateArray())
-            {
-                plataformas.Add(new PlataformaSonarDto
-                {
-                    Tipo = tipo.Name,
-                    Chave = ConverterSonarQube.Texto(item, "key"),
-                    Url = item.TryGetProperty("url", out var url) ? url.GetString() : null,
-                    Configurada = true
-                });
-            }
-        }
-
-        foreach (var tipo in tiposSuportados)
-        {
-            if (plataformas.Any(p =>
-                p.Tipo.Equals(tipo, StringComparison.OrdinalIgnoreCase)))
-                continue;
-
-            plataformas.Add(new PlataformaSonarDto
-            {
-                Tipo = tipo,
-                Chave = string.Empty,
-                Url = null,
-                Configurada = false
-            });
-        }
-
-        return plataformas;
-    }
-
-
     // ============================== ISSUES ==============================
 
     public async Task<List<IssueSonarDto>> ListarIssuesAsync(string chave)
@@ -198,7 +154,7 @@ public class SonarQubeService
 
             foreach (var item in doc.RootElement.GetProperty("issues").EnumerateArray())
             {
-                var issue = ConverterSonarQube.ConverterIssueParaDto(item);
+                var issue = ConversaoSonarQube.ConverterIssueParaDto(item);
                 destino[issue.Chave] = issue;
             }
         }
@@ -219,78 +175,4 @@ public class SonarQubeService
     private static string FormatarData(DateTime data) =>
         data.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss", CultureInfo.InvariantCulture) + "+0000";
 
-
-    // ============================== ATIVIDADES (bônus) ==============================
-
-    public async Task<List<AtividadeSonarDto>> ListarAtividadesAsync(string chave)
-    {
-        var atividades = new List<AtividadeSonarDto>();
-
-        for (var pagina = 1; ; pagina++)
-        {
-            using var doc = await GetAsync(
-                $"api/project_analyses/search?project={Uri.EscapeDataString(chave)}&ps={TamanhoPagina}&p={pagina}");
-
-            foreach (var analise in doc.RootElement.GetProperty("analyses").EnumerateArray())
-            {
-                var eventos = analise.TryGetProperty("events", out var ev)
-                    ? ev.EnumerateArray().Select(x => ConverterSonarQube.Texto(x, "name")).ToList()
-                    : new List<string>();
-
-                atividades.Add(new AtividadeSonarDto
-                {
-                    Chave = ConverterSonarQube.Texto(analise, "key"),
-                    Data = ConverterSonarQube.Data(analise, "date"),
-                    Eventos = eventos
-                });
-            }
-
-            var total = doc.RootElement.GetProperty("paging").GetProperty("total").GetInt32();
-            if (pagina * TamanhoPagina >= total)
-                break;
-        }
-
-        return atividades;
-    }
-
-    // Issue de um projeto pela chave. Só acha se pertencer ao projeto informado.
-    public async Task<IssueSonarDto> ObterIssueAsync(string chaveProjeto, string chaveIssue)
-    {
-        using var doc = await GetAsync(
-            $"api/issues/search?issues={Uri.EscapeDataString(chaveIssue)}" +
-            $"&componentKeys={Uri.EscapeDataString(chaveProjeto)}&ps=1");
-
-        var issues = doc.RootElement.GetProperty("issues");
-        if (issues.GetArrayLength() == 0)
-            throw new DomainException("Issue não encontrada neste projeto");
-
-        return ConverterSonarQube.ConverterIssueParaDto(issues[0]);
-    }
-
-    // Passo 1: autor, data e hash do commit da linha (git blame do SonarQube).
-    public async Task<ScmLinhaSonarDto?> ObterScmLinhaAsync(string componente, int linha)
-    {
-        using var doc = await GetAsync(
-            $"api/sources/scm?key={Uri.EscapeDataString(componente)}&from={linha}&to={linha}&commits_by_line=true");
-
-        var scm = doc.RootElement.GetProperty("scm");
-        if (scm.GetArrayLength() == 0)
-            return null;
-
-        // Cada item é um array: [linha, autor, data, revisão]
-        var item = scm[0];
-
-        DateTime? data = null;
-        if (item.GetArrayLength() > 2 &&
-            DateTimeOffset.TryParse(item[2].GetString(), CultureInfo.InvariantCulture,
-                DateTimeStyles.None, out var dt))
-            data = dt.UtcDateTime;
-
-        return new ScmLinhaSonarDto
-        {
-            Autor = item.GetArrayLength() > 1 ? item[1].GetString() : null,
-            Data = data,
-            Revisao = item.GetArrayLength() > 3 ? item[3].GetString() : null
-        };
-    }
 }

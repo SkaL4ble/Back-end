@@ -50,6 +50,12 @@ public partial class SkaL4bleContext : DbContext
 
     public virtual DbSet<UsuarioIdeToken> UsuarioIdeToken { get; set; }
 
+    public virtual DbSet<Workflow> Workflow { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=SkaL4ble;Trusted_Connection=True;TrustServerCertificate=True");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Atuacao>(entity =>
@@ -188,14 +194,8 @@ public partial class SkaL4bleContext : DbContext
             entity.Property(e => e.Origem)
                 .HasMaxLength(10)
                 .IsUnicode(false);
-            entity.Property(e => e.Plataforma)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.Repositorio)
-                .HasMaxLength(300)
-                .IsUnicode(false);
-            entity.Property(e => e.TokenGithubCriptografado).IsUnicode(false);
             entity.Property(e => e.TokenSonarCriptografado).IsUnicode(false);
+            entity.Property(e => e.WorkflowId).HasDefaultValue(1);
 
             entity.HasOne(d => d.Projeto).WithMany(p => p.ProjetoSonar)
                 .HasForeignKey(d => d.ProjetoId)
@@ -390,6 +390,18 @@ public partial class SkaL4bleContext : DbContext
             entity.HasOne(d => d.Usuario).WithMany(p => p.UsuarioIdeToken)
                 .HasForeignKey(d => d.UsuarioId)
                 .HasConstraintName("FK_UsuarioIdeToken_Usuario");
+        });
+
+        modelBuilder.Entity<Workflow>(entity =>
+        {
+            entity.HasKey(e => e.WorkflowId).HasName("PK__Workflow__5704A66A23491600");
+
+            entity.HasIndex(e => e.NomeWorkflow, "UQ__Workflow__1C21ED92D7D42DAF").IsUnique();
+
+            entity.Property(e => e.WorkflowId).ValueGeneratedNever();
+            entity.Property(e => e.NomeWorkflow)
+                .HasMaxLength(30)
+                .IsUnicode(false);
         });
 
         OnModelCreatingPartial(modelBuilder);

@@ -18,25 +18,11 @@ public class SonarQubeController : ControllerBase
     }
 
     /// <summary>
-    /// Lista as plataformas DevOps configuradas no SonarQube, exceto o GitLab.
+    /// Lista os tipos de workflow disponíveis para um projeto local.
     /// </summary>
-    /// <returns>Lista de plataformas disponíveis para importação remota.</returns>
-    /// <response code="200">Plataformas listadas com sucesso.</response>
-    /// <response code="400">Erro ao consultar o SonarQube.</response>
-    [HttpGet("plataformas")]
-    [ProducesResponseType(typeof(List<PlataformaSonarDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> ListarPlataformas()
-    {
-        try
-        {
-            return Ok(await _service.ListarPlataformasAsync());
-        }
-        catch (DomainException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
+    [HttpGet("workflows")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public IActionResult ListarWorkflows() => Ok(_service.ListarTiposWorkflow());
 
     /// <summary>
     /// Cria um projeto local no SonarQube e gera o token de análise, guardado de forma criptografada.
@@ -109,24 +95,26 @@ public class SonarQubeController : ControllerBase
     }
 
     /// <summary>
-    /// Troca o token do GitHub guardado para o projeto.
+    /// Retorna os dados necessários para configurar a análise do projeto no GitHub Actions.
+    /// O workflow usa a branch develop e o tipo padrão é dotnet.
     /// </summary>
     /// <param name="id">Identificador do projeto do SonarQube.</param>
-    /// <param name="dto">Novo token do GitHub.</param>
-    /// <returns>Sem conteúdo quando a troca é concluída.</returns>
-    /// <response code="204">Token atualizado com sucesso.</response>
-    /// <response code="400">Token inválido.</response>
+    /// <response code="200">Configuração retornada com sucesso.</response>
+    /// <response code="400">Tipo inválido ou erro ao ler o token.</response>
     /// <response code="404">Projeto não encontrado.</response>
-    [HttpPut("projetos/{id:guid}/token-github")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [HttpGet("projetos/{id:guid}/configuracao")]
+    [ProducesResponseType(typeof(ConfiguracaoSonarQubeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public IActionResult AtualizarTokenGithub(Guid id, [FromBody] AtualizarTokenGItDto dto)
+    public IActionResult ObterConfiguracao(Guid id)
     {
         try
         {
-            _service.AtualizarTokenGithub(id, dto.TokenGithub);
-            return NoContent();
+            return Ok(_service.ObterConfiguracao(id));
+        }
+        catch (DomainException ex) when (ex.Message.Contains("não encontrado", StringComparison.OrdinalIgnoreCase))
+        {
+            return NotFound(ex.Message);
         }
         catch (DomainException ex)
         {
@@ -151,30 +139,6 @@ public class SonarQubeController : ControllerBase
         try
         {
             return Ok(await _service.ListarIssuesAsync(id));
-        }
-        catch (DomainException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
-
-    /// <summary>
-    /// Lista o histórico de análises (atividades) do projeto no SonarQube.
-    /// </summary>
-    /// <param name="id">Identificador do projeto do SonarQube.</param>
-    /// <returns>Lista de análises com data e eventos.</returns>
-    /// <response code="200">Atividades listadas com sucesso.</response>
-    /// <response code="400">Erro ao consultar o SonarQube.</response>
-    /// <response code="404">Projeto não encontrado.</response>
-    [HttpGet("projetos/{id:guid}/atividades")]
-    [ProducesResponseType(typeof(List<AtividadeSonarDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> ListarAtividades(Guid id)
-    {
-        try
-        {
-            return Ok(await _service.ListarAtividadesAsync(id));
         }
         catch (DomainException ex)
         {
