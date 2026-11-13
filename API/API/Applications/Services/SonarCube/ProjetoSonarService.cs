@@ -231,5 +231,9 @@ public class ProjetoSonarService
 
     public async Task<List<IssueSonarDto>> ListarIssuesAsync(Guid id) =>
         await _sonar.ListarIssuesAsync(BuscarOuFalharSonar(id).ChaveSonar);
+    public async Task<List<IssueSonarDto>> ListarIssuesPorFuncionaro(Guid id, string email)
+    {
+        return await _sonar.ListarIssuesPorFuncionarioAsync(BuscarOuFalharSonar(id).ChaveSonar, email);
+    }
 
 }

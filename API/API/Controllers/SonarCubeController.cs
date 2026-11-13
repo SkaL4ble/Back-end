@@ -133,12 +133,34 @@ public class SonarQubeController : ControllerBase
     [HttpGet("projetos/{id:guid}/issues")]
     [ProducesResponseType(typeof(List<IssueSonarDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ListarIssues(Guid id)
     {
         try
         {
             return Ok(await _service.ListarIssuesAsync(id));
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Lista todas as issues do projeto , paginando e fatiando por período quando passam de 10.000.
+    /// </summary>
+    /// <param name="id">Identificador do projeto do SonarQube.</param>
+    /// <returns>Lista completa de issues do projeto.</returns>
+    /// <response code="200">Issues listadas com sucesso.</response>
+    /// <response code="400">Erro ao consultar o SonarQube.</response>
+    /// <response code="404">Projeto não encontrado.</response>
+    [HttpGet("projetos/{id:guid}//issues")]
+    [ProducesResponseType(typeof(List<IssueSonarDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ListarIssuePorFuncionarioAsync(Guid id, string emailFuncionario)
+    {
+        try
+        {
+            return Ok(await _service.ListarIssuesPorFuncionaro(id, emailFuncionario));
         }
         catch (DomainException ex)
         {
