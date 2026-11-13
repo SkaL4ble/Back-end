@@ -15,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 DotNetEnv.Env.Load();
 
 // PEGA A CONNECTION STRING DO .env
-string connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+string? connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
 
 // CONECTA AO BANCO COM A CONNECTION STRING DO .env
 builder.Services.AddDbContext<SkaL4bleContext>(options => options.UseSqlServer(connectionString));

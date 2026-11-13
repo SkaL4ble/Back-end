@@ -1,7 +1,6 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto;
 using API.Domains;
 using API.DTOs.ProjetoDto;
-using API.DTOs.StatusTicketDto;
 using API.Exceptions;
 using API.Interfaces;
 
@@ -54,6 +53,38 @@ namespace API.Applications.Services
             _repository.CadastrarProjeto(ConversaoProjeto.ConverterParaDomain(projetoDto));
         }
 
+        public void AssociarUsuario(Guid projetoId, Guid usuarioId)
+        {
+            Projeto? projeto = BuscarOuFalhar(projetoId);
+            if (projeto == null)
+                throw new DomainException("Projeto não encontrado");
+            if (projeto.Usuario.Any(u => u.UsuarioId == usuarioId))
+                throw new DomainException("Usuário já associado ao projeto");
+            _repository.AssociarUsuarioAoProjeto(projetoId, usuarioId);
+        }
+
+        public void DesassociarUsuario(Guid projetoId, Guid usuarioId)
+        {
+            Projeto? projeto = BuscarOuFalhar(projetoId);
+            if (projeto == null)
+                throw new DomainException("Projeto não encontrado");
+            if (!projeto.Usuario.Any(u => u.UsuarioId == usuarioId))
+                throw new DomainException("Usuário não associado ao projeto");
+            _repository.DesassociarUsuarioDoProjeto(projetoId, usuarioId);
+        }
+
+        public List<ListarProjetoDto> ListarProjetosPorUsuario(Guid usuarioId)
+        {
+            return _repository.ListarProjetosPorUsuario(usuarioId)
+                .Select(ConversaoProjeto.ConverterParaDto)
+                .ToList();
+        }
+
+        public bool UsuarioEstaAssociadoAoProjeto(Guid usuarioId, Guid projetoId)
+        {
+            return _repository.UsuarioEstaAssociadoAoProjeto(usuarioId, projetoId);
+        }
+           
         public void Atualizar(Guid id, CriarProjetoDto projetoDto)
         {
             Projeto? projetoBanco = BuscarOuFalhar(id);

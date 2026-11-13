@@ -72,7 +72,7 @@ namespace API.Controllers
         /// Atualiza um tipo de metrica
         /// </summary>
         /// <param name="id">ID do tipo de metrica a ser atualizado</param>
-        /// <param name="dto">Novos dados do tipo de metrica</param>
+        /// <param name="tipoMetrica">Novos dados do tipo de metrica</param>
         /// <response code="204">Tipo de metrica atualizado com sucesso</response>
         /// <response code="400">Dados inválidos, tipo de metrica não encontrado ou já existente</response>
         [HttpPut("{id}")]

@@ -34,7 +34,7 @@ namespace API.Repositories
                 .ToList();
         }
 
-        public Usuario BuscarPorId(Guid id)
+        public Usuario? BuscarPorId(Guid id)
         {
             return UsuariosComRelacoes()
                 .AsNoTracking()
@@ -72,7 +72,7 @@ namespace API.Repositories
             {
                 return;
             }
-            Usuario usuarioBanco = _context.Usuario.Find(id);
+            Usuario? usuarioBanco = _context.Usuario.Find(id);
             if (usuarioBanco == null)
             {
                 return;
@@ -83,7 +83,7 @@ namespace API.Repositories
 
         public void AtualizarSenha(Guid id, byte[] senha)
         {
-            Usuario usuario = _context.Usuario.Find(id);
+            Usuario? usuario = _context.Usuario.Find(id);
             if (usuario == null)
             {
                 return;
@@ -96,7 +96,7 @@ namespace API.Repositories
 
         public void Inativar(Guid id)
         {
-            Usuario usuario = _context.Usuario.Find(id);
+            Usuario? usuario = _context.Usuario.Find(id);
             if (usuario == null)
             {
                 return;

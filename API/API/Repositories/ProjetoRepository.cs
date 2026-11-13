@@ -77,7 +77,7 @@ namespace API.Repositories
 
         public void DeletarProjeto(Guid id)
         {
-            Projeto projeto = _context.Projeto.Find(id);
+            Projeto? projeto = _context.Projeto.Find(id);
 
             if (projeto == null)
             {
@@ -168,9 +168,14 @@ namespace API.Repositories
                 .ToList() ?? new List<Projeto>();
         }
 
-        public List<Projeto> ListarProjetosPorStatusETipo(int statusId, int tipoId);
+        public void DeletarProjeto(Projeto? projeto)
         {
-            
+            if (projeto == null)
+            {
+                return;
+            }
+            _context.Projeto.Remove(projeto);
+            _context.SaveChanges();
         }
     }
 }
