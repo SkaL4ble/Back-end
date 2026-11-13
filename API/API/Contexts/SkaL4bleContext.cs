@@ -227,6 +227,7 @@ public partial class SkaL4bleContext : DbContext
                 .HasConstraintName("FK_Ticket_UsuarioResponsavel");
         });
 
+
         modelBuilder.Entity<TicketUsuario>(entity =>
         {
             entity.HasKey(e => new { e.TicketId, e.UsuarioId }).HasName("PK_TicketColaboradores");
