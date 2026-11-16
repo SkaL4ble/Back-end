@@ -20,5 +20,12 @@ namespace API.Applications.Regras
         // TIPO USUARIO
         public static void TipoUsuario(this string tipoUsuario) =>
             tipoUsuario.Validar("O tipo de usuário é obrigatório.");
+
+        // USUARIO
+        public static void EmailPessoal(this string emailPessoal) =>
+            emailPessoal.Validar("O email pessoal é obrigatório.");
+
+        public static void EmailGit(this string emailGit) =>
+            emailGit.Validar("O email GitHub é obrigatório.");
     }
 }

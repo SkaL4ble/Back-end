@@ -153,7 +153,7 @@ public class SonarQubeController : ControllerBase
     /// <response code="200">Issues listadas com sucesso.</response>
     /// <response code="400">Erro ao consultar o SonarQube.</response>
     /// <response code="404">Projeto não encontrado.</response>
-    [HttpGet("projetos/{id:guid}//issues")]
+    [HttpGet("projetos/{id:guid}/funcionarios/{emailFuncionario}/issues")]
     [ProducesResponseType(typeof(List<IssueSonarDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ListarIssuePorFuncionarioAsync(Guid id, string emailFuncionario)

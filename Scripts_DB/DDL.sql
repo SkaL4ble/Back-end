@@ -20,11 +20,14 @@ GO
 
 CREATE TABLE TipoUsuario (
     TipoUsuarioId UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
+    CodigoTipoUsuario VARCHAR(30) NOT NULL,
     NomeTipoUsuario VARCHAR(30) NOT NULL,
     CONSTRAINT PK_TipoUsuario PRIMARY KEY (TipoUsuarioId),
+    CONSTRAINT UQ_TipoUsuario_Codigo UNIQUE (CodigoTipoUsuario),
     CONSTRAINT UQ_TipoUsuario_Nome UNIQUE (NomeTipoUsuario)
 );
 GO
+
 
 CREATE TABLE Cargo (
     CargoId INT IDENTITY(1,1) NOT NULL,
@@ -137,20 +140,6 @@ CREATE TABLE Projeto (
         REFERENCES Usuario (UsuarioId),
     CONSTRAINT FK_Projeto_TipoProjeto FOREIGN KEY (TipoProjetoId) 
         REFERENCES TipoProjeto (TipoProjetoId)
-);
-GO
-
-CREATE TABLE ProjetoSonar (
-    ProjetoSonarId           UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY,
-    ProjetoId                UNIQUEIDENTIFIER NOT NULL REFERENCES Projeto(ProjetoId),
-    ChaveSonar               VARCHAR(400)     NOT NULL UNIQUE,
-    NomeSonar                VARCHAR(255)     NOT NULL,
-    Descricao                VARCHAR(500)     NULL,
-    Origem                   VARCHAR(10)      NOT NULL CHECK (Origem IN ('LOCAL', 'REMOTO')),
-    Plataforma               VARCHAR(50)      NULL,
-    TokenSonarCriptografado  VARCHAR(MAX)     NOT NULL,
-    TokenGithubCriptografado VARCHAR(MAX)     NULL,
-    DataCriacao              DATETIME         NOT NULL DEFAULT GETUTCDATE()
 );
 GO
 

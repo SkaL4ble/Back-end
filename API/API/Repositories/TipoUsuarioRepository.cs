@@ -26,6 +26,13 @@ namespace API.Repositories
                 .FirstOrDefault(u => u.TipoUsuarioId == id);
         }
 
+        public TipoUsuario BuscarPorCodigo(string codigo)
+        {
+            return _context.TipoUsuario
+                .AsNoTracking()
+                .FirstOrDefault(t => t.CodigoTipoUsuario == codigo);
+        }
+
         public bool TipoUsuarioExistente(Guid id)
         {
             return _context.TipoUsuario.AsNoTracking().Any(u => u.TipoUsuarioId == id);
