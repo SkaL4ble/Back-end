@@ -15,18 +15,26 @@ namespace API.Applications.Services
             _repository = repository;
         }
 
-        public Projeto? BuscarOuFalhar(Guid id)
+        public Projeto BuscarOuFalhar(Guid id)
         {
             return _repository.ObterPorId(id)
-                ?? throw new DomainException("Projeto não encontrado");
+                ?? throw new DomainException("Projeto não encontrado.");
         }
 
-        public static string NormalizarNome(string? nome)
+        private static string NormalizarNome(string? nome)
         {
             if (string.IsNullOrWhiteSpace(nome))
-                throw new DomainException("O nome do projeto é obrigatório");
+                throw new DomainException("O nome do projeto é obrigatório.");
 
             return nome.Trim();
+        }
+
+        private static string NormalizarLinkRepositorio(string? linkRepositorio)
+        {
+            if (string.IsNullOrWhiteSpace(linkRepositorio))
+                throw new DomainException("O link do repositório é obrigatório.");
+
+            return linkRepositorio.Trim();
         }
 
         public List<ListarProjetoDto> ListarProjetos()
@@ -38,71 +46,53 @@ namespace API.Applications.Services
 
         public ListarProjetoDto ObterPorId(Guid id)
         {
-            Projeto? projeto = BuscarOuFalhar(id);
+            Projeto projeto = BuscarOuFalhar(id);
             return ConversaoProjeto.ConverterParaDto(projeto);
         }
-
-        public void AdicionarProjeto(CriarProjetoDto projetoDto)
+        public ListarProjetoDto AdicionarProjeto(CriarProjetoDto projetoDto)
         {
             projetoDto.Nome = NormalizarNome(projetoDto.Nome);
+            projetoDto.LinkRepositorio = NormalizarLinkRepositorio(projetoDto.LinkRepositorio);
 
             if (_repository.NomeProjetoExiste(projetoDto.Nome))
-                throw new DomainException("Projeto já existe");
+                throw new DomainException("Um projeto com este nome já existe.");
 
+            Projeto novoProjeto = ConversaoProjeto.ConverterParaDomain(projetoDto);
 
-            _repository.CadastrarProjeto(ConversaoProjeto.ConverterParaDomain(projetoDto));
+            if (novoProjeto.ProjetoId == Guid.Empty)
+            {
+                novoProjeto.ProjetoId = Guid.NewGuid();
+            }
+
+            _repository.CadastrarProjeto(novoProjeto);
+
+            return ConversaoProjeto.ConverterParaDto(novoProjeto);
         }
 
-        public void AssociarUsuario(Guid projetoId, Guid usuarioId)
-        {
-            Projeto? projeto = BuscarOuFalhar(projetoId);
-            if (projeto == null)
-                throw new DomainException("Projeto não encontrado");
-            if (projeto.Usuario.Any(u => u.UsuarioId == usuarioId))
-                throw new DomainException("Usuário já associado ao projeto");
-            _repository.AssociarUsuarioAoProjeto(projetoId, usuarioId);
-        }
-
-        public void DesassociarUsuario(Guid projetoId, Guid usuarioId)
-        {
-            Projeto? projeto = BuscarOuFalhar(projetoId);
-            if (projeto == null)
-                throw new DomainException("Projeto não encontrado");
-            if (!projeto.Usuario.Any(u => u.UsuarioId == usuarioId))
-                throw new DomainException("Usuário não associado ao projeto");
-            _repository.DesassociarUsuarioDoProjeto(projetoId, usuarioId);
-        }
-
-        public List<ListarProjetoDto> ListarProjetosPorUsuario(Guid usuarioId)
-        {
-            return _repository.ListarProjetosPorUsuario(usuarioId)
-                .Select(ConversaoProjeto.ConverterParaDto)
-                .ToList();
-        }
-
-        public bool UsuarioEstaAssociadoAoProjeto(Guid usuarioId, Guid projetoId)
-        {
-            return _repository.UsuarioEstaAssociadoAoProjeto(usuarioId, projetoId);
-        }
-           
         public void Atualizar(Guid id, CriarProjetoDto projetoDto)
         {
-            Projeto? projetoBanco = BuscarOuFalhar(id);
+            Projeto projetoBanco = BuscarOuFalhar(id);
             string novoNome = NormalizarNome(projetoDto.Nome);
 
             bool nomeMudou = !string.Equals(
-                projetoBanco?.NomeProjeto, novoNome, StringComparison.OrdinalIgnoreCase);
+                projetoBanco.NomeProjeto, novoNome, StringComparison.OrdinalIgnoreCase);
 
             if (nomeMudou && _repository.NomeProjetoExiste(novoNome))
-                throw new DomainException("Projeto já existe");
+                throw new DomainException("Um projeto com este nome já existe.");
 
             projetoDto.Nome = novoNome;
-            _repository.AtualizarProjeto(id, ConversaoProjeto.ConverterParaDomain(projetoDto));
+            projetoDto.LinkRepositorio = NormalizarLinkRepositorio(projetoDto.LinkRepositorio);
+
+            Projeto projetoAtualizado = ConversaoProjeto.ConverterParaDomain(projetoDto);
+
+            projetoAtualizado.ProjetoId = id;
+
+            _repository.AtualizarProjeto(id, projetoAtualizado);
         }
 
         public void Remover(Guid id)
         {
-            Projeto? projeto = BuscarOuFalhar(id);
+            Projeto projeto = BuscarOuFalhar(id);
             _repository.DeletarProjeto(projeto);
         }
     }

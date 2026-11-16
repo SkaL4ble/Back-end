@@ -9,13 +9,14 @@ public partial class Projeto
 
     public string NomeProjeto { get; set; } = null!;
 
-    public DateTime? Prazo { get; set; }
+    public DateTime Prazo { get; set; }
 
     public Guid Autor { get; set; }
 
     public string? Descricao { get; set; }
 
     public string LinkRepositorio { get; set; } = null!;
+    public DateTime DataCriacao { get; set; }
 
     public bool Ativo { get; set; }
 

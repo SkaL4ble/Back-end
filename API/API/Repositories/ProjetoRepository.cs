@@ -60,11 +60,11 @@ namespace API.Repositories
                 .Where(p => p.TipoProjetoId == tipoId)
                 .ToList();
         }
-        public void CadastrarProjeto(Projeto projeto)
-        {
-            _context.Projeto.Add(projeto);
-            _context.SaveChanges();
-        }
+       public void CadastrarProjeto(Projeto projeto)
+    {
+        _context.Projeto.Add(projeto);
+        _context.SaveChanges();
+    }
         public void AtualizarProjeto(Guid id, Projeto projeto)
         {
             var projetoExistente = ObterPorId(id);

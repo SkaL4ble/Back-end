@@ -34,8 +34,6 @@ public partial class SkaL4bleContext : DbContext
 
     public virtual DbSet<Ticket> Ticket { get; set; }
 
-    public virtual DbSet<TicketUsuario> TicketUsuario { get; set; }
-
     public virtual DbSet<TipoMetrica> TipoMetrica { get; set; }
 
     public virtual DbSet<TipoProjeto> TipoProjeto { get; set; }
@@ -53,7 +51,6 @@ public partial class SkaL4bleContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=SkaL4ble;Trusted_Connection=True;TrustServerCertificate=True");
-
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -225,22 +222,7 @@ public partial class SkaL4bleContext : DbContext
             entity.HasOne(d => d.UsuarioResponsavelNavigation).WithMany(p => p.Ticket)
                 .HasForeignKey(d => d.UsuarioResponsavel)
                 .HasConstraintName("FK_Ticket_UsuarioResponsavel");
-        });
 
-
-        modelBuilder.Entity<TicketUsuario>(entity =>
-        {
-            entity.HasKey(e => new { e.TicketId, e.UsuarioId }).HasName("PK_TicketColaboradores");
-
-            entity.Property(e => e.Autor).HasDefaultValue(true);
-
-            entity.HasOne(d => d.Ticket).WithMany(p => p.TicketUsuario)
-                .HasForeignKey(d => d.TicketId)
-                .HasConstraintName("FK_TicketUsuario_Ticket");
-
-            entity.HasOne(d => d.Usuario).WithMany(p => p.TicketUsuario)
-                .HasForeignKey(d => d.UsuarioId)
-                .HasConstraintName("FK_TicketUsuario_Usuario");
             entity.HasMany(d => d.Usuario).WithMany(p => p.TicketNavigation)
                 .UsingEntity<Dictionary<string, object>>(
                     "TicketUsuario",
@@ -285,14 +267,9 @@ public partial class SkaL4bleContext : DbContext
 
         modelBuilder.Entity<TipoUsuario>(entity =>
         {
-            entity.HasIndex(e => e.CodigoTipoUsuario, "UQ_TipoUsuario_Codigo").IsUnique();
-
             entity.HasIndex(e => e.NomeTipoUsuario, "UQ_TipoUsuario_Nome").IsUnique();
 
             entity.Property(e => e.TipoUsuarioId).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.CodigoTipoUsuario)
-                .HasMaxLength(30)
-                .IsUnicode(false);
             entity.Property(e => e.NomeTipoUsuario)
                 .HasMaxLength(30)
                 .IsUnicode(false);
@@ -302,10 +279,15 @@ public partial class SkaL4bleContext : DbContext
         {
             entity.ToTable(tb => tb.HasTrigger("TR_Usuario_SoftDeleteCascade"));
 
+            entity.HasIndex(e => e.EmailGitHub, "UQ_Usuario_EmailGitHub").IsUnique();
+
             entity.HasIndex(e => e.EmailPessoal, "UQ_Usuario_EmailPessoal").IsUnique();
 
             entity.Property(e => e.UsuarioId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Ativo).HasDefaultValue(true);
+            entity.Property(e => e.EmailGitHub)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.EmailPessoal)
                 .HasMaxLength(100)
                 .IsUnicode(false);

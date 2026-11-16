@@ -10,7 +10,9 @@ namespace API.Applications.Conversoes.ConversoesDeDto
             return new ListarProjetoDto
             {
                 Id = projeto.ProjetoId,
-                Nome = projeto.NomeProjeto
+                Nome = projeto.NomeProjeto,
+                Status = projeto.StatusProjetoId,
+                Prazo = projeto.Prazo
             };
         }
 
@@ -18,7 +20,14 @@ namespace API.Applications.Conversoes.ConversoesDeDto
         {
             return new Projeto
             {
-                NomeProjeto = projetoDto.Nome
+                NomeProjeto = projetoDto.Nome,
+                Descricao = projetoDto.Descricao,
+                LinkRepositorio = projetoDto.LinkRepositorio,
+                Autor = projetoDto.Autor,
+                StatusProjetoId = projetoDto.StatusId,
+                TipoProjetoId = projetoDto.TipoId,
+                Prazo = projetoDto.Prazo,
+                DataCriacao = projetoDto.DataCriacao
             };
         }
     }
