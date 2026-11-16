@@ -129,18 +129,37 @@ public class SonarQubeService
         return resultado.Values.OrderBy(i => i.DataCriacao).ToList();
     }
 
-    public async Task<List<IssueSonarDto>> ListarIssuesPorFuncionarioAsync(string chave, string emailFuncionario)
+    public async Task<List<IssueSonarDto>>
+    ListarIssuesPorFuncionarioAsync(
+        string chaveSonar,
+        string emailFuncionario)
     {
-        var resultado = new Dictionary<string, IssueSonarDto>();
-        await BuscarJanelaAsync(chave,
-            new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+        var resultado =
+            new Dictionary<string, IssueSonarDto>();
+
+        await BuscarJanelaAsync(
+            chaveSonar,
+            new DateTime(
+                2000,
+                1,
+                1,
+                0,
+                0,
+                0,
+                DateTimeKind.Utc),
             DateTime.UtcNow.AddMinutes(1),
             resultado);
+
         return resultado.Values
-            .Where(i => i.Autor.Equals(emailFuncionario, StringComparison.OrdinalIgnoreCase))
-            .OrderBy(i => i.DataCriacao)
+            .Where(issue =>
+                string.Equals(
+                    issue.Autor,
+                    emailFuncionario,
+                    StringComparison.OrdinalIgnoreCase))
+            .OrderBy(issue => issue.DataCriacao)
             .ToList();
     }
+
 
     // O SonarQube não devolve mais de 10.000 issues por busca. Se a janela passar disso,
     // ela é dividida ao meio até caber. O dicionário elimina duplicatas nas bordas.

@@ -14,7 +14,7 @@ public class ProjetoSonarRepository : IProjetoSonarRepository
     }
 
     public ProjetoSonar? ObterPorId(Guid projetoSonarId) =>
-        _context.ProjetoSonar.FirstOrDefault(p => p.ProjetoSonarId == projetoSonarId);
+        _context.ProjetoSonar.FirstOrDefault(p => p.ProjetoId == projetoSonarId);
 
     public List<Workflow> ObterWorkflows() => _context.Workflow.ToList();
 
@@ -32,4 +32,29 @@ public class ProjetoSonarRepository : IProjetoSonarRepository
         _context.ProjetoSonar.Update(projetoSonar);
         _context.SaveChanges();
     }
+
+    public List<Guid> ListarIdsPorUsuario(Guid usuarioId)
+    {
+        return _context.Projeto
+            .Where(projeto =>
+                projeto.Ativo &&
+                projeto.Usuario.Any(usuario =>
+                    usuario.UsuarioId == usuarioId))
+            .Select(projeto => projeto.ProjetoId)
+            .ToList();
+    }
+
+    public List<string> ListarChavesSonarPorProjeto(
+    Guid projetoId)
+    {
+        return _context.ProjetoSonar
+            .Where(projetoSonar =>
+                projetoSonar.ProjetoId == projetoId)
+            .Select(projetoSonar =>
+                projetoSonar.ChaveSonar)
+            .Where(chave =>
+                !string.IsNullOrWhiteSpace(chave))
+            .ToList();
+    }
+
 }

@@ -25,16 +25,16 @@ public class ProjetoSonarService
     private readonly SonarQubeService _sonar;
     private readonly CriptografiaService _criptografia;
     private readonly string _urlBase;
-    private readonly ProjetoService _serviceProjeto;
+    private readonly UsuarioService _usuarioService;
 
     public ProjetoSonarService(IProjetoSonarRepository repository, SonarQubeService sonar,
-        CriptografiaService criptografia, IConfiguration config, ProjetoService serviceProjeto)
+        CriptografiaService criptografia, IConfiguration config, UsuarioService usuarioService)
     {
         _repository = repository;
         _sonar = sonar;
         _criptografia = criptografia;
         _urlBase = (config["SonarQube:UrlBase"] ?? string.Empty).TrimEnd('/');
-        _serviceProjeto = serviceProjeto;
+        _usuarioService = usuarioService;
     }
 
     // ============================== VALIDACOES ==============================
@@ -75,13 +75,6 @@ public class ProjetoSonarService
         return normalizada;
     }
 
-    private static string ExigirTexto(string? valor, string campo)
-    {
-        if (string.IsNullOrWhiteSpace(valor))
-            throw new DomainException($"{campo} é obrigatório");
-
-        return valor.Trim();
-    }
 
     // Chave do SonarQube: só aceita letras, números, '-', '_', '.' e ':'.
     // O sufixo aleatório evita colisão entre projetos com o mesmo nome.
@@ -231,9 +224,65 @@ public class ProjetoSonarService
 
     public async Task<List<IssueSonarDto>> ListarIssuesAsync(Guid id) =>
         await _sonar.ListarIssuesAsync(BuscarOuFalharSonar(id).ChaveSonar);
-    public async Task<List<IssueSonarDto>> ListarIssuesPorFuncionaro(Guid id, string email)
+    public async Task<List<IssueSonarDto>>
+    ListarIssuesPorUsuarioAsync(Guid usuarioId)
     {
-        return await _sonar.ListarIssuesPorFuncionarioAsync(BuscarOuFalharSonar(id).ChaveSonar, email);
+        // Busca o usuário pelo ID
+        var usuario =
+            _usuarioService.BuscarPorId(usuarioId);
+
+        // E-mail utilizado para comparar com o Autor da issue
+        var emailFuncionario =
+            usuario.EmailPessoal?.Trim();
+
+        if (string.IsNullOrWhiteSpace(emailFuncionario))
+        {
+            throw new DomainException(
+                "O funcionário não possui e-mail GitHub cadastrado");
+        }
+
+        // Lista os IDs dos projetos do usuário
+        var idsProjetos =
+            _repository.ListarIdsPorUsuario(usuarioId);
+
+        if (idsProjetos.Count == 0)
+        {
+            throw new DomainException(
+                "O funcionário não está cadastrado em nenhum projeto");
+        }
+
+        var issuesDoFuncionario =
+            new List<IssueSonarDto>();
+
+        // Percorre cada projeto do usuário
+        foreach (var projetoId in idsProjetos)
+        {
+            // Busca as chaves do SonarQube desse projeto
+            var chavesSonar =
+                _repository.ListarChavesSonarPorProjeto(
+                    projetoId);
+
+            // Um projeto pode ter uma ou mais configurações SonarQube
+            foreach (var chaveSonar in chavesSonar)
+            {
+                // Busca somente issues cujo Autor seja o e-mail
+                var issues =
+                    await _sonar.ListarIssuesPorFuncionarioAsync(
+                        chaveSonar,
+                        emailFuncionario);
+
+                issuesDoFuncionario.AddRange(issues);
+            }
+        }
+
+        return issuesDoFuncionario
+            .GroupBy(
+                issue => issue.Chave,
+                StringComparer.OrdinalIgnoreCase)
+            .Select(grupo => grupo.First())
+            .OrderBy(issue => issue.DataCriacao)
+            .ToList();
     }
+
 
 }
