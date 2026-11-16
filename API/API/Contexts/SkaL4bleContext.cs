@@ -26,6 +26,8 @@ public partial class SkaL4bleContext : DbContext
 
     public virtual DbSet<Projeto> Projeto { get; set; }
 
+    public virtual DbSet<ProjetoSonar> ProjetoSonar { get; set; }
+
     public virtual DbSet<StatusProjeto> StatusProjeto { get; set; }
 
     public virtual DbSet<StatusTicket> StatusTicket { get; set; }
@@ -33,8 +35,6 @@ public partial class SkaL4bleContext : DbContext
     public virtual DbSet<Tecnologia> Tecnologia { get; set; }
 
     public virtual DbSet<Ticket> Ticket { get; set; }
-
-    public virtual DbSet<TicketUsuario> TicketUsuario { get; set; }
 
     public virtual DbSet<TipoMetrica> TipoMetrica { get; set; }
 
@@ -49,6 +49,12 @@ public partial class SkaL4bleContext : DbContext
     public virtual DbSet<UsuarioEmailGit> UsuarioEmailGit { get; set; }
 
     public virtual DbSet<UsuarioIdeToken> UsuarioIdeToken { get; set; }
+
+    public virtual DbSet<Workflow> Workflow { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=SkaL4ble;Trusted_Connection=True;TrustServerCertificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -128,6 +134,7 @@ public partial class SkaL4bleContext : DbContext
 
             entity.Property(e => e.ProjetoId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Ativo).HasDefaultValue(true);
+            entity.Property(e => e.DataCriacao).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.Descricao).IsUnicode(false);
             entity.Property(e => e.LinkRepositorio)
                 .HasMaxLength(150)
@@ -164,6 +171,37 @@ public partial class SkaL4bleContext : DbContext
                     {
                         j.HasKey("ProjetoId", "UsuarioId");
                     });
+        });
+
+        modelBuilder.Entity<ProjetoSonar>(entity =>
+        {
+            entity.HasKey(e => e.ProjetoSonarId).HasName("PK__ProjetoS__94B1675300E4BD38");
+
+            entity.HasIndex(e => e.ChaveSonar, "UQ__ProjetoS__58568D62D4147687").IsUnique();
+
+            entity.Property(e => e.ProjetoSonarId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.ChaveSonar)
+                .HasMaxLength(400)
+                .IsUnicode(false);
+            entity.Property(e => e.DataCriacao)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Descricao)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.NomeSonar)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.Origem)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.TokenSonarCriptografado).IsUnicode(false);
+            entity.Property(e => e.WorkflowId).HasDefaultValue(1);
+
+            entity.HasOne(d => d.Projeto).WithMany(p => p.ProjetoSonar)
+                .HasForeignKey(d => d.ProjetoId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__ProjetoSo__Proje__55F4C372");
         });
 
         modelBuilder.Entity<StatusProjeto>(entity =>
@@ -220,21 +258,20 @@ public partial class SkaL4bleContext : DbContext
             entity.HasOne(d => d.UsuarioResponsavelNavigation).WithMany(p => p.Ticket)
                 .HasForeignKey(d => d.UsuarioResponsavel)
                 .HasConstraintName("FK_Ticket_UsuarioResponsavel");
-        });
 
-        modelBuilder.Entity<TicketUsuario>(entity =>
-        {
-            entity.HasKey(e => new { e.TicketId, e.UsuarioId }).HasName("PK_TicketColaboradores");
-
-            entity.Property(e => e.Autor).HasDefaultValue(true);
-
-            entity.HasOne(d => d.Ticket).WithMany(p => p.TicketUsuario)
-                .HasForeignKey(d => d.TicketId)
-                .HasConstraintName("FK_TicketUsuario_Ticket");
-
-            entity.HasOne(d => d.Usuario).WithMany(p => p.TicketUsuario)
-                .HasForeignKey(d => d.UsuarioId)
-                .HasConstraintName("FK_TicketUsuario_Usuario");
+            entity.HasMany(d => d.Usuario).WithMany(p => p.TicketNavigation)
+                .UsingEntity<Dictionary<string, object>>(
+                    "TicketUsuario",
+                    r => r.HasOne<Usuario>().WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .HasConstraintName("FK_TicketUsuario_Usuario"),
+                    l => l.HasOne<Ticket>().WithMany()
+                        .HasForeignKey("TicketId")
+                        .HasConstraintName("FK_TicketUsuario_Ticket"),
+                    j =>
+                    {
+                        j.HasKey("TicketId", "UsuarioId").HasName("PK_TicketColaboradores");
+                    });
         });
 
         modelBuilder.Entity<TipoMetrica>(entity =>
@@ -278,10 +315,15 @@ public partial class SkaL4bleContext : DbContext
         {
             entity.ToTable(tb => tb.HasTrigger("TR_Usuario_SoftDeleteCascade"));
 
+            entity.HasIndex(e => e.EmailGitHub, "UQ_Usuario_EmailGitHub").IsUnique();
+
             entity.HasIndex(e => e.EmailPessoal, "UQ_Usuario_EmailPessoal").IsUnique();
 
             entity.Property(e => e.UsuarioId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Ativo).HasDefaultValue(true);
+            entity.Property(e => e.EmailGitHub)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.EmailPessoal)
                 .HasMaxLength(100)
                 .IsUnicode(false);
@@ -349,6 +391,18 @@ public partial class SkaL4bleContext : DbContext
             entity.HasOne(d => d.Usuario).WithMany(p => p.UsuarioIdeToken)
                 .HasForeignKey(d => d.UsuarioId)
                 .HasConstraintName("FK_UsuarioIdeToken_Usuario");
+        });
+
+        modelBuilder.Entity<Workflow>(entity =>
+        {
+            entity.HasKey(e => e.WorkflowId).HasName("PK__Workflow__5704A66A23491600");
+
+            entity.HasIndex(e => e.NomeWorkflow, "UQ__Workflow__1C21ED92D7D42DAF").IsUnique();
+
+            entity.Property(e => e.WorkflowId).ValueGeneratedNever();
+            entity.Property(e => e.NomeWorkflow)
+                .HasMaxLength(30)
+                .IsUnicode(false);
         });
 
         OnModelCreatingPartial(modelBuilder);

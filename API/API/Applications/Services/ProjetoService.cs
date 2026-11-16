@@ -16,6 +16,24 @@ namespace API.Applications.Services
             _repository = repository;
         }
 
+        public bool ValidarProjeto(CriarProjetoDto projetoDto)
+        {
+            projetoDto.Nome = NormalizarNome(projetoDto.Nome);
+            if (_repository.NomeProjetoExiste(projetoDto.Nome))
+                throw new DomainException("Projeto já existe");
+            else if (projetoDto.LinkRepositorio != null && _repository.LinkRepositorioExiste(projetoDto.LinkRepositorio))
+                throw new DomainException("Link de repositório já existe");
+            else if (projetoDto.AutorId != null && !_repository.UsuarioExiste(projetoDto.AutorId))
+                throw new DomainException("Autor não encontrado");
+            else if (projetoDto.StatusId != null && !_repository.StatusExiste(projetoDto.StatusId))
+                throw new DomainException("Status não encontrado");
+            else if (projetoDto.TipoId != null && !_repository.TipoExiste(projetoDto.TipoId))
+                throw new DomainException("Tipo de projeto não encontrado");
+            else if(_repository.NomeProjetoExiste(projetoDto.Nome))
+                throw new DomainException("Projeto já existe");
+            return true;
+        }
+
         public Projeto? BuscarOuFalhar(Guid id)
         {
             return _repository.ObterPorId(id)
@@ -45,12 +63,7 @@ namespace API.Applications.Services
 
         public void AdicionarProjeto(CriarProjetoDto projetoDto)
         {
-            projetoDto.Nome = NormalizarNome(projetoDto.Nome);
-
-            if (_repository.NomeProjetoExiste(projetoDto.Nome))
-                throw new DomainException("Projeto já existe");
-
-
+            ValidarProjeto(projetoDto);
             _repository.CadastrarProjeto(ConversaoProjeto.ConverterParaDomain(projetoDto));
         }
 
@@ -65,14 +78,14 @@ namespace API.Applications.Services
             if (nomeMudou && _repository.NomeProjetoExiste(novoNome))
                 throw new DomainException("Projeto já existe");
 
-            projetoDto.Nome = novoNome;
+            ValidarProjeto(projetoDto);
             _repository.AtualizarProjeto(id, ConversaoProjeto.ConverterParaDomain(projetoDto));
         }
 
         public void Remover(Guid id)
         {
             Projeto? projeto = BuscarOuFalhar(id);
-            _repository.DeletarProjeto(projeto);
+            _repository.DeletarProjeto(id);
         }
     }
 }

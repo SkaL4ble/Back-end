@@ -9,8 +9,10 @@ namespace API.Applications.Conversoes.ConversoesDeDto
         {
             return new ListarProjetoDto
             {
-                Id = projeto.ProjetoId,
-                Nome = projeto.NomeProjeto
+                ProjetoId = projeto.ProjetoId,
+                Nome = projeto.NomeProjeto,
+                AutorId = projeto.Autor,
+
             };
         }
 

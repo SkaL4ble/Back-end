@@ -9,9 +9,11 @@ public partial class Usuario
 
     public string NomeUsuario { get; set; } = null!;
 
-    public string EmailPessoal { get; set; } = null!;
+    public string? EmailPessoal { get; set; }
 
-    public byte[]? Senha { get; set; }
+    public byte[] Senha { get; set; } = null!;
+
+    public string EmailGitHub { get; set; } = null!;
 
     public byte[]? Imagem { get; set; }
 
@@ -35,8 +37,6 @@ public partial class Usuario
 
     public virtual ICollection<Ticket> Ticket { get; set; } = new List<Ticket>();
 
-    public virtual ICollection<TicketUsuario> TicketUsuario { get; set; } = new List<TicketUsuario>();
-
     public virtual TipoUsuario TipoUsuario { get; set; } = null!;
 
     public virtual ICollection<UsuarioEmailGit> UsuarioEmailGit { get; set; } = new List<UsuarioEmailGit>();
@@ -46,4 +46,6 @@ public partial class Usuario
     public virtual ICollection<Projeto> ProjetoNavigation { get; set; } = new List<Projeto>();
 
     public virtual ICollection<Tecnologia> Tecnologia { get; set; } = new List<Tecnologia>();
+
+    public virtual ICollection<Ticket> TicketNavigation { get; set; } = new List<Ticket>();
 }
