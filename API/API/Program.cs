@@ -101,6 +101,12 @@ builder.Services.AddScoped<TicketService>();
 builder.Services.AddScoped<IProjetoRepository, ProjetoRepository>();
 builder.Services.AddScoped<ProjetoService>();
 
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<UsuarioService>();
+
+builder.Services.AddScoped<ITipoUsuarioRepository, TipoUsuarioRepository>();
+builder.Services.AddScoped<TipoUsuarioService>();
+
 //======================= SONARQUBE =======================
 builder.Services.AddDataProtection();
 builder.Services.AddScoped<IProjetoSonarRepository, ProjetoSonarRepository>();

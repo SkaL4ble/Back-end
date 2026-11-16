@@ -31,14 +31,9 @@ public partial class Ticket
 
     public virtual StatusTicket StatusTicket { get; set; } = null!;
 
-    public virtual ICollection<TicketUsuario> TicketUsuario { get; set; } = new List<TicketUsuario>();
-
     public virtual TipoTicket TipoTicket { get; set; } = null!;
 
     public virtual Usuario? UsuarioResponsavelNavigation { get; set; }
-<<<<<<< HEAD
 
     public virtual ICollection<Usuario> Usuario { get; set; } = new List<Usuario>();
-=======
->>>>>>> 54c68d4786ac642a7cdc0febe54e544fea06c48a
 }

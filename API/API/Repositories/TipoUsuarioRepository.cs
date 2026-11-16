@@ -30,7 +30,7 @@ namespace API.Repositories
         {
             return _context.TipoUsuario
                 .AsNoTracking()
-                .FirstOrDefault(t => t.CodigoTipoUsuario == codigo);
+                .FirstOrDefault(t => t.NomeTipoUsuario == codigo);
         }
 
         public bool TipoUsuarioExistente(Guid id)
