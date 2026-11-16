@@ -4,77 +4,66 @@ using API.DTOs.TipoProjetoDto;
 using API.Exceptions;
 using API.Interfaces;
 
-namespace API.Applications.Services
+namespace API.Applications.Services;
+
+public class TipoProjetoService
 {
-    public class TipoProjetoService
+    private const int TamanhoMaximoNome = 30;
+    private readonly ITipoProjetoRepository _repository;
+
+    public TipoProjetoService(ITipoProjetoRepository repository) => _repository = repository;
+
+    private TipoProjeto BuscarOuFalhar(int id) =>
+        _repository.ObterPorId(id)
+        ?? throw new DomainException("Tipo de projeto não encontrado");
+
+    private static string NormalizarNome(string? nome)
     {
-        private readonly ITipoProjetoRepository _repository;
+        if (string.IsNullOrWhiteSpace(nome))
+            throw new DomainException("O nome do tipo de projeto é obrigatório");
 
-        public TipoProjetoService(ITipoProjetoRepository repository)
-        {
-            _repository = repository;
-        }
+        var normalizado = nome.Trim();
+        if (normalizado.Length > TamanhoMaximoNome)
+            throw new DomainException($"O nome do tipo de projeto deve ter no máximo {TamanhoMaximoNome} caracteres");
 
-        private TipoProjeto BuscarOuFalhar(int id)
-        {
-            return _repository.ObterPorId(id)
-                ?? throw new DomainException("Tipo de projeto não encontrado");
-        }
+        return normalizado;
+    }
 
-        private static string NormalizarNome(string? nome)
-        {
-            if (string.IsNullOrWhiteSpace(nome))
-                throw new DomainException("O nome do tipo de projeto é obrigatório");
+    public List<ListarTipoProjetoDto> ListarTiposProjeto() =>
+        _repository.ListarTiposProjeto()
+            .Select(ConversaoTipoProjeto.ConverterParaDto)
+            .ToList();
 
-            return nome.Trim();
-        }
+    public ListarTipoProjetoDto ObterPorId(int id) =>
+        ConversaoTipoProjeto.ConverterParaDto(BuscarOuFalhar(id));
 
-        public List<ListarTipoProjetoDto> ListarTiposProjeto()
-        {
-            return _repository.ListarTiposProjeto()
-                .Select(ConversaoTipoProjeto.ConverterParaDto)
-                .ToList();
-        }
+    public void AdicionarTipoProjeto(CriarTipoProjetoDto dto)
+    {
+        var nome = NormalizarNome(dto.NomeTipoProjeto);
+        if (_repository.NomeTipoProjetoExiste(nome))
+            throw new DomainException("Tipo de projeto já existe");
 
-        public ListarTipoProjetoDto ObterPorId(int id)
-        {
-            TipoProjeto tipoProjeto = BuscarOuFalhar(id);
-            return ConversaoTipoProjeto.ConverterParaDto(tipoProjeto);
-        }
+        _repository.Adicionar(new TipoProjeto { NomeTipoProjeto = nome });
+    }
 
-        public void AdicionarTipoProjeto(CriarTipoProjetoDto tipoProjetoDto)
-        {
-            tipoProjetoDto.NomeTipoProjeto = NormalizarNome(tipoProjetoDto.NomeTipoProjeto);
+    public void Atualizar(int id, CriarTipoProjetoDto dto)
+    {
+        var atual = BuscarOuFalhar(id);
+        var nome = NormalizarNome(dto.NomeTipoProjeto);
+        var mudou = !string.Equals(atual.NomeTipoProjeto, nome, StringComparison.OrdinalIgnoreCase);
 
-            if (_repository.NomeTipoProjetoExiste(tipoProjetoDto.NomeTipoProjeto))
-                throw new DomainException("Tipo de projeto já existe");
+        if (mudou && _repository.NomeTipoProjetoExiste(nome))
+            throw new DomainException("Tipo de projeto já existe");
 
-            _repository.Adicionar(ConversaoTipoProjeto.ConverterParaDomain(tipoProjetoDto));
-        }
+        _repository.Atualizar(id, new TipoProjeto { TipoProjetoId = id, NomeTipoProjeto = nome });
+    }
 
-        public void Atualizar(int id, CriarTipoProjetoDto tipoProjetoDto)
-        {
-            TipoProjeto tipoProjetoBanco = BuscarOuFalhar(id);
-            string novoNome = NormalizarNome(tipoProjetoDto.NomeTipoProjeto);
+    public void Deletar(int id)
+    {
+        BuscarOuFalhar(id);
+        if (_repository.PossuiProjetos(id))
+            throw new DomainException("Não é possível excluir: há projetos vinculados a este tipo de projeto");
 
-            bool nomeMudou = !string.Equals(
-                tipoProjetoBanco.NomeTipoProjeto, novoNome, StringComparison.OrdinalIgnoreCase);
-
-            if (nomeMudou && _repository.NomeTipoProjetoExiste(novoNome))
-                throw new DomainException("Tipo de projeto já existe");
-
-            tipoProjetoDto.NomeTipoProjeto = novoNome;
-            _repository.Atualizar(id, ConversaoTipoProjeto.ConverterParaDomain(tipoProjetoDto));
-        }
-
-        public void Deletar(int id)
-        {
-            BuscarOuFalhar(id);
-
-            if (_repository.PossuiProjetos(id))
-                throw new DomainException("Não é possível excluir: há projetos vinculados a este tipo de projeto");
-
-            _repository.Deletar(id);
-        }
+        _repository.Deletar(id);
     }
 }

@@ -4,77 +4,69 @@ using API.DTOs.StatusTicketDto;
 using API.Exceptions;
 using API.Interfaces;
 
-namespace API.Applications.Services
+namespace API.Applications.Services;
+
+public class StatusTicketService
 {
-    public class StatusTicketService
+    private const int TamanhoMaximoNome = 30;
+    private const int TamanhoMinimoNome = 3;
+    private readonly IStatusTicketRepository _repository;
+
+    public StatusTicketService(IStatusTicketRepository repository) => _repository = repository;
+
+    private StatusTicket BuscarOuFalhar(int id) =>
+        _repository.ObterPorId(id)
+        ?? throw new DomainException("Status de ticket não encontrado");
+
+    private static string NormalizarNome(string? nome)
     {
-        private readonly IStatusTicketRepository _repository;
+        if (string.IsNullOrWhiteSpace(nome))
+            throw new DomainException("O nome do status de ticket é obrigatório");
 
-        public StatusTicketService(IStatusTicketRepository repository)
-        {
-            _repository = repository;
-        }
+        var normalizado = nome.Trim();
+        if (normalizado.Length > TamanhoMaximoNome)
+            throw new DomainException($"O nome do status de ticket deve ter no máximo {TamanhoMaximoNome} caracteres");
+        else if (normalizado.Length < TamanhoMinimoNome)
+            throw new DomainException($"O nome do status de ticket deve ter no mínimo {TamanhoMinimoNome} caracteres");
 
-        private StatusTicket BuscarOuFalhar(int id)
-        {
-            return _repository.ObterPorId(id)
-                ?? throw new DomainException("Status de ticket não encontrado");
-        }
+        return normalizado;
+    }
 
-        private static string NormalizarNome(string? nome)
-        {
-            if (string.IsNullOrWhiteSpace(nome))
-                throw new DomainException("O nome do status de ticket é obrigatório");
+    public List<ListarStatusTicketDto> ListarStatusTicket() =>
+        _repository.ListarStatusTicket()
+            .Select(ConversaoStatusTicket.ConverterParaDto)
+            .ToList();
 
-            return nome.Trim();
-        }
+    public ListarStatusTicketDto ObterPorId(int id) =>
+        ConversaoStatusTicket.ConverterParaDto(BuscarOuFalhar(id));
 
-        public List<ListarStatusTicketDto> ListarStatusTicket()
-        {
-            return _repository.ListarStatusTicket()
-                .Select(ConversaoStatusTicket.ConverterParaDto)
-                .ToList();
-        }
+    public void AdicionarStatusTicket(CriarStatusTicketDto dto)
+    {
+        var nome = NormalizarNome(dto.NomeStatusTicket);
+        if (_repository.NomeStatusTicketExiste(nome))
+            throw new DomainException("Status de ticket já existe");
 
-        public ListarStatusTicketDto ObterPorId(int id)
-        {
-            StatusTicket statusTicket = BuscarOuFalhar(id);
-            return ConversaoStatusTicket.ConverterParaDto(statusTicket);
-        }
+        _repository.Adicionar(new StatusTicket { NomeStatusTicket = nome });
+    }
 
-        public void AdicionarStatusTicket(CriarStatusTicketDto statusTicketDto)
-        {
-            statusTicketDto.NomeStatusTicket = NormalizarNome(statusTicketDto.NomeStatusTicket);
+    public void Atualizar(int id, CriarStatusTicketDto dto)
+    {
+        var atual = BuscarOuFalhar(id);
+        var nome = NormalizarNome(dto.NomeStatusTicket);
+        var mudou = !string.Equals(atual.NomeStatusTicket, nome, StringComparison.OrdinalIgnoreCase);
 
-            if (_repository.NomeStatusTicketExiste(statusTicketDto.NomeStatusTicket))
-                throw new DomainException("Status de ticket já existe");
+        if (mudou && _repository.NomeStatusTicketExiste(nome))
+            throw new DomainException("Status de ticket já existe");
 
-            _repository.Adicionar(ConversaoStatusTicket.ConverterParaDomain(statusTicketDto));
-        }
+        _repository.Atualizar(id, new StatusTicket { StatusTicketId = id, NomeStatusTicket = nome });
+    }
 
-        public void Atualizar(int id, CriarStatusTicketDto statusTicketDto)
-        {
-            StatusTicket statusTicketBanco = BuscarOuFalhar(id);
-            string novoNome = NormalizarNome(statusTicketDto.NomeStatusTicket);
+    public void Deletar(int id)
+    {
+        BuscarOuFalhar(id);
+        if (_repository.PossuiTickets(id))
+            throw new DomainException("Não é possível excluir: há tickets vinculados a este status de ticket");
 
-            bool nomeMudou = !string.Equals(
-                statusTicketBanco.NomeStatusTicket, novoNome, StringComparison.OrdinalIgnoreCase);
-
-            if (nomeMudou && _repository.NomeStatusTicketExiste(novoNome))
-                throw new DomainException("Status de ticket já existe");
-
-            statusTicketDto.NomeStatusTicket = novoNome;
-            _repository.Atualizar(id, ConversaoStatusTicket.ConverterParaDomain(statusTicketDto));
-        }
-
-        public void Deletar(int id)
-        {
-            BuscarOuFalhar(id);
-
-            if (_repository.PossuiTickets(id))
-                throw new DomainException("Não é possível excluir: há tickets vinculados a este status de ticket");
-
-            _repository.Deletar(id);
-        }
+        _repository.Deletar(id);
     }
 }

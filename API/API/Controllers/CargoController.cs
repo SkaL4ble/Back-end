@@ -41,7 +41,7 @@ public class CargoController : ControllerBase
         }
         catch (DomainException ex)
         {
-            return NotFound(ex.Message);
+            return BadRequest(ex.Message);
         }
     }
 

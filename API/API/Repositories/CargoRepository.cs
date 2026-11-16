@@ -32,7 +32,7 @@ namespace API.Repositories
         public void Adicionar(Cargo cargo)
         {
             _context.Cargo.Add(cargo);
-            _context.SaveChangesAsync();
+            _context.SaveChanges();
         }
 
         public void Deletar (int id)
@@ -44,7 +44,7 @@ namespace API.Repositories
                 return;
             }
             _context.Cargo.Remove(cargoBanco);
-            _context.SaveChangesAsync();
+            _context.SaveChanges();
         }
 
         public void Atualizar(int id, Cargo cargo)
@@ -58,7 +58,7 @@ namespace API.Repositories
 
             cargoBanco.NomeCargo = cargo.NomeCargo;
 
-            _context.SaveChangesAsync();
+            _context.SaveChanges();
         }
     }
 }
