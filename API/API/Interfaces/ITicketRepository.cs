@@ -1,4 +1,5 @@
 ﻿using API.Domains;
+using API.DTOs.TicketDto;
 
 namespace API.Interfaces
 {
@@ -19,23 +20,13 @@ namespace API.Interfaces
         public Usuario? ObterUsuarioPorId(Guid usuarioId);
         bool UsuarioParticipaDoProjeto(Guid usuarioId, Guid projetoId);
         // ================================ LISTAGEM =================================
-        public List<Ticket> ListarTickets();
-        public List<Usuario> ListarColaboradores(int ticketId);
-        public List<Ticket> ListarTicketsPorUsuario(Guid usuarioId);
-        public List<Ticket> ListarTicketsPorProjeto(Guid projetoId);
-        public List<Ticket> ListarTicketsPorStatus(int statusTicketId);
-        public List<Ticket> ListarTicketsPorTipo(int tipoTicketId);
-        public List<Ticket> ListarTicketsPorPrioridade(int prioridade);
-        public List<Ticket> ListarTicketsPorUsuarioEProjeto(Guid usuarioId, Guid projetoId);
-
-
-        public List<Ticket> ListarTicketsPorPeriodo(DateTime dataInicio, DateTime dataFim);
-        public List<Ticket> ListarTicketPorDataForaDoPrazo();
-        public List<Ticket> ListarTicketPorDataForaDoPrazoPorUsuario(Guid usuarioId);
-        public List<Ticket> ListarTicketPorDataForaDoPrazoPorProjeto(Guid projetoId);
-        public List<Ticket> ListarTicketPorDataDentroDoPrazo();
-        public List<Ticket> ListarTicketPorDataDentroDoPrazoPorUsuario(Guid usuarioId);
-        public List<Ticket> ListarTicketPorDataDentroDoPrazoPorProjeto(Guid projetoId);
+        List<Ticket> ListarTickets(FiltroTicketDto filtro);
+        List<Usuario> ListarColaboradores(int ticketId);
+        List<Ticket> ListarTicketsPorPeriodo(
+            DateTime dataInicio,
+            DateTime dataFim);
+        List<Ticket> ListarTicketsForaDoPrazo(FiltroTicketForaOuDentro filtro);
+        List<Ticket> ListarTicketsDentroDoPrazo(FiltroTicketForaOuDentro filtro);
 
         // ================================ FUNCOES =================================
         public void MudarEstadoTicket(int ticketId, int statusTicketId);

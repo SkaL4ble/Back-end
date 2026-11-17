@@ -17,16 +17,7 @@ namespace API.Controllers
             _service = service;
         }
 
-        /// <summary>
-        /// Lista os projetos
-        /// </summary>
-        /// <returns>Todos os projetos cadastrados</returns>
-        /// <response code="200">Retorna todos os projetos do banco</response>
-        [HttpGet]
-        public ActionResult<List<ListarProjetoDto>> Listar()
-        {
-            return Ok(_service.ListarProjetos());
-        }
+        //========================================= CRUD =========================================
 
         /// <summary>
         /// Retorna um projeto por ID
@@ -101,6 +92,80 @@ namespace API.Controllers
             try
             {
                 _service.Remover(id);
+                return NoContent();
+            }
+            catch (DomainException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // ========================================= LISTAR =========================================
+
+        /// <summary>
+        /// Lista os projetos
+        /// </summary>
+        /// <returns>Todos os projetos cadastrados</returns>
+        /// <response code="200">Retorna todos os projetos do banco</response>
+        [HttpGet]
+        public ActionResult<List<ListarProjetoDto>> Listar(
+            [FromQuery] FiltroProjetoDto filtro)
+        {
+            return Ok(_service.ListarProjetos(filtro));
+        }
+
+        /// <summary>
+        /// Lista os projetos fora do prazo
+        /// </summary>
+        /// <returns>Projetos fora do prazo</returns>
+        /// <response code="200">Retorna os projetos fora do prazo</response>
+        [HttpGet("fora-do-prazo")]
+        public ActionResult<List<ListarProjetoDto>> ListarProjetosForaDoPrazo(
+            [FromQuery] FiltroProjetoDentroOuForaPrazo filtro)
+        {
+            return Ok(_service.ListarProjetosForaDoPrazo(filtro));
+        }
+
+        /// <summary>
+        /// Lista os projetos dentro do prazo
+        /// </summary>
+        /// <returns>Projetos dentro do prazo</returns>
+        /// <response code="200">Retorna os projetos dentro do prazo</response>
+        [HttpGet("dentro-do-prazo")]
+        public ActionResult<List<ListarProjetoDto>> ListarProjetosDentroDoPrazo(
+            [FromQuery] FiltroProjetoDentroOuForaPrazo filtro)
+        {
+            return Ok(_service.ListarProjetosDentroDoPrazo(filtro));
+        }
+
+        // ========================================= FUNCOES =========================================
+
+        [HttpGet("{id}/link-repositorio")]
+        public ActionResult<string?> ObterLinkRepositorio(Guid id)
+        {
+            return Ok(_service.ObterLinkRepositorioPorId(id));
+        }
+
+        [HttpPatch("{projetoId}/associar-usuario/{usuarioId}")]
+        public ActionResult AssociarUsuario(Guid projetoId, Guid usuarioId)
+        {
+            try
+            {
+                _service.AssociarUsuarioAoProjeto(projetoId, usuarioId);
+                return NoContent();
+            }
+            catch (DomainException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPatch("{projetoId}/desassociar-usuario/{usuarioId}")]
+        public ActionResult DesassociarUsuario(Guid projetoId, Guid usuarioId)
+        {
+            try
+            {
+                _service.DesassociarUsuarioDoProjeto(projetoId, usuarioId);
                 return NoContent();
             }
             catch (DomainException ex)
