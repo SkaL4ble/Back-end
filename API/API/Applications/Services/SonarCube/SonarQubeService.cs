@@ -97,8 +97,8 @@ public class SonarQubeService
         (await PostAsync("api/projects/delete", new() { ["project"] = chave })).Dispose();
     }
 
-    // Token escopado ao projeto (PROJECT_ANALYSIS_TOKEN): só serve para analisar esse projeto.
-    // O SonarQube só mostra o valor nesta resposta, por isso quem chama deve guardá-lo.
+    // Token escopado ao projeto (PROJECT_ANALYSIS_TOKEN): só serve para analisar esse projeto
+    // O SonarQube só mostra o valor nesta resposta, por isso quem chama deve guardá-lo
     public async Task<string> GerarTokenAnaliseAsync(string chave)
     {
         var nome = $"skal4ble-{chave}";

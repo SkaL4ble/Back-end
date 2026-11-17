@@ -14,12 +14,24 @@ public class CargoController : ControllerBase
         _service = service;
     }
 
+    /// <summary>
+    /// Lista os cargos
+    /// </summary>
+    /// <returns>Todos os cargos cadastrados</returns>
+    /// <response code="200">Retorna todos os cargos do banco</response>
     [HttpGet]
     public ActionResult<List<ListarCargoDto>> Listar()
     {
         return Ok(_service.ListarCargo());
     }
 
+    /// <summary>
+    /// Retorna um cargo por ID
+    /// </summary>
+    /// <param name="id">ID do cargo</param>
+    /// <returns>O cargo encontrado</returns>
+    /// <response code="200">Retorna o cargo</response>
+    /// <response code="404">Cargo não encontrado</response>
     [HttpGet("{id}")]
     public ActionResult<ListarCargoDto> ObterPorId(int id)
     {
@@ -33,6 +45,12 @@ public class CargoController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Deleta um cargo
+    /// </summary>
+    /// <param name="id">ID do cargo a ser deletado</param>
+    /// <response code="204">Cargo deletado com sucesso</response>
+    /// <response code="400">Cargo não encontrado ou possui tickets vinculados</response>
     [HttpDelete("{id}")]
     public ActionResult Deletar(int id)
     {
@@ -47,6 +65,12 @@ public class CargoController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Adiciona um cargo
+    /// </summary>
+    /// <param name="dto">Dados do novo cargo</param>
+    /// <response code="201">Cargo criado com sucesso</response>
+    /// <response code="400">Dados inválidos ou cargo já existente</response>
     [HttpPost]
     public ActionResult Adicionar(CriarCargoDto dto)
     {
@@ -61,6 +85,13 @@ public class CargoController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Atualiza um cargo
+    /// </summary>
+    /// <param name="id">ID do cargo a ser atualizado</param>
+    /// <param name="dto">Novos dados do cargo</param>
+    /// <response code="204">Cargo atualizado com sucesso</response>
+    /// <response code="400">Dados inválidos, cargo não encontrado ou já existente</response>
     [HttpPut("{id}")]
     public ActionResult Atualizar(int id, CriarCargoDto dto)
     {

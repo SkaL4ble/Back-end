@@ -23,6 +23,8 @@ public partial class Projeto
 
     public int TipoProjetoId { get; set; }
 
+    public DateTime? DataCriacao { get; set; }
+
     public virtual Usuario AutorNavigation { get; set; } = null!;
 
     public virtual ICollection<ProjetoSonar> ProjetoSonar { get; set; } = new List<ProjetoSonar>();

@@ -134,6 +134,7 @@ public partial class SkaL4bleContext : DbContext
 
             entity.Property(e => e.ProjetoId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Ativo).HasDefaultValue(true);
+            entity.Property(e => e.DataCriacao).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.Descricao).IsUnicode(false);
             entity.Property(e => e.LinkRepositorio)
                 .HasMaxLength(150)
