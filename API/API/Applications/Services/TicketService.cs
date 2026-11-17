@@ -16,8 +16,7 @@ public class TicketService
 
     public TicketService(ITicketRepository repository) => _repository = repository;
 
-    // Retorna o ticket mesmo se estiver inativo (usado por operações que
-    // precisam dar mensagem específica para ticket inativo).
+    //================================= VALIDAÇÕES ==========================================
     private Ticket BuscarOuFalhar(int id)
     {
         if (id <= 0)
@@ -26,8 +25,6 @@ public class TicketService
         return _repository.ObterPorId(id)
             ?? throw new DomainException("Ticket não encontrado");
     }
-
-    // Soft delete: ticket inativo é tratado como inexistente em consultas normais.
     private Ticket BuscarAtivoOuFalhar(int id)
     {
         var ticket = BuscarOuFalhar(id);
@@ -112,6 +109,7 @@ public class TicketService
     private static List<ListarTicketDto> ParaDtos(IEnumerable<Ticket> tickets) =>
         tickets.Select(ConversaoTicket.ConverterParaDto).ToList();
 
+    //========================================= CRUD =========================================
     public ListarTicketDto ObterPorId(int id) =>
         ConversaoTicket.ConverterParaDto(BuscarAtivoOuFalhar(id));
 
@@ -171,6 +169,7 @@ public class TicketService
         _repository.DeletarTicket(ticket);
     }
 
+    //==================================== FUNCOES ====================================
     public void MudarEstadoTicket(int ticketId, int statusTicketId)
     {
         var ticket = BuscarOuFalhar(ticketId);
@@ -228,43 +227,46 @@ public class TicketService
         _repository.RemoverColaborador(ticketId, usuarioId);
     }
 
-    public List<ListarTicketDto> ListarTickets() => ParaDtos(_repository.ListarTickets());
-
-    public List<ListarTicketDto> ListarTicketsPorUsuario(Guid usuarioId)
+    //============================== LISTAGEM =================================
+    public List<ListarTicketDto> ListarTickets(
+    FiltroTicketDto filtro)
     {
-        ValidarUsuario(usuarioId);
-        return ParaDtos(_repository.ListarTicketsPorUsuario(usuarioId));
-    }
+        if (filtro.DataInicio.HasValue &&
+            filtro.DataFim.HasValue &&
+            filtro.DataInicio.Value > filtro.DataFim.Value)
+        {
+            throw new DomainException(
+                "A data de início não pode ser maior que a data de fim");
+        }
 
-    public List<ListarTicketDto> ListarTicketsPorProjeto(Guid projetoId)
-    {
-        ValidarProjeto(projetoId);
-        return ParaDtos(_repository.ListarTicketsPorProjeto(projetoId));
-    }
+        if (filtro.UsuarioId.HasValue)
+        {
+            ValidarUsuario(filtro.UsuarioId.Value);
+        }
 
-    public List<ListarTicketDto> ListarTicketsPorStatus(int statusTicketId)
-    {
-        ValidarStatusTicket(statusTicketId);
-        return ParaDtos(_repository.ListarTicketsPorStatus(statusTicketId));
-    }
+        if (filtro.ProjetoId.HasValue)
+        {
+            ValidarProjeto(filtro.ProjetoId.Value);
+        }
 
-    public List<ListarTicketDto> ListarTicketsPorTipo(int tipoTicketId)
-    {
-        ValidarTipoTicket(tipoTicketId);
-        return ParaDtos(_repository.ListarTicketsPorTipo(tipoTicketId));
-    }
+        if (filtro.StatusTicketId.HasValue)
+        {
+            ValidarStatusTicket(filtro.StatusTicketId.Value);
+        }
 
-    public List<ListarTicketDto> ListarTicketsPorUsuarioEProjeto(Guid usuarioId, Guid projetoId)
-    {
-        ValidarUsuario(usuarioId);
-        ValidarProjeto(projetoId);
-        return ParaDtos(_repository.ListarTicketsPorUsuarioEProjeto(usuarioId, projetoId));
-    }
+        if (filtro.TipoTicketId.HasValue)
+        {
+            ValidarTipoTicket(filtro.TipoTicketId.Value);
+        }
 
-    public List<ListarTicketDto> ListarTicketsPorPrioridade(int prioridade)
-    {
-        ValidarPrioridade(prioridade);
-        return ParaDtos(_repository.ListarTicketsPorPrioridade(prioridade));
+        if (filtro.Prioridade.HasValue)
+        {
+            ValidarPrioridade(filtro.Prioridade.Value);
+        }
+
+        var tickets = _repository.ListarTickets(filtro);
+
+        return ParaDtos(tickets);
     }
 
     public List<ListarTicketDto> ListarTicketsPorPeriodo(DateTime dataInicio, DateTime dataFim)
@@ -273,35 +275,5 @@ public class TicketService
             throw new DomainException("A data de início não pode ser maior que a data de fim");
 
         return ParaDtos(_repository.ListarTicketsPorPeriodo(dataInicio, dataFim));
-    }
-
-    public List<ListarTicketDto> ListarTicketPorDataForaDoPrazo() =>
-        ParaDtos(_repository.ListarTicketPorDataForaDoPrazo());
-
-    public List<ListarTicketDto> ListarTicketPorDataForaDoPrazoPorUsuario(Guid usuarioId)
-    {
-        ValidarUsuario(usuarioId);
-        return ParaDtos(_repository.ListarTicketPorDataForaDoPrazoPorUsuario(usuarioId));
-    }
-
-    public List<ListarTicketDto> ListarTicketPorDataForaDoPrazoPorProjeto(Guid projetoId)
-    {
-        ValidarProjeto(projetoId);
-        return ParaDtos(_repository.ListarTicketPorDataForaDoPrazoPorProjeto(projetoId));
-    }
-
-    public List<ListarTicketDto> ListarTicketPorDataDentroDoPrazo() =>
-        ParaDtos(_repository.ListarTicketPorDataDentroDoPrazo());
-
-    public List<ListarTicketDto> ListarTicketPorDataDentroDoPrazoPorUsuario(Guid usuarioId)
-    {
-        ValidarUsuario(usuarioId);
-        return ParaDtos(_repository.ListarTicketPorDataDentroDoPrazoPorUsuario(usuarioId));
-    }
-
-    public List<ListarTicketDto> ListarTicketPorDataDentroDoPrazoPorProjeto(Guid projetoId)
-    {
-        ValidarProjeto(projetoId);
-        return ParaDtos(_repository.ListarTicketPorDataDentroDoPrazoPorProjeto(projetoId));
     }
 }

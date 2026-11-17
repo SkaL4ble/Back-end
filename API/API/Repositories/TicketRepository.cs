@@ -1,5 +1,6 @@
 ﻿using API.Contexts;
 using API.Domains;
+using API.DTOs.TicketDto;
 using API.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -81,95 +82,86 @@ public class TicketRepository : ITicketRepository
 
     public List<Ticket> ListarTickets() => TicketsAtivos().ToList();
 
+    public List<Ticket> ListarTickets(FiltroTicketDto filtro)
+    {
+        var query = TicketsAtivos();
+
+        if (filtro.UsuarioId.HasValue)
+        {
+            var usuarioId = filtro.UsuarioId.Value;
+
+            query = query.Where(ticket =>
+                ticket.UsuarioResponsavel == usuarioId ||
+                ticket.Usuario.Any(usuario =>
+                    usuario.UsuarioId == usuarioId));
+        }
+
+        if (filtro.ProjetoId.HasValue)
+        {
+            query = query.Where(ticket =>
+                ticket.ProjetoId == filtro.ProjetoId.Value);
+        }
+
+        if (filtro.StatusTicketId.HasValue)
+        {
+            query = query.Where(ticket =>
+                ticket.StatusTicketId == filtro.StatusTicketId.Value);
+        }
+
+        if (filtro.TipoTicketId.HasValue)
+        {
+            query = query.Where(ticket =>
+                ticket.TipoTicketId == filtro.TipoTicketId.Value);
+        }
+
+        if (filtro.Prioridade.HasValue)
+        {
+            query = query.Where(ticket =>
+                ticket.Prioridade == filtro.Prioridade.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filtro.Nome))
+        {
+            var nome = filtro.Nome.Trim();
+
+            query = query.Where(ticket =>
+                ticket.NomeTicket.Contains(nome));
+        }
+
+        if (filtro.DataInicio.HasValue)
+        {
+            query = query.Where(ticket =>
+                ticket.DataCriacao >= filtro.DataInicio.Value);
+        }
+
+        if (filtro.DataFim.HasValue)
+        {
+            var dataFimExclusiva = filtro.DataFim.Value
+                .Date
+                .AddDays(1);
+
+            query = query.Where(ticket =>
+                ticket.DataCriacao < dataFimExclusiva);
+        }
+
+        return query
+            .OrderByDescending(ticket => ticket.DataCriacao)
+            .ToList();
+    }
+
+
     public List<Usuario> ListarColaboradores(int ticketId) =>
         _context.Usuario
             .Where(u => u.Ticket.Any(t => t.TicketId == ticketId) && u.Ativo)
             .AsNoTracking()
             .ToList();
 
-    public List<Ticket> ListarTicketsPorUsuario(Guid usuarioId) =>
-        TicketsAtivos()
-            .Where(t =>
-                t.UsuarioResponsavel == usuarioId ||
-                t.Usuario.Any(c => c.UsuarioId == usuarioId))
-            .ToList();
-
-    public List<Ticket> ListarTicketsPorProjeto(Guid projetoId) =>
-        TicketsAtivos().Where(t => t.ProjetoId == projetoId).ToList();
-
-    public List<Ticket> ListarTicketsPorStatus(int statusTicketId) =>
-        TicketsAtivos().Where(t => t.StatusTicketId == statusTicketId).ToList();
-
-    public List<Ticket> ListarTicketsPorTipo(int tipoTicketId) =>
-        TicketsAtivos().Where(t => t.TipoTicketId == tipoTicketId).ToList();
-
-    public List<Ticket> ListarTicketsPorPrioridade(int prioridade) =>
-        TicketsAtivos().Where(t => t.Prioridade == prioridade).ToList();
-
-    public List<Ticket> ListarTicketsPorUsuarioEProjeto(Guid usuarioId, Guid projetoId) =>
-        TicketsAtivos()
-            .Where(t =>
-                t.ProjetoId == projetoId &&
-                (t.UsuarioResponsavel == usuarioId ||
-                 t.Usuario.Any(u => u.UsuarioId == usuarioId)))
-            .ToList();
 
     public List<Ticket> ListarTicketsPorPeriodo(DateTime dataInicio, DateTime dataFim) =>
         TicketsAtivos()
             .Where(t => t.DataCriacao >= dataInicio && t.DataCriacao < dataFim.Date.AddDays(1))
             .ToList();
 
-    public List<Ticket> ListarTicketPorDataForaDoPrazo() =>
-        TicketsAtivos()
-            .Where(t =>
-                t.DataPrazo.HasValue &&
-                ((t.DataEntrega.HasValue && t.DataEntrega.Value > t.DataPrazo.Value) ||
-                 (!t.DataEntrega.HasValue && t.DataPrazo.Value < DateTime.UtcNow)))
-            .ToList();
-
-    public List<Ticket> ListarTicketPorDataForaDoPrazoPorUsuario(Guid usuarioId) =>
-        TicketsAtivos()
-            .Where(t =>
-                (t.UsuarioResponsavel == usuarioId || t.Usuario.Any(u => u.UsuarioId == usuarioId)) &&
-                t.DataPrazo.HasValue &&
-                ((t.DataEntrega.HasValue && t.DataEntrega.Value > t.DataPrazo.Value) ||
-                 (!t.DataEntrega.HasValue && t.DataPrazo.Value < DateTime.UtcNow)))
-            .ToList();
-
-    public List<Ticket> ListarTicketPorDataForaDoPrazoPorProjeto(Guid projetoId) =>
-        TicketsAtivos()
-            .Where(t =>
-                t.ProjetoId == projetoId &&
-                t.DataPrazo.HasValue &&
-                ((t.DataEntrega.HasValue && t.DataEntrega.Value > t.DataPrazo.Value) ||
-                 (!t.DataEntrega.HasValue && t.DataPrazo.Value < DateTime.UtcNow)))
-            .ToList();
-
-    public List<Ticket> ListarTicketPorDataDentroDoPrazo() =>
-        TicketsAtivos()
-            .Where(t =>
-                t.DataPrazo.HasValue &&
-                ((t.DataEntrega.HasValue && t.DataEntrega.Value <= t.DataPrazo.Value) ||
-                 (!t.DataEntrega.HasValue && t.DataPrazo.Value >= DateTime.UtcNow)))
-            .ToList();
-
-    public List<Ticket> ListarTicketPorDataDentroDoPrazoPorUsuario(Guid usuarioId) =>
-        TicketsAtivos()
-            .Where(t =>
-                (t.UsuarioResponsavel == usuarioId || t.Usuario.Any(u => u.UsuarioId == usuarioId)) &&
-                t.DataPrazo.HasValue &&
-                ((t.DataEntrega.HasValue && t.DataEntrega.Value <= t.DataPrazo.Value) ||
-                 (!t.DataEntrega.HasValue && t.DataPrazo.Value >= DateTime.UtcNow)))
-            .ToList();
-
-    public List<Ticket> ListarTicketPorDataDentroDoPrazoPorProjeto(Guid projetoId) =>
-        TicketsAtivos()
-            .Where(t =>
-                t.ProjetoId == projetoId &&
-                t.DataPrazo.HasValue &&
-                ((t.DataEntrega.HasValue && t.DataEntrega.Value <= t.DataPrazo.Value) ||
-                 (!t.DataEntrega.HasValue && t.DataPrazo.Value >= DateTime.UtcNow)))
-            .ToList();
 
     // ================================ FUNCOES =================================
 

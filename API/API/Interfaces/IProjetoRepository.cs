@@ -1,4 +1,5 @@
 ﻿using API.Domains;
+using API.DTOs.ProjetoDto;
 
 namespace API.Interfaces
 {
@@ -11,18 +12,14 @@ namespace API.Interfaces
         public void DeletarProjeto(Guid id);
 
         //================================= LISTAGENS ==========================================
-        public List<Projeto> ListarProjetos();
-        public List<Projeto> ListarProjetosPorUsuario(Guid usuarioId);
-        public List<Projeto> ListarProjetosPorStatus(int statusId);
-        public List<Projeto> ListarProjetosPorTipo(int tipoId);
-        public List<Projeto> ListarProjetosPorStatusETipo(int statusId, int tipoId);Projeto? ObterPorNome(string nome);
+        public List<Projeto> ListarProjetos(FiltroProjetoDto filtro);
 
         // ================================= VALIDAÇÕES ==========================================
         public bool NomeProjetoExiste(string nome);
         public bool LinkRepositorioExiste(string linkRepositorio);
-        public bool UsuarioExiste(Guid usuarioId);
-        public bool StatusExiste(int statusId);
-        public bool TipoExiste(int tipoId);
+        public bool UsuarioExiste(Guid? usuarioId);
+        public bool StatusExiste(int? statusId);
+        public bool TipoExiste(int? tipoId);
         public bool UsuarioEstaAssociadoAoProjetoPorNome(Guid usuarioId, string nomeProjeto);
         public bool UsuarioEstaAssociadoAoProjeto(Guid usuarioId, Guid projetoId);
         public bool UsuarioEstaAssociadoAoProjetoPorId(Guid usuarioId, Guid projetoId);

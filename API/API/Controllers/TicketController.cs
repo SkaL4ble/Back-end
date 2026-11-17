@@ -193,123 +193,19 @@ namespace API.Controllers
         /// <returns>Todos os tickets cadastrados</returns>
         /// <response code="200">Retorna todos os tickets do banco</response>
         [HttpGet]
-        public ActionResult<List<ListarTicketDto>> Listar()
-        {
-            return Ok(_service.ListarTickets());
-        }
-
-        /// <summary>
-        /// Lista os tickets de um usuário (como responsável ou colaborador)
-        /// </summary>
-        /// <param name="usuarioId">ID do usuário</param>
-        /// <returns>Os tickets do usuário</returns>
-        /// <response code="200">Retorna os tickets do usuário</response>
-        /// <response code="404">Usuário não encontrado</response>
-        [HttpGet("usuario/{usuarioId:guid}")]
-        public ActionResult<List<ListarTicketDto>> ListarPorUsuario(Guid usuarioId)
+        public ActionResult<List<ListarTicketDto>> Listar(
+        [FromQuery] FiltroTicketDto filtro)
         {
             try
             {
-                return Ok(_service.ListarTicketsPorUsuario(usuarioId));
+                return Ok(_service.ListarTickets(filtro));
             }
             catch (DomainException ex)
             {
-                return NotFound(ex.Message);
+                return BadRequest(ex.Message);
             }
         }
 
-        /// <summary>
-        /// Lista os tickets de um projeto
-        /// </summary>
-        /// <param name="projetoId">ID do projeto</param>
-        /// <returns>Os tickets do projeto</returns>
-        /// <response code="200">Retorna os tickets do projeto</response>
-        /// <response code="404">Projeto não encontrado</response>
-        [HttpGet("projeto/{projetoId:guid}")]
-        public ActionResult<List<ListarTicketDto>> ListarPorProjeto(Guid projetoId)
-        {
-            try
-            {
-                return Ok(_service.ListarTicketsPorProjeto(projetoId));
-            }
-            catch (DomainException ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
-
-        /// <summary>
-        /// Lista os tickets por status
-        /// </summary>
-        /// <param name="statusTicketId">ID do status de ticket</param>
-        /// <returns>Os tickets com o status informado</returns>
-        /// <response code="200">Retorna os tickets com o status informado</response>
-        /// <response code="404">Status de ticket não encontrado</response>
-        [HttpGet("status/{statusTicketId:int}")]
-        public ActionResult<List<ListarTicketDto>> ListarPorStatus(int statusTicketId)
-        {
-            try
-            {
-                return Ok(_service.ListarTicketsPorStatus(statusTicketId));
-            }
-            catch (DomainException ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
-
-        /// <summary>
-        /// Lista os tickets por tipo
-        /// </summary>
-        /// <param name="tipoTicketId">ID do tipo de ticket</param>
-        /// <returns>Os tickets do tipo informado</returns>
-        /// <response code="200">Retorna os tickets do tipo informado</response>
-        /// <response code="404">Tipo de ticket não encontrado</response>
-        [HttpGet("tipo/{tipoTicketId:int}")]
-        public ActionResult<List<ListarTicketDto>> ListarPorTipo(int tipoTicketId)
-        {
-            try
-            {
-                return Ok(_service.ListarTicketsPorTipo(tipoTicketId));
-            }
-            catch (DomainException ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
-
-        /// <summary>
-        /// Lista os tickets de um usuário em um projeto
-        /// </summary>
-        /// <param name="usuarioId">ID do usuário</param>
-        /// <param name="projetoId">ID do projeto</param>
-        /// <returns>Os tickets do usuário no projeto</returns>
-        /// <response code="200">Retorna os tickets do usuário no projeto</response>
-        /// <response code="404">Usuário ou projeto não encontrado</response>
-        [HttpGet("usuario/{usuarioId:guid}/projeto/{projetoId:guid}")]
-        public ActionResult<List<ListarTicketDto>> ListarPorUsuarioEProjeto(Guid usuarioId, Guid projetoId)
-        {
-            try
-            {
-                return Ok(_service.ListarTicketsPorUsuarioEProjeto(usuarioId, projetoId));
-            }
-            catch (DomainException ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
-
-        /// <summary>
-        /// Lista os tickets por prioridade
-        /// </summary>
-        /// <param name="prioridade">Valor da prioridade</param>
-        /// <returns>Os tickets com a prioridade informada</returns>
-        /// <response code="200">Retorna os tickets com a prioridade informada</response>
-        [HttpGet("prioridade/{prioridade:int}")]
-        public ActionResult<List<ListarTicketDto>> ListarPorPrioridade(int prioridade)
-        {
-            return Ok(_service.ListarTicketsPorPrioridade(prioridade));
-        }
 
         /// <summary>
         /// Lista os tickets criados em um período
@@ -319,7 +215,7 @@ namespace API.Controllers
         /// <returns>Os tickets criados no período</returns>
         /// <response code="200">Retorna os tickets criados no período</response>
         /// <response code="400">Data de início maior que a data de fim</response>
-        [HttpGet("periodo")]
+        [HttpGet("Periodo")]
         public ActionResult<List<ListarTicketDto>> ListarPorPeriodo(
             [FromQuery] DateTime dataInicio, [FromQuery] DateTime dataFim)
         {
@@ -333,108 +229,5 @@ namespace API.Controllers
             }
         }
 
-        // ================================ PRAZO =================================
-
-        /// <summary>
-        /// Lista os tickets fora do prazo
-        /// </summary>
-        /// <returns>Os tickets fora do prazo</returns>
-        /// <response code="200">Retorna os tickets fora do prazo</response>
-        [HttpGet("prazo/fora")]
-        public ActionResult<List<ListarTicketDto>> ListarForaDoPrazo()
-        {
-            return Ok(_service.ListarTicketPorDataForaDoPrazo());
-        }
-
-        /// <summary>
-        /// Lista os tickets fora do prazo de um usuário
-        /// </summary>
-        /// <param name="usuarioId">ID do usuário</param>
-        /// <returns>Os tickets fora do prazo do usuário</returns>
-        /// <response code="200">Retorna os tickets fora do prazo do usuário</response>
-        /// <response code="404">Usuário não encontrado</response>
-        [HttpGet("prazo/fora/usuario/{usuarioId:guid}")]
-        public ActionResult<List<ListarTicketDto>> ListarForaDoPrazoPorUsuario(Guid usuarioId)
-        {
-            try
-            {
-                return Ok(_service.ListarTicketPorDataForaDoPrazoPorUsuario(usuarioId));
-            }
-            catch (DomainException ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
-
-        /// <summary>
-        /// Lista os tickets fora do prazo de um projeto
-        /// </summary>
-        /// <param name="projetoId">ID do projeto</param>
-        /// <returns>Os tickets fora do prazo do projeto</returns>
-        /// <response code="200">Retorna os tickets fora do prazo do projeto</response>
-        /// <response code="404">Projeto não encontrado</response>
-        [HttpGet("prazo/fora/projeto/{projetoId:guid}")]
-        public ActionResult<List<ListarTicketDto>> ListarForaDoPrazoPorProjeto(Guid projetoId)
-        {
-            try
-            {
-                return Ok(_service.ListarTicketPorDataForaDoPrazoPorProjeto(projetoId));
-            }
-            catch (DomainException ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
-
-        /// <summary>
-        /// Lista os tickets dentro do prazo
-        /// </summary>
-        /// <returns>Os tickets dentro do prazo</returns>
-        /// <response code="200">Retorna os tickets dentro do prazo</response>
-        [HttpGet("prazo/dentro")]
-        public ActionResult<List<ListarTicketDto>> ListarDentroDoPrazo()
-        {
-            return Ok(_service.ListarTicketPorDataDentroDoPrazo());
-        }
-
-        /// <summary>
-        /// Lista os tickets dentro do prazo de um usuário
-        /// </summary>
-        /// <param name="usuarioId">ID do usuário</param>
-        /// <returns>Os tickets dentro do prazo do usuário</returns>
-        /// <response code="200">Retorna os tickets dentro do prazo do usuário</response>
-        /// <response code="404">Usuário não encontrado</response>
-        [HttpGet("prazo/dentro/usuario/{usuarioId:guid}")]
-        public ActionResult<List<ListarTicketDto>> ListarDentroDoPrazoPorUsuario(Guid usuarioId)
-        {
-            try
-            {
-                return Ok(_service.ListarTicketPorDataDentroDoPrazoPorUsuario(usuarioId));
-            }
-            catch (DomainException ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
-
-        /// <summary>
-        /// Lista os tickets dentro do prazo de um projeto
-        /// </summary>
-        /// <param name="projetoId">ID do projeto</param>
-        /// <returns>Os tickets dentro do prazo do projeto</returns>
-        /// <response code="200">Retorna os tickets dentro do prazo do projeto</response>
-        /// <response code="404">Projeto não encontrado</response>
-        [HttpGet("prazo/dentro/projeto/{projetoId:guid}")]
-        public ActionResult<List<ListarTicketDto>> ListarDentroDoPrazoPorProjeto(Guid projetoId)
-        {
-            try
-            {
-                return Ok(_service.ListarTicketPorDataDentroDoPrazoPorProjeto(projetoId));
-            }
-            catch (DomainException ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
     }
 }

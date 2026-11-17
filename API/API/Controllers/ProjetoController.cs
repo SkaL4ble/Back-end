@@ -23,9 +23,10 @@ namespace API.Controllers
         /// <returns>Todos os projetos cadastrados</returns>
         /// <response code="200">Retorna todos os projetos do banco</response>
         [HttpGet]
-        public ActionResult<List<ListarProjetoDto>> Listar()
+        public ActionResult<List<ListarProjetoDto>> Listar(
+            [FromQuery] FiltroProjetoDto filtro)
         {
-            return Ok(_service.ListarProjetos());
+            return Ok(_service.ListarProjetos(filtro));
         }
 
         /// <summary>

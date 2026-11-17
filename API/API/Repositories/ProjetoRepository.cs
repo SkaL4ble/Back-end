@@ -1,5 +1,6 @@
 ﻿using API.Contexts;
 using API.Domains;
+using API.DTOs.ProjetoDto;
 using API.Interfaces;
 using Microsoft.EntityFrameworkCore;
 namespace API.Repositories
@@ -42,13 +43,33 @@ namespace API.Repositories
         }
 
         //================================= LISTAGENS ==========================================
-        public List<Projeto> ListarProjetos()
+        public IQueryable<Projeto> ListarAtivos()
         {
             return _context.Projeto
                 .Include(u => u.AutorNavigation)
                 .Include(t => t.TipoProjeto)
                 .Include(s => s.StatusProjeto)
-                .ToList();
+                .Where(a => a.Ativo)
+                .AsNoTracking();
+        }
+        public List<Projeto> ListarProjetos(FiltroProjetoDto filtro)
+        {
+            var query = ListarAtivos();
+
+            if (filtro.TipoId.HasValue)
+            {
+                query = query.Where(p => p.Autor == filtro.UsuarioId);
+            }
+            if (filtro.TipoId.HasValue)
+            {
+                query = query.Where(p => p.TipoProjetoId == filtro.TipoId);
+            }
+            if (filtro.StatusId.HasValue)
+            {
+                query = query.Where(p => p.StatusProjetoId == filtro.StatusId);
+            }
+
+            return query.OrderByDescending(p => p.DataCriacao).ToList();
         }
         public List<Projeto> ListarProjetosPorUsuario(Guid usuarioId)
         {
@@ -100,15 +121,15 @@ namespace API.Repositories
         {
             return _context.Projeto.Any(p => p.LinkRepositorio == linkRepositorio);
         }
-        public bool UsuarioExiste(Guid usuarioId)
+        public bool UsuarioExiste(Guid? usuarioId)
         {
             return _context.Usuario.Any(u => u.UsuarioId == usuarioId);
         }
-        public bool StatusExiste(int statusId)
+        public bool StatusExiste(int? statusId)
         {
             return _context.StatusProjeto.Any(s => s.StatusProjetoId == statusId);
         }
-        public bool TipoExiste(int tipoId)
+        public bool TipoExiste(int? tipoId)
         {
             return _context.TipoProjeto.Any(t => t.TipoProjetoId == tipoId);
         }

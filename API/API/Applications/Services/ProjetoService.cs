@@ -16,6 +16,21 @@ namespace API.Applications.Services
             _repository = repository;
         }
 
+        //================================= VALIDAÇÕES ==========================================
+        public static string NormalizarNome(string? nome)
+        {
+            if (string.IsNullOrWhiteSpace(nome))
+                throw new DomainException("O nome do projeto é obrigatório");
+
+            return nome.Trim();
+        }
+
+        public Projeto? BuscarOuFalhar(Guid id)
+        {
+            return _repository.ObterPorId(id)
+                ?? throw new DomainException("Projeto não encontrado");
+        }
+
         public bool ValidarProjeto(CriarProjetoDto projetoDto)
         {
             projetoDto.Nome = NormalizarNome(projetoDto.Nome);
@@ -33,27 +48,17 @@ namespace API.Applications.Services
                 throw new DomainException("Projeto já existe");
             return true;
         }
-
-        public Projeto? BuscarOuFalhar(Guid id)
-        {
-            return _repository.ObterPorId(id)
-                ?? throw new DomainException("Projeto não encontrado");
+        public bool ValidarFiltro(FiltroProjetoDto filtro){
+            if (filtro.UsuarioId != null && !_repository.UsuarioExiste(filtro.UsuarioId))
+                throw new DomainException("Autor não encontrado");
+            else if (filtro.StatusId != null && !_repository.StatusExiste(filtro.StatusId))
+                throw new DomainException("Status não encontrado");
+            else if (filtro.TipoId != null && !_repository.TipoExiste(filtro.TipoId))
+                throw new DomainException("Tipo de projeto não encontrado");
+            return true;
         }
 
-        public static string NormalizarNome(string? nome)
-        {
-            if (string.IsNullOrWhiteSpace(nome))
-                throw new DomainException("O nome do projeto é obrigatório");
-
-            return nome.Trim();
-        }
-
-        public List<ListarProjetoDto> ListarProjetos()
-        {
-            return _repository.ListarProjetos()
-                .Select(ConversaoProjeto.ConverterParaDto)
-                .ToList();
-        }
+        //================================= CRUD ==========================================
 
         public ListarProjetoDto ObterPorId(Guid id)
         {
@@ -87,5 +92,13 @@ namespace API.Applications.Services
             Projeto? projeto = BuscarOuFalhar(id);
             _repository.DeletarProjeto(id);
         }
+        //================================= LISTAR ==========================================
+        public List<ListarProjetoDto> ListarProjetos(FiltroProjetoDto filtro)
+        {
+            ValidarFiltro(filtro);
+            return _repository.ListarProjetos(filtro).Select(ConversaoProjeto.ConverterParaDto).ToList();
+        }
+
+        
     }
 }
