@@ -14,6 +14,7 @@
         public string NomeTipo { get; set; } = null!;
         public DateTime? Prazo { get; set; }
         public List<Guid> UsuariosId { get; set; } = new List<Guid>();
+        public int QuantidadeColaboradores { get; set; }
         public DateTime? DataCriacao { get; set; } = DateTime.Now;
     }
 }

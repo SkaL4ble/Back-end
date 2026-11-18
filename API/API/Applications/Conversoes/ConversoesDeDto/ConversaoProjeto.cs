@@ -21,6 +21,7 @@ public static class ConversaoProjeto
             NomeTipo = projeto.TipoProjeto?.NomeTipoProjeto ?? string.Empty,
             Prazo = projeto.Prazo,
             UsuariosId = projeto.Usuario?.Select(u => u.UsuarioId).ToList() ?? new List<Guid>(),
+            QuantidadeColaboradores = projeto.Usuario?.Count ?? 0,
             DataCriacao = projeto.DataCriacao
         };
     }

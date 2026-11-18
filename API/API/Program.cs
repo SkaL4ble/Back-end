@@ -16,7 +16,8 @@ DotNetEnv.Env.Load();
 var builder = WebApplication.CreateBuilder(args);
 
 // PEGA A CONNECTION STRING DO .env
-string connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+string connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING")
+    ?? throw new InvalidOperationException("CONNECTION_STRING não definida no .env");
 
 // CONECTA AO BANCO COM A CONNECTION STRING DO .env
 builder.Services.AddDbContext<SkaL4bleContext>(options => options.UseSqlServer(connectionString));
@@ -67,12 +68,16 @@ builder.Services.AddSwaggerGen(c =>
     // NoWarn 1591 desativa avisos sobre métodos sem comentários de documentação.
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    c.IncludeXmlComments(xmlPath);
+    if(File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
 });
 
 
 builder.Services.AddScoped<IProjetoRepository, ProjetoRepository>();
 builder.Services.AddScoped<ProjetoService>();
+
 builder.Services.AddScoped<ICargoRepository, CargoRepository>();
 builder.Services.AddScoped<CargoService>();
 
@@ -96,9 +101,6 @@ builder.Services.AddScoped<StatusTicketService>();
 
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 builder.Services.AddScoped<TicketService>();
-
-builder.Services.AddScoped<IProjetoRepository, ProjetoRepository>();
-builder.Services.AddScoped<ProjetoService>();
 
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<UsuarioService>();
@@ -178,7 +180,6 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-app.UseCors("CorsPolicy");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -187,10 +188,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-if (!app.Environment.IsDevelopment())
+else
 {
     app.UseHttpsRedirection();
 }
+
+app.UseCors("CorsPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
