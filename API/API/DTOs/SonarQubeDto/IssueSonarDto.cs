@@ -1,25 +1,25 @@
-﻿namespace API.DTOs.SonarQubeDto
+﻿namespace API.DTOs.SonarQubeDto;
+
+public class IssueSonarDto
 {
-    public class IssueSonarDto
-    {
-        public string Chave { get; set; } = null!;
-        public string? Autor { get; set; }
-        public string? Responsavel { get; set; }
+    public string Componente { get; set; } = string.Empty;
+    public int? Linha { get; set; }
+    public string? LinhaInicial { get; set; }
+    public string? LinhaFinal { get; set; }
 
-        public string Regra { get; set; } = null!;
+    public string Chave { get; set; } = string.Empty;
+    public string Regra { get; set; } = string.Empty;
+    public string Severidade { get; set; } = string.Empty;
+    public string Tipo { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string Mensagem { get; set; } = string.Empty;
+    public string? DescricaoRegra { get; set; }
 
-        public string Severidade { get; set; } = null!;
 
-        public string Tipo { get; set; } = null!;
+    public string? ComoCorrigir { get; set; }
+    public string? EsforcoRemediacao { get; set; }
 
-        public string Status { get; set; } = null!;
-
-        public string Mensagem { get; set; } = null!;
-
-        public string Componente { get; set; } = null!;
-
-        public int? Linha { get; set; }
-
-        public DateTime? DataCriacao { get; set; }
-    }
+    public string? Autor { get; set; }
+    public string? Responsavel { get; set; }
+    public DateTime? DataCriacao { get; set; }
 }
