@@ -120,6 +120,29 @@ CREATE TABLE Usuario (
 );
 GO
 
+CREATE TABLE TokenRedefinicaoSenha (
+    TokenRedefinicaoSenhaId INT IDENTITY(1,1) NOT NULL,
+    UsuarioId UNIQUEIDENTIFIER NOT NULL,
+    TokenHash VARCHAR(255) NOT NULL,
+    ExpiraEm DATETIME2 NOT NULL,
+    Utilizado BIT NOT NULL DEFAULT 0,
+
+    CONSTRAINT PK_TokenRedefinicaoSenha
+        PRIMARY KEY (TokenRedefinicaoSenhaId),
+
+    CONSTRAINT UQ_TokenRedefinicaoSenha_TokenHash
+        UNIQUE (TokenHash),
+
+    CONSTRAINT FK_TokenRedefinicaoSenha_Usuario
+        FOREIGN KEY (UsuarioId)
+        REFERENCES Usuario (UsuarioId)
+);
+GO
+
+CREATE INDEX IX_TokenRedefinicaoSenha_UsuarioId
+    ON TokenRedefinicaoSenha (UsuarioId);
+GO
+
 CREATE TABLE Projeto (
     ProjetoId UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
     NomeProjeto VARCHAR(50) NOT NULL,

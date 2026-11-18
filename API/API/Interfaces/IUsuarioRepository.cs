@@ -18,7 +18,9 @@ namespace API.Interfaces
 
         void Atualizar(Usuario usuario, Guid id);
 
-        void AtualizarSenha(Guid id, byte[] senha);
+        Task<Usuario?> BuscarEmail(string email);
+
+        Task<bool> AtualizarSenha(Guid id, byte[] senha);
 
         void Inativar(Guid id);
     }

@@ -39,6 +39,8 @@ public partial class Usuario
 
     public virtual TipoUsuario TipoUsuario { get; set; } = null!;
 
+    public virtual ICollection<TokenRedefinicaoSenha> TokenRedefinicaoSenha { get; set; } = new List<TokenRedefinicaoSenha>();
+
     public virtual ICollection<UsuarioEmailGit> UsuarioEmailGit { get; set; } = new List<UsuarioEmailGit>();
 
     public virtual ICollection<UsuarioIdeToken> UsuarioIdeToken { get; set; } = new List<UsuarioIdeToken>();

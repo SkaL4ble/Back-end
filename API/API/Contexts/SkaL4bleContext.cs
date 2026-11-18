@@ -44,15 +44,13 @@ public partial class SkaL4bleContext : DbContext
 
     public virtual DbSet<TipoUsuario> TipoUsuario { get; set; }
 
+    public virtual DbSet<TokenRedefinicaoSenha> TokenRedefinicaoSenha { get; set; }
+
     public virtual DbSet<Usuario> Usuario { get; set; }
 
     public virtual DbSet<UsuarioEmailGit> UsuarioEmailGit { get; set; }
 
     public virtual DbSet<UsuarioIdeToken> UsuarioIdeToken { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=SkaL4ble;Trusted_Connection=True;TrustServerCertificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -281,6 +279,22 @@ public partial class SkaL4bleContext : DbContext
             entity.Property(e => e.NomeTipoUsuario)
                 .HasMaxLength(30)
                 .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<TokenRedefinicaoSenha>(entity =>
+        {
+            entity.HasIndex(e => e.UsuarioId, "IX_TokenRedefinicaoSenha_UsuarioId");
+
+            entity.HasIndex(e => e.TokenHash, "UQ_TokenRedefinicaoSenha_TokenHash").IsUnique();
+
+            entity.Property(e => e.TokenHash)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.Usuario).WithMany(p => p.TokenRedefinicaoSenha)
+                .HasForeignKey(d => d.UsuarioId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TokenRedefinicaoSenha_Usuario");
         });
 
         modelBuilder.Entity<Usuario>(entity =>
