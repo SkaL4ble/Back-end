@@ -71,9 +71,6 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 
-builder.Services.AddScoped<ITipoMetricaRepository, TipoMetricaRepository>();
-//builder.Services.AddScoped<TipoMetricaService>();
-
 builder.Services.AddScoped<IProjetoRepository, ProjetoRepository>();
 builder.Services.AddScoped<ProjetoService>();
 builder.Services.AddScoped<ICargoRepository, CargoRepository>();

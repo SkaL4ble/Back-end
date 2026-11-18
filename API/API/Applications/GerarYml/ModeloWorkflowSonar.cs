@@ -9,7 +9,7 @@ public static class ModeloWorkflowSonar
     // Confira a versão mais recente em https://github.com/marketplace/actions/official-sonarqube-scan
     private const string VersaoScanAction = "v5";
 
-    public static string Gerar(int workflowId, string chaveProjeto, string branch)
+    public static string Gerar(int? workflowId, string chaveProjeto, string branch)
     {
         var corpo = workflowId switch
         {

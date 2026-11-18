@@ -1,5 +1,6 @@
 ﻿using API.Contexts;
 using API.Domains;
+using API.Exceptions;
 using API.Interfaces;
 using Microsoft.EntityFrameworkCore;
 

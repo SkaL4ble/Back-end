@@ -14,7 +14,9 @@
     <Compile Remove="Controllers\SubirPastaVazia3.cs" />
     <Compile Remove="DTOs\SonarQubeDto\CriarProjetoSonarRemotoDto.cs" />
     <Compile Remove="DTOs\SubirPastaVazia4.cs" />
+    <Compile Remove="Interfaces\ITipoMetricaRepository.cs" />
     <Compile Remove="Interfaces\SubirPastaVazia5.cs" />
+    <Compile Remove="Repositories\TipoMetricaRepository.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,10 +35,6 @@
     </PackageReference>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.1" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="DTOs\TipoMetricaDto\" />
   </ItemGroup>
 
 </Project>

@@ -17,6 +17,8 @@ namespace API.Controllers
             _service = service;
         }
 
+        //========================================= CRUD =========================================
+
         /// <summary>
         /// Retorna um projeto por ID
         /// </summary>
@@ -37,5 +39,139 @@ namespace API.Controllers
             }
         }
 
+        /// <summary>
+        /// Adiciona um projeto
+        /// </summary>
+        /// <param name="dto">Dados do novo projeto</param>
+        /// <response code="201">Projeto criado com sucesso</response>
+        /// <response code="400">Dados inválidos ou projeto já existente</response>
+        [HttpPost]
+        public ActionResult Adicionar(CriarProjetoDto dto)
+        {
+            try
+            {
+                _service.AdicionarProjeto(dto);
+                return StatusCode(StatusCodes.Status201Created);
+            }
+            catch (DomainException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Atualiza um projeto
+        /// </summary>
+        /// <param name="id">ID do projeto a ser atualizado</param>
+        /// <param name="dto">Novos dados do projeto</param>
+        /// <response code="204">Projeto atualizado com sucesso</response>
+        /// <response code="400">Dados inválidos, projeto não encontrado ou já existente</response>
+        [HttpPut("{id}")]
+        public ActionResult Atualizar(Guid id, CriarProjetoDto dto)
+        {
+            try
+            {
+                _service.Atualizar(id, dto);
+                return NoContent();
+            }
+            catch (DomainException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Deleta um projeto
+        /// </summary>
+        /// <param name="id">ID do projeto a ser deletado</param>
+        /// <response code="204">Projeto deletado com sucesso</response>
+        /// <response code="400">Projeto não encontrado ou possui tickets vinculados</response>
+        [HttpDelete("{id}")]
+        public ActionResult Deletar(Guid id)
+        {
+            try
+            {
+                _service.Remover(id);
+                return NoContent();
+            }
+            catch (DomainException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // ========================================= LISTAR =========================================
+
+        /// <summary>
+        /// Lista os projetos
+        /// </summary>
+        /// <returns>Todos os projetos cadastrados</returns>
+        /// <response code="200">Retorna todos os projetos do banco</response>
+        [HttpGet]
+        public ActionResult<List<ListarProjetoDto>> Listar(
+            [FromQuery] FiltroProjetoDto filtro)
+        {
+            return Ok(_service.ListarProjetos(filtro));
+        }
+
+        /// <summary>
+        /// Lista os projetos fora do prazo
+        /// </summary>
+        /// <returns>Projetos fora do prazo</returns>
+        /// <response code="200">Retorna os projetos fora do prazo</response>
+        [HttpGet("fora-do-prazo")]
+        public ActionResult<List<ListarProjetoDto>> ListarProjetosForaDoPrazo(
+            [FromQuery] FiltroProjetoDentroOuForaPrazo filtro)
+        {
+            return Ok(_service.ListarProjetosForaDoPrazo(filtro));
+        }
+
+        /// <summary>
+        /// Lista os projetos dentro do prazo
+        /// </summary>
+        /// <returns>Projetos dentro do prazo</returns>
+        /// <response code="200">Retorna os projetos dentro do prazo</response>
+        [HttpGet("dentro-do-prazo")]
+        public ActionResult<List<ListarProjetoDto>> ListarProjetosDentroDoPrazo(
+            [FromQuery] FiltroProjetoDentroOuForaPrazo filtro)
+        {
+            return Ok(_service.ListarProjetosDentroDoPrazo(filtro));
+        }
+
+        // ========================================= FUNCOES =========================================
+
+        [HttpGet("{id}/link-repositorio")]
+        public ActionResult<string?> ObterLinkRepositorio(Guid id)
+        {
+            return Ok(_service.ObterLinkRepositorioPorId(id));
+        }
+
+        [HttpPatch("{projetoId}/associar-usuario/{usuarioId}")]
+        public ActionResult AssociarUsuario(Guid projetoId, Guid usuarioId)
+        {
+            try
+            {
+                _service.AssociarUsuarioAoProjeto(projetoId, usuarioId);
+                return NoContent();
+            }
+            catch (DomainException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPatch("{projetoId}/desassociar-usuario/{usuarioId}")]
+        public ActionResult DesassociarUsuario(Guid projetoId, Guid usuarioId)
+        {
+            try
+            {
+                _service.DesassociarUsuarioDoProjeto(projetoId, usuarioId);
+                return NoContent();
+            }
+            catch (DomainException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
+}
