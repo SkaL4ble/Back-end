@@ -126,7 +126,17 @@ public class SonarQubeService
             DateTime.UtcNow.AddMinutes(1),
             resultado);
 
-        return resultado.Values.OrderBy(i => i.DataCriacao).ToList();
+        var issues = resultado.Values
+        .OrderBy(i => i.DataCriacao)
+        .ToList();
+
+        foreach (var issue in issues)
+        {
+            await EnriquecerIssueComDetalhesDaRegraAsync(issue);
+        }
+
+        return issues;
+
     }
 
     public async Task<List<IssueSonarDto>>
@@ -160,6 +170,7 @@ public class SonarQubeService
             .ToList();
     }
 
+    // ============================== AUXILIARES ==============================
 
     // O SonarQube não devolve mais de 10.000 issues por busca. Se a janela passar disso,
     // ela é dividida ao meio até caber. O dicionário elimina duplicatas nas bordas.
@@ -206,5 +217,89 @@ public class SonarQubeService
 
     private static string FormatarData(DateTime data) =>
         data.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss", CultureInfo.InvariantCulture) + "+0000";
+
+    private static string? ObterTexto(
+    JsonElement elemento,
+    string propriedade)
+    {
+        if (!elemento.TryGetProperty(propriedade, out var valor))
+            return null;
+
+        if (valor.ValueKind == JsonValueKind.Null ||
+            valor.ValueKind == JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        return valor.ValueKind switch
+        {
+            JsonValueKind.String => valor.GetString(),
+            JsonValueKind.Number => valor.ToString(),
+            JsonValueKind.True => "true",
+            JsonValueKind.False => "false",
+            JsonValueKind.Object => valor.ToString(),
+            JsonValueKind.Array => valor.ToString(),
+            _ => null
+        };
+    }
+
+    private static string? ObterSecaoDescricao(
+        JsonElement regra,
+        string chave)
+    {
+        if (!regra.TryGetProperty(
+                "descriptionSections",
+                out var secoes))
+        {
+            return null;
+        }
+
+        if (secoes.ValueKind != JsonValueKind.Array)
+            return null;
+
+        foreach (var secao in secoes.EnumerateArray())
+        {
+            var chaveSecao = ObterTexto(secao, "key");
+
+            if (string.Equals(
+                    chaveSecao,
+                    chave,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return ObterTexto(secao, "content");
+            }
+        }
+
+        return null;
+    }
+
+
+    private async Task EnriquecerIssueComDetalhesDaRegraAsync(
+    IssueSonarDto issue)
+    {
+        if (string.IsNullOrWhiteSpace(issue.Regra))
+            return;
+
+        var caminho =
+            $"api/rules/show?key={Uri.EscapeDataString(issue.Regra)}";
+
+        using var documento = await GetAsync(caminho);
+
+        if (!documento.RootElement.TryGetProperty("rule", out var regra))
+            return;
+
+        issue.DescricaoRegra =
+            ObterTexto(regra, "htmlDesc")
+            ?? ObterTexto(regra, "mdDesc");
+
+        issue.EsforcoRemediacao =
+            ObterTexto(regra, "remediation")
+            ?? ObterTexto(regra, "debtRemFnType");
+
+        issue.ComoCorrigir =
+            ObterSecaoDescricao(regra, "how_to_fix")
+            ?? ObterSecaoDescricao(regra, "howToFix")
+            ?? issue.DescricaoRegra;
+    }
 
 }
