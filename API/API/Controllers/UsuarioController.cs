@@ -41,11 +41,11 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public ActionResult Cadastrar(CriarUsuarioDto dto)
+        public async Task<ActionResult> Cadastrar(CriarUsuarioDto dto)
         {
             try
             {
-                _service.Cadastrar(dto);
+                await _service.Cadastrar(dto);
                 return StatusCode(StatusCodes.Status201Created);
             }
             catch (DomainException ex)
@@ -60,20 +60,6 @@ namespace API.Controllers
             try
             {
                 _service.Atualizar(dto, id);
-                return NoContent();
-            }
-            catch (DomainException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
-        [HttpPatch("{id}/senha")]
-        public ActionResult AtribuirSenha(Guid id, AtribuirSenha dto)
-        {
-            try
-            {
-                _service.AtribuirSenha(dto, id);
                 return NoContent();
             }
             catch (DomainException ex)

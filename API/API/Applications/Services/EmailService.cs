@@ -42,7 +42,7 @@ namespace API.Applications.Services
             // Remetente
             mensagem.From.Add(
                 new MailboxAddress(
-                    "FinControl",
+                    "SkaL4ble",
                     remetente
                 )
             );
@@ -53,7 +53,7 @@ namespace API.Applications.Services
             );
 
             // Assunto
-            mensagem.Subject = "Redefinição de senha - FinControl";
+            mensagem.Subject = "Redefinição de senha - SkaL4ble";
 
             // Corpo do e-mail
             mensagem.Body = new TextPart("html")
@@ -69,7 +69,7 @@ namespace API.Applications.Services
 <body style='
     margin: 0;
     padding: 0;
-    background-color: #F5F3FA;
+    background-color: #FFFFFF;
     font-family: Arial, Helvetica, sans-serif;
 '>
 
@@ -84,7 +84,7 @@ namespace API.Applications.Services
 
         <!-- Cabeçalho -->
         <div style='
-            background-color: #7548D8;
+            background-color: #5810B1;
             padding: 30px;
             text-align: center;
         '>
@@ -93,15 +93,15 @@ namespace API.Applications.Services
                 color: #FFFFFF;
                 font-size: 28px;
             '>
-                FinControl
+                SkaL4ble
             </h1>
 
             <p style='
                 margin: 8px 0 0;
-                color: #EDE7FF;
+                color: #FFFFFF;
                 font-size: 14px;
             '>
-                Seu dinheiro. Seu controle.
+                Bem vindo(a), colaborador(a)!
             </p>
         </div>
 
@@ -131,7 +131,7 @@ namespace API.Applications.Services
                 line-height: 1.6;
             '>
                 Recebemos uma solicitação para redefinir a senha
-                da sua conta no <strong>FinControl</strong>.
+                da sua conta no <strong>SkaL4ble</strong>.
             </p>
 
             <p style='
@@ -145,8 +145,8 @@ namespace API.Applications.Services
             <div style='
                 margin: 30px 0;
                 padding: 25px;
-                background-color: #F3EEFF;
-                border: 1px solid #D9C9FF;
+                background-color: #FFFFFF;
+                border: 1px solid #5810B1;
                 border-radius: 12px;
                 text-align: center;
             '>
@@ -162,7 +162,7 @@ namespace API.Applications.Services
                 </p>
 
                 <div style='
-                    color: #7548D8;
+                    color: #5810B1;
                     font-size: 25px;
                     font-weight: bold;
                     letter-spacing: 5px;
@@ -193,7 +193,7 @@ namespace API.Applications.Services
 
         <!-- Rodapé -->
         <div style='
-            background-color: #F8F7FB;
+            background-color: #FFFFFF;
             padding: 25px;
             text-align: center;
             border-top: 1px solid #EEEEEE;
@@ -204,7 +204,7 @@ namespace API.Applications.Services
                 color: #777777;
                 font-size: 12px;
             '>
-                © {DateTime.Now.Year} FinControl
+                © {DateTime.Now.Year} SkaL4ble
             </p>
 
             <p style='

@@ -1,130 +1,74 @@
 USE SkaL4ble;
 GO
 
-SET XACT_ABORT ON;
-BEGIN TRANSACTION;
+-- =============================================================================
+-- ATRIBUTOS INERENTES DO SISTEMA
+-- =============================================================================
 
--- Tipos de usuario necessarios para o cadastro via API.
+-- __________________________________TipoUsuario__________________________________
 IF NOT EXISTS (
-    SELECT 1 FROM dbo.TipoUsuario WHERE CodigoTipoUsuario = 'TECH_LEAD'
+    SELECT 1 FROM dbo.TipoUsuario WHERE CodigoTipoUsuario = 'Tech Lead'
 )
 BEGIN
     INSERT INTO dbo.TipoUsuario (CodigoTipoUsuario, NomeTipoUsuario)
-    VALUES ('TECH_LEAD', 'Tech Lead');
+    VALUES ('Tech Lead', 'Tech Lead');
 END;
 
 IF NOT EXISTS (
-    SELECT 1 FROM dbo.TipoUsuario WHERE CodigoTipoUsuario = 'COLABORADOR'
+    SELECT 1 FROM dbo.TipoUsuario WHERE CodigoTipoUsuario = 'Colaborador'
 )
 BEGIN
     INSERT INTO dbo.TipoUsuario (CodigoTipoUsuario, NomeTipoUsuario)
-    VALUES ('COLABORADOR', 'Colaborador');
+    VALUES ('Colaborador', 'Colaborador');
 END;
 
--- Valores de referencia para testar criacao e atualizacao.
+-- __________________________________Atuacao______________________________________
 IF NOT EXISTS (
-    SELECT 1 FROM dbo.Cargo WHERE NomeCargo = 'Cargo Teste A'
+    SELECT 1 FROM dbo.Atuacao WHERE NomeAtuacao = 'Backend'
 )
 BEGIN
-    INSERT INTO dbo.Cargo (NomeCargo) VALUES ('Cargo Teste A');
-END;
-
-IF NOT EXISTS (
-    SELECT 1 FROM dbo.Cargo WHERE NomeCargo = 'Cargo Teste B'
-)
-BEGIN
-    INSERT INTO dbo.Cargo (NomeCargo) VALUES ('Cargo Teste B');
+    INSERT INTO dbo.Atuacao (NomeAtuacao) VALUES ('Backend');
 END;
 
 IF NOT EXISTS (
-    SELECT 1 FROM dbo.Atuacao WHERE NomeAtuacao = 'Atuacao Teste A'
+    SELECT 1 FROM dbo.Atuacao WHERE NomeAtuacao = 'Frontend'
 )
 BEGIN
-    INSERT INTO dbo.Atuacao (NomeAtuacao) VALUES ('Atuacao Teste A');
+    INSERT INTO dbo.Atuacao (NomeAtuacao) VALUES ('Frontend');
 END;
 
 IF NOT EXISTS (
-    SELECT 1 FROM dbo.Atuacao WHERE NomeAtuacao = 'Atuacao Teste B'
+    SELECT 1 FROM dbo.Atuacao WHERE NomeAtuacao = 'Fullstack'
 )
 BEGIN
-    INSERT INTO dbo.Atuacao (NomeAtuacao) VALUES ('Atuacao Teste B');
+    INSERT INTO dbo.Atuacao (NomeAtuacao) VALUES ('Fullstack');
 END;
 
-DECLARE @TipoColaborador UNIQUEIDENTIFIER = (
-    SELECT TipoUsuarioId
-    FROM dbo.TipoUsuario
-    WHERE CodigoTipoUsuario = 'COLABORADOR'
-);
-DECLARE @CargoA INT = (SELECT CargoId FROM dbo.Cargo WHERE NomeCargo = 'Cargo Teste A');
-DECLARE @CargoB INT = (SELECT CargoId FROM dbo.Cargo WHERE NomeCargo = 'Cargo Teste B');
-DECLARE @AtuacaoA INT = (SELECT AtuacaoId FROM dbo.Atuacao WHERE NomeAtuacao = 'Atuacao Teste A');
-DECLARE @AtuacaoB INT = (SELECT AtuacaoId FROM dbo.Atuacao WHERE NomeAtuacao = 'Atuacao Teste B');
-DECLARE @UsuarioTeste1 UNIQUEIDENTIFIER = 'A0000000-0000-0000-0000-000000000001';
-DECLARE @UsuarioTeste2 UNIQUEIDENTIFIER = 'A0000000-0000-0000-0000-000000000002';
-
-IF @TipoColaborador IS NULL
-    THROW 50001, 'Tipo COLABORADOR nao foi encontrado em TipoUsuario.', 1;
-
--- Fixtures existentes para testar PUT, PATCH de senha, inativacao e duplicidades.
+-- __________________________________Cargo________________________________________
 IF NOT EXISTS (
-    SELECT 1 FROM dbo.Usuario WHERE UsuarioId = @UsuarioTeste1
+    SELECT 1 FROM dbo.Cargo WHERE NomeCargo = 'Estagiario'
 )
 BEGIN
-    INSERT INTO dbo.Usuario
-        (UsuarioId, NomeUsuario, EmailPessoal, TipoUsuarioId, CargoId, AtuacaoId)
-    VALUES
-        (@UsuarioTeste1, 'Usuario Teste A', 'usuario.teste.a@example.com', @TipoColaborador, @CargoA, @AtuacaoA);
+    INSERT INTO dbo.Cargo (NomeCargo) VALUES ('Estagiario');
 END;
 
 IF NOT EXISTS (
-    SELECT 1 FROM dbo.Usuario WHERE UsuarioId = @UsuarioTeste2
+    SELECT 1 FROM dbo.Cargo WHERE NomeCargo = 'Desenvolvedor Junior'
 )
 BEGIN
-    INSERT INTO dbo.Usuario
-        (UsuarioId, NomeUsuario, EmailPessoal, TipoUsuarioId, CargoId, AtuacaoId)
-    VALUES
-        (@UsuarioTeste2, 'Usuario Teste B', 'usuario.teste.b@example.com', @TipoColaborador, @CargoB, @AtuacaoB);
+    INSERT INTO dbo.Cargo (NomeCargo) VALUES ('Desenvolvedor Junior');
 END;
 
 IF NOT EXISTS (
-    SELECT 1 FROM dbo.UsuarioEmailGit WHERE EmailGit = 'git.teste.a@example.com'
+    SELECT 1 FROM dbo.Cargo WHERE NomeCargo = 'Desenvolvedor Pleno'
 )
 BEGIN
-    INSERT INTO dbo.UsuarioEmailGit (UsuarioId, EmailGit)
-    VALUES (@UsuarioTeste1, 'git.teste.a@example.com');
+    INSERT INTO dbo.Cargo (NomeCargo) VALUES ('Desenvolvedor Pleno');
 END;
 
 IF NOT EXISTS (
-    SELECT 1 FROM dbo.UsuarioEmailGit WHERE EmailGit = 'git.teste.b@example.com'
+    SELECT 1 FROM dbo.Cargo WHERE NomeCargo = 'Desenvolvedor Senior'
 )
 BEGIN
-    INSERT INTO dbo.UsuarioEmailGit (UsuarioId, EmailGit)
-    VALUES (@UsuarioTeste2, 'git.teste.b@example.com');
+    INSERT INTO dbo.Cargo (NomeCargo) VALUES ('Desenvolvedor Senior');
 END;
-
-COMMIT TRANSACTION;
-GO
-
--- IDs e valores para usar nos testes via Swagger.
-SELECT
-    u.UsuarioId,
-    u.NomeUsuario,
-    u.EmailPessoal,
-    u.TipoUsuarioId,
-    tu.CodigoTipoUsuario,
-    u.CargoId,
-    c.NomeCargo,
-    u.AtuacaoId,
-    a.NomeAtuacao,
-    eg.EmailGit
-FROM dbo.Usuario AS u
-JOIN dbo.TipoUsuario AS tu ON tu.TipoUsuarioId = u.TipoUsuarioId
-JOIN dbo.Cargo AS c ON c.CargoId = u.CargoId
-JOIN dbo.Atuacao AS a ON a.AtuacaoId = u.AtuacaoId
-LEFT JOIN dbo.UsuarioEmailGit AS eg ON eg.UsuarioId = u.UsuarioId
-WHERE u.UsuarioId IN (
-    'A0000000-0000-0000-0000-000000000001',
-    'A0000000-0000-0000-0000-000000000002'
-)
-ORDER BY u.NomeUsuario;
-GO
