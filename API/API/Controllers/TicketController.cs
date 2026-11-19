@@ -229,5 +229,30 @@ namespace API.Controllers
             }
         }
 
+        [HttpGet("ForaDoPrazo")]
+        public ActionResult<List<ListarTicketDto>> ListarForaDoPrazo([FromQuery] FiltroTicketForaOuDentro filtro)
+        {
+            try
+            {
+                return Ok(_service.ListarTicketsForaDoPrazo(filtro));
+            }
+            catch (DomainException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("DentroDoPrazo")]
+        public ActionResult<List<ListarTicketDto>> ListarDentroDoPrazo([FromQuery] FiltroTicketForaOuDentro filtro)
+        {
+            try
+            {
+                return Ok(_service.ListarTicketsDentroDoPrazo(filtro));
+            }
+            catch (DomainException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

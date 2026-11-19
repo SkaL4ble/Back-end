@@ -1,33 +1,35 @@
 ﻿using API.Domains;
 using API.DTOs.ProjetoDto;
 
-namespace API.Interfaces
+namespace API.Interfaces;
+
+public interface IProjetoRepository
 {
-    public interface IProjetoRepository
-    {
-         //================================= CRUD ==========================================
-         Projeto? ObterPorId(Guid id);
-        public void CadastrarProjeto(Projeto projeto);
-        public void AtualizarProjeto(Guid id, Projeto projeto);
-        public void DeletarProjeto(Guid id);
+    // ================================= CRUD =================================
+    Projeto? ObterPorId(Guid id);
+    void CadastrarProjeto(Projeto projeto);
+    void AtualizarProjeto(Guid id, Projeto projeto);
+    void DeletarProjeto(Guid id);
 
-        //================================= LISTAGENS ==========================================
-        public List<Projeto> ListarProjetos(FiltroProjetoDto filtro);
+    // ================================ LISTAGEM =================================
+    List<Projeto> ListarProjetos(FiltroProjetoDto filtro);
+    List<Projeto> ListarProjetosForaDoPrazo(FiltroProjetoDentroOuForaPrazo filtro);
+    List<Projeto> ListarProjetosDentroDoPrazo(FiltroProjetoDentroOuForaPrazo filtro);
 
-        // ================================= VALIDAÇÕES ==========================================
-        public bool NomeProjetoExiste(string nome);
-        public bool LinkRepositorioExiste(string linkRepositorio);
-        public bool UsuarioExiste(Guid? usuarioId);
-        public bool StatusExiste(int? statusId);
-        public bool TipoExiste(int? tipoId);
-        public bool UsuarioEstaAssociadoAoProjetoPorNome(Guid usuarioId, string nomeProjeto);
-        public bool UsuarioEstaAssociadoAoProjeto(Guid usuarioId, Guid projetoId);
-        public bool UsuarioEstaAssociadoAoProjetoPorId(Guid usuarioId, Guid projetoId);
+    // ================================ VALIDAÇÕES =================================
+    bool NomeProjetoExiste(string nome, Guid? idIgnorado = null);
+    bool LinkRepositorioExiste(string linkRepositorio, Guid? idIgnorado = null);
+    bool UsuarioExiste(Guid? usuarioId);
+    bool StatusExiste(int? statusId);
+    bool TipoExiste(int? tipoId);
+    bool UsuarioEstaAssociadoAoProjetoPorNome(Guid usuarioId, string nomeProjeto);
+    bool UsuarioEstaAssociadoAoProjeto(Guid usuarioId, Guid projetoId);
+    bool UsuarioEstaAssociadoAoProjetoPorId(Guid usuarioId, Guid projetoId);
+    bool ProjetoPossuiColaboradores(Guid projetoId);
 
-        // ================================= FUNCOES ==========================================
-        public string? ObterLinkRepositorioPorId(Guid id);
-        public void AssociarUsuarioAoProjeto(Guid usuarioId, Guid projetoId);
-        public void DesassociarUsuarioDoProjeto(Guid usuarioId, Guid projetoId);
-        bool ProjetoPossuiColaboradores(Guid projetoId);
-    }
+    // ================================ FUNCOES =================================
+    void AtualizarColaboradores(Guid projetoId, IEnumerable<Guid> usuariosIds);
+    string? ObterLinkRepositorioPorId(Guid id);
+    void AssociarUsuarioAoProjeto(Guid usuarioId, Guid projetoId);
+    void DesassociarUsuarioDoProjeto(Guid usuarioId, Guid projetoId);
 }

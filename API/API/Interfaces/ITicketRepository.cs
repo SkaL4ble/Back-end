@@ -25,6 +25,8 @@ namespace API.Interfaces
         List<Ticket> ListarTicketsPorPeriodo(
             DateTime dataInicio,
             DateTime dataFim);
+        List<Ticket> ListarTicketsForaDoPrazo(FiltroTicketForaOuDentro filtro);
+        List<Ticket> ListarTicketsDentroDoPrazo(FiltroTicketForaOuDentro filtro);
 
         // ================================ FUNCOES =================================
         public void MudarEstadoTicket(int ticketId, int statusTicketId);
