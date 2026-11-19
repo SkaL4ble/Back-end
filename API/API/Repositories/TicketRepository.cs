@@ -162,6 +162,36 @@ public class TicketRepository : ITicketRepository
             .Where(t => t.DataCriacao >= dataInicio && t.DataCriacao < dataFim.Date.AddDays(1))
             .ToList();
 
+    public List<Ticket> ListarTicketsForaDoPrazo(FiltroTicketForaOuDentro filtro)
+    {
+        var query = TicketsAtivos()
+            .Where(t => t.DataPrazo.HasValue && t.DataEntrega.HasValue && ((t.DataEntrega.HasValue && t.DataEntrega.Value > t.DataPrazo.Value) ||
+                 (!t.DataEntrega.HasValue && t.DataPrazo.Value < DateTime.UtcNow)));
+        if (filtro.ProjetoId != Guid.Empty)
+        {
+            query = query.Where(t => t.ProjetoId == filtro.ProjetoId);
+        }
+        else if (filtro.UsuarioId != Guid.Empty)
+        {
+            query = query.Where(t => t.UsuarioResponsavel == filtro.UsuarioId || t.Usuario.Any(u => u.UsuarioId == filtro.UsuarioId));
+        }
+        return query.ToList();
+    }
+    public List<Ticket> ListarTicketsDentroDoPrazo(FiltroTicketForaOuDentro filtro)
+    {
+        var query = TicketsAtivos()
+            .Where(t => t.DataPrazo.HasValue && t.DataEntrega.HasValue && ((t.DataEntrega.HasValue && t.DataEntrega.Value <= t.DataPrazo.Value) ||
+                 (!t.DataEntrega.HasValue && t.DataPrazo.Value >= DateTime.UtcNow)));
+        if (filtro.ProjetoId != Guid.Empty)
+        {
+            query = query.Where(t => t.ProjetoId == filtro.ProjetoId);
+        }
+        else if (filtro.UsuarioId != Guid.Empty)
+        {
+            query = query.Where(t => t.UsuarioResponsavel == filtro.UsuarioId || t.Usuario.Any(u => u.UsuarioId == filtro.UsuarioId));
+        }
+        return query.ToList();
+    }
 
     // ================================ FUNCOES =================================
 

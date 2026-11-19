@@ -1,4 +1,4 @@
-﻿using API.Applications.Conversoes;
+﻿using API.Applications.Conversoes.ConversoesDeDto;
 using API.Domains;
 using API.DTOs.TicketDto;
 using API.Exceptions;
@@ -275,5 +275,25 @@ public class TicketService
             throw new DomainException("A data de início não pode ser maior que a data de fim");
 
         return ParaDtos(_repository.ListarTicketsPorPeriodo(dataInicio, dataFim));
+    }
+
+    public List<ListarTicketDto> ListarTicketsForaDoPrazo(FiltroTicketForaOuDentro filtro)
+    {
+        if(filtro.ProjetoId != Guid.Empty)
+            ValidarProjeto(filtro.ProjetoId);
+        else if(filtro.UsuarioId != Guid.Empty)
+            ValidarUsuario(filtro.UsuarioId);
+
+        return ParaDtos(_repository.ListarTicketsForaDoPrazo(filtro));
+    }
+
+    public List<ListarTicketDto> ListarTicketsDentroDoPrazo(FiltroTicketForaOuDentro filtro)
+    {
+        if (filtro.ProjetoId != Guid.Empty)
+            ValidarProjeto(filtro.ProjetoId);
+        else if (filtro.UsuarioId != Guid.Empty)
+            ValidarUsuario(filtro.UsuarioId);
+
+        return ParaDtos(_repository.ListarTicketsDentroDoPrazo(filtro));
     }
 }

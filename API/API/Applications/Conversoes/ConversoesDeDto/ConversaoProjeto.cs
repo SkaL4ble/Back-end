@@ -1,27 +1,45 @@
 ﻿using API.Domains;
 using API.DTOs.ProjetoDto;
 
-namespace API.Applications.Conversoes.ConversoesDeDto
+namespace API.Applications.Conversoes.ConversoesDeDto;
+
+public static class ConversaoProjeto
 {
-    public class ConversaoProjeto
+    public static ListarProjetoDto ConverterParaDto(Projeto projeto)
     {
-        public static ListarProjetoDto ConverterParaDto(Projeto projeto)
+        return new ListarProjetoDto
         {
-            return new ListarProjetoDto
-            {
-                ProjetoId = projeto.ProjetoId,
-                Nome = projeto.NomeProjeto,
-                AutorId = projeto.Autor,
+            ProjetoId = projeto.ProjetoId,
+            Nome = projeto.NomeProjeto,
+            Descricao = projeto.Descricao,
+            LinkRepositorio = projeto.LinkRepositorio,
+            AutorId = projeto.Autor,
+            NomeAutor = projeto.AutorNavigation?.NomeUsuario ?? string.Empty,
+            StatusId = projeto.StatusProjetoId,
+            Status = projeto.StatusProjeto?.NomeStatusProjeto ?? string.Empty,
+            TipoId = projeto.TipoProjetoId,
+            NomeTipo = projeto.TipoProjeto?.NomeTipoProjeto ?? string.Empty,
+            Prazo = projeto.Prazo,
+            UsuariosId = projeto.Usuario?.Select(u => u.UsuarioId).ToList() ?? new List<Guid>(),
+            QuantidadeColaboradores = projeto.Usuario?.Count ?? 0,
+            DataCriacao = projeto.DataCriacao
+        };
+    }
 
-            };
-        }
-
-        public static Projeto ConverterParaDomain(CriarProjetoDto projetoDto)
+    public static Projeto ConverterParaDomain(CriarProjetoDto dto, Guid? projetoId = null)
+    {
+        return new Projeto
         {
-            return new Projeto
-            {
-                NomeProjeto = projetoDto.Nome
-            };
-        }
+            ProjetoId = projetoId ?? Guid.NewGuid(),
+            NomeProjeto = dto.Nome!.Trim(),
+            Descricao = string.IsNullOrWhiteSpace(dto.Descricao) ? null : dto.Descricao.Trim(),
+            LinkRepositorio = dto.LinkRepositorio!.Trim(),
+            Autor = dto.AutorId,
+            StatusProjetoId = dto.StatusId,
+            TipoProjetoId = dto.TipoId,
+            Prazo = dto.Prazo,
+            Ativo = true,
+            DataCriacao = DateTime.UtcNow
+        };
     }
 }
