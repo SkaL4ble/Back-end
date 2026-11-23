@@ -1,5 +1,6 @@
 ﻿using API.Domains;
 using API.DTOs.ProjetoDto;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace API.Interfaces;
 
@@ -32,4 +33,5 @@ public interface IProjetoRepository
     string? ObterLinkRepositorioPorId(Guid id);
     void AssociarUsuarioAoProjeto(Guid usuarioId, Guid projetoId);
     void DesassociarUsuarioDoProjeto(Guid usuarioId, Guid projetoId);
+    public Task<IDbContextTransaction> ObterTransacaoBanco();
 }

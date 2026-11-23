@@ -46,11 +46,11 @@ namespace API.Controllers
         /// <response code="201">Projeto criado com sucesso</response>
         /// <response code="400">Dados inválidos ou projeto já existente</response>
         [HttpPost]
-        public ActionResult Adicionar(CriarProjetoDto dto)
+        public async Task<IActionResult> Adicionar([FromBody] CriarProjetoDto dto)
         {
             try
             {
-                _service.AdicionarProjeto(dto);
+                await _service.AdicionarProjeto(dto);
                 return StatusCode(StatusCodes.Status201Created);
             }
             catch (DomainException ex)
