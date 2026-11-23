@@ -6,6 +6,8 @@
 
         public string EmailPessoal { get; set; } = null!;
 
+        public DateTime? DataAdmissao { get; set; }
+
         public int CargoId { get; set; }
 
         public int AtuacaoId { get; set; }

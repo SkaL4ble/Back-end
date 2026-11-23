@@ -1,6 +1,7 @@
 ﻿using API.Applications.Services;
 using API.DTOs.TipoUsuarioDto;
 using API.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,6 +19,7 @@ namespace API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult<List<LerTipoUsuarioDto>> Listar()
         {
             List<LerTipoUsuarioDto> tiposUsuario = _service.Listar();
@@ -25,6 +27,7 @@ namespace API.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult<LerTipoUsuarioDto> BuscarPorId(Guid id)
         {
             try
@@ -39,6 +42,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Cadastrar(CriarTipoUsuarioDto dto)
         {
             try
@@ -53,6 +57,7 @@ namespace API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Atualizar(AtualizarTipoUsuarioDto dto, Guid id)
         {
             try

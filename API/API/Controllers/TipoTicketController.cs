@@ -1,6 +1,7 @@
 ﻿using API.Applications.Services;
 using API.DTOs.TipoTicketDto;
 using API.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -22,6 +23,7 @@ namespace API.Controllers
         /// <returns>Todos os tipos de ticket cadastrados</returns>
         /// <response code="200">Retorna todos os tipos de ticket do banco</response>
         [HttpGet]
+        [Authorize(Roles = "Tech Lead, Colaborador")]
         public ActionResult<List<ListarTipoTicketDto>> Listar()
         {
             return Ok(_service.ListarTiposTicket());
@@ -35,6 +37,7 @@ namespace API.Controllers
         /// <response code="200">Retorna o tipo de ticket</response>
         /// <response code="404">Tipo de ticket não encontrado</response>
         [HttpGet("{id}")]
+        [Authorize(Roles = "Tech Lead, Colaborador")]
         public ActionResult<ListarTipoTicketDto> ObterPorId(int id)
         {
             try
@@ -54,6 +57,7 @@ namespace API.Controllers
         /// <response code="201">Tipo de ticket criado com sucesso</response>
         /// <response code="400">Dados inválidos ou tipo de ticket já existente</response>
         [HttpPost]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Adicionar(CriarTipoTicketDto dto)
         {
             try
@@ -75,6 +79,7 @@ namespace API.Controllers
         /// <response code="204">Tipo de ticket atualizado com sucesso</response>
         /// <response code="400">Dados inválidos, tipo de ticket não encontrado ou já existente</response>
         [HttpPut("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Atualizar(int id, CriarTipoTicketDto dto)
         {
             try
@@ -95,6 +100,7 @@ namespace API.Controllers
         /// <response code="204">Tipo de ticket deletado com sucesso</response>
         /// <response code="400">Tipo de ticket não encontrado ou possui tickets vinculados</response>
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Deletar(int id)
         {
             try

@@ -1,6 +1,7 @@
 ﻿using API.Applications.Services;
 using API.DTOs.AtuacaoDto;
 using API.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -20,8 +21,9 @@ namespace API.Controllers
         /// Lista as atuacoes
         /// </summary>
         /// <returns>Os itens da atuacao</returns>
-        /// <response code="200">Returna todas atuacoes do banco</response>
+        /// <response code="200">Retorna todas atuacoes do banco</response>
         [HttpGet]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult<List<ListarAtuacaoDto>> Listar()
         {
             return Ok(_service.ListarAtuacoes());
@@ -33,6 +35,7 @@ namespace API.Controllers
         /// <returns>Retorna a atuacao</returns>
         /// <response code="200">Returna a atuacao por id</response>
         [HttpGet("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult<ListarAtuacaoDto> ObterPorId(int id)
         {
             try
@@ -50,6 +53,7 @@ namespace API.Controllers
         /// </summary>
         /// <response code="201">Returna a atuacao por id</response>
         [HttpPost]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Adicionar(CriarAtuacaoDto dto)
         {
             try
@@ -68,6 +72,7 @@ namespace API.Controllers
         /// </summary>
         /// <response code="204">Atualizacao uma atuacao usando ID de referencia e mandando o corpo</response>
         [HttpPut("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Atualizar(int id, CriarAtuacaoDto dto)
         {
             try
@@ -86,6 +91,7 @@ namespace API.Controllers
         /// </summary>
         /// <response code="204">Deleta uma atuacao pelo ID</response>
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Deletar(int id)
         {
             try

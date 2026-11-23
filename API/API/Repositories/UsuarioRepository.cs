@@ -81,18 +81,27 @@ namespace API.Repositories
             _context.SaveChanges();
         }
 
-        public void AtualizarSenha(Guid id, byte[] senha)
+        public async Task<Usuario?> BuscarEmail(string email)
         {
-            Usuario usuario = _context.Usuario.Find(id);
-            if (usuario == null)
+            return await _context.Usuario
+                .Include(u => u.TipoUsuario)
+                .SingleOrDefaultAsync(u => u.EmailPessoal == email);
+        }
+
+        public async Task<bool> AtualizarSenha(Guid id, byte[] senha)
+        {
+            Usuario? usuario = await _context.Usuario.FindAsync(id);
+
+            if (usuario is null)
             {
-                return;
+                return false;
             }
 
             usuario.Senha = senha;
-            _context.SaveChanges();
-        }
+            await _context.SaveChangesAsync();
 
+            return true;
+        }
 
         public void Inativar(Guid id)
         {
