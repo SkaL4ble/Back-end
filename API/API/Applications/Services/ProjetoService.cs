@@ -122,7 +122,7 @@ public class ProjetoService
 
         _repository.CadastrarProjeto(ConversaoProjeto.ConverterParaDomain(dto));
         _repository.AtualizarColaboradores(ConversaoProjeto.ConverterParaDomain(dto).ProjetoId, dto.UsuariosId);
-        _sonarService.CriarProjetoSonarJuntoAProjeto(ConversaoProjeto.ConverterParaDomain(dto), dto.WorkflowId);
+        await _sonarService.CriarProjetoSonarJuntoAProjeto(ConversaoProjeto.ConverterParaDomain(dto), dto.WorkflowId);
 
     }
 
