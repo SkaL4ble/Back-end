@@ -40,6 +40,7 @@ public static class ConversaoProjeto
 
     public static Projeto ConverterParaDomain(CriarProjetoDto dto, Guid? projetoId = null)
     {
+
         return new Projeto
         {
             ProjetoId = projetoId ?? Guid.NewGuid(),

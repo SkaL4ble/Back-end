@@ -14,11 +14,13 @@ public class ProjetoService
 
     private readonly IProjetoRepository _repository;
     private readonly IProjetoSonarRepository _sonarRepository;
+    private readonly ProjetoSonarService _sonarService;
 
-    public ProjetoService(IProjetoRepository repository, IProjetoSonarRepository sonarRepository)
+    public ProjetoService(IProjetoRepository repository, IProjetoSonarRepository sonarRepository, ProjetoSonarService sonarService)
     {
         _repository = repository;
         _sonarRepository = sonarRepository;
+        _sonarService = sonarService;
     }
 
     // ================================ VALIDAÇÕES =================================
@@ -115,36 +117,13 @@ public class ProjetoService
     public async Task AdicionarProjeto(CriarProjetoDto dto)
     {
         ValidarProjeto(dto);
-            var projetoId = Guid.NewGuid();
+        var projetoId = Guid.NewGuid();
+        dto.ProjetoId = projetoId;
 
-            var projeto = new Projeto
-            {
-                ProjetoId = projetoId,
-                NomeProjeto = dto.Nome.Trim(),
-                Descricao = dto.Descricao?.Trim(),
-                LinkRepositorio = dto.LinkRepositorio.Trim(),
-                Autor = dto.AutorId,
-                Prazo = dto.Prazo,
-                Ativo = true,
-                StatusProjetoId = dto.StatusId,
-                TipoProjetoId = dto.TipoId
-            };
+        _repository.CadastrarProjeto(ConversaoProjeto.ConverterParaDomain(dto));
+        _repository.AtualizarColaboradores(ConversaoProjeto.ConverterParaDomain(dto).ProjetoId, dto.UsuariosId);
+        _sonarService.CriarProjetoSonarJuntoAProjeto(ConversaoProjeto.ConverterParaDomain(dto), dto.WorkflowId);
 
-            var projetoSonar = new ProjetoSonar
-            {
-                ProjetoSonarId = Guid.NewGuid(),
-                ProjetoId = projetoId,
-                NomeSonar = dto.Nome.Trim(),
-                Descricao = dto.Descricao?.Trim(),
-                Origem = "LOCAL",
-                WorkflowId = dto.WorkflowId,
-                DataCriacao = DateTime.UtcNow
-            };
-
-            _repository.CadastrarProjeto(projeto);
-            _sonarRepository.Adicionar(projetoSonar);
-            _repository.AtualizarColaboradores(projeto.ProjetoId, dto.UsuariosId);
-        }
     }
 
     public void Atualizar(Guid id, CriarProjetoDto dto)

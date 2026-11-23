@@ -79,7 +79,7 @@ public class ProjetoSonarService
 
     // Chave do SonarQube: só aceita letras, números, '-', '_', '.' e ':'.
     // O sufixo aleatório evita colisão entre projetos com o mesmo nome.
-    private static string GerarChave(string nome)
+    public string GerarChave(string nome)
     {
         var semAcento = new string(nome.Normalize(NormalizationForm.FormD)
             .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
@@ -127,6 +127,18 @@ public class ProjetoSonarService
         await _sonar.CriarProjetoAsync(chave, nome);
 
         return await RegistrarAsync(dto.ProjetoId, chave, nome, descricao, "LOCAL", dto.WorkflowId);
+    }
+
+    public async Task<ListarProjetoSonarDto> CriarProjetoSonarJuntoAProjeto(Projeto projeto, int workflowId)
+    {
+        ValidarProjeto(projeto.ProjetoId);
+        var nome = NormalizarNome(projeto.NomeProjeto);
+        var descricao = NormalizarDescricao(projeto.Descricao);
+        var chave = GerarChave(nome);
+
+        await _sonar.CriarProjetoAsync(chave, nome);
+
+        return await RegistrarAsync(projeto.ProjetoId, chave, nome, descricao, "LOCAL", workflowId);
     }
 
     // Gera o token de análise e salva tudo no banco. Se o salvamento falhar,
@@ -372,21 +384,6 @@ private static bool EhIssueDeSeguranca(IssueSonarDto issue)
                StringComparison.OrdinalIgnoreCase);
 }
 
-private static bool EhIssueDeComplexidade(IssueSonarDto issue)
-{
-    if (!EhIssueDeManutencao(issue))
-        return false;
-
-    var texto = string.Join(
-        " ",
-        issue.Regra,
-        issue.Mensagem);
-
-    return texto.Contains("complex", StringComparison.OrdinalIgnoreCase)
-        || texto.Contains("cognitive", StringComparison.OrdinalIgnoreCase)
-        || texto.Contains("cyclomatic", StringComparison.OrdinalIgnoreCase)
-        || texto.Contains("complexidade", StringComparison.OrdinalIgnoreCase);
-}
 
 private static decimal CalcularNivel(
     IReadOnlyCollection<IssueSonarDto> issues)
