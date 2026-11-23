@@ -5,6 +5,7 @@ using API.Domains;
 using API.DTOs.UsuarioDto;
 using API.Exceptions;
 using API.Interfaces;
+using API.DTOs.AutenticacaoDto;
 using API.Repositories;
 
 namespace API.Applications.Services
@@ -13,13 +14,16 @@ namespace API.Applications.Services
     {
         private readonly IUsuarioRepository _repository;
         private readonly ITipoUsuarioRepository _tipoUsuarioRepository;
+        private readonly AutenticacaoService _autenticacaoService;
 
         public UsuarioService(
     IUsuarioRepository repository,
-    ITipoUsuarioRepository tipoUsuarioRepository)
+    ITipoUsuarioRepository tipoUsuarioRepository,
+    AutenticacaoService autenticacaoService)
         {
             _repository = repository;
             _tipoUsuarioRepository = tipoUsuarioRepository;
+            _autenticacaoService = autenticacaoService;
         }
 
 
@@ -46,22 +50,25 @@ namespace API.Applications.Services
             return ConversaoUsuario.ToDto(usuario);
         }
 
-        public void Cadastrar(CriarUsuarioDto dto)
+        public async Task Cadastrar(CriarUsuarioDto dto)
         {
             ValidarCriacao(dto);
 
             if (_repository.EmailExistente(dto.EmailPessoal, Guid.Empty))
             {
-                throw new DomainException("Já existe um usuário com este email.");
+                throw new DomainException(
+                    "Já existe um usuário com este email.");
             }
 
             if (_repository.EmailGitExistente(dto.EmailsGit, Guid.Empty))
             {
-                throw new DomainException("Já existe um usuário com este email GitHub.");
+                throw new DomainException(
+                    "Já existe um usuário com este email GitHub.");
             }
 
             TipoUsuario colaborador =
-    _tipoUsuarioRepository.BuscarPorCodigo(CodigosTipoUsuario.Colaborador);
+                _tipoUsuarioRepository.BuscarPorCodigo(
+                    CodigosTipoUsuario.Colaborador);
 
             if (colaborador == null)
             {
@@ -71,9 +78,16 @@ namespace API.Applications.Services
 
             Usuario usuario = ConversaoUsuario.ToEntity(dto);
             usuario.TipoUsuarioId = colaborador.TipoUsuarioId;
+            usuario.Senha = null; // Será atribuida pelo email enviado ao email pessoal do colaborador
+            usuario.Ativo = true;
 
             _repository.Cadastrar(usuario);
 
+            await _autenticacaoService.SolicitarRedefinicaoSenhaAsync(
+                new SolicitarRedefinicaoSenhaDto
+                {
+                    Email = usuario.EmailPessoal
+                });
         }
 
         public void Atualizar(AtualizarUsuarioDto dto, Guid id)
@@ -106,28 +120,28 @@ namespace API.Applications.Services
             _repository.Atualizar(usuario, id);
         }
 
-        public void AtribuirSenha(AtribuirSenha dto, Guid id)
-        {
-            if (id == Guid.Empty)
-            {
-                throw new DomainException("Preencha o campo de ID do usuário.");
-            }
+        //public void AtribuirSenha(AtribuirSenha dto, Guid id)
+        //{
+        //    if (id == Guid.Empty)
+        //    {
+        //        throw new DomainException("Preencha o campo de ID do usuário.");
+        //    }
 
-            if (dto == null || dto.Senha == null || dto.Senha.Length == 0)
-            {
-                throw new DomainException("Informe uma senha válida.");
-            }
+        //    if (dto == null || dto.Senha == null || dto.Senha.Length == 0)
+        //    {
+        //        throw new DomainException("Informe uma senha válida.");
+        //    }
 
-            Usuario usuario = _repository.BuscarPorId(id);
+        //    Usuario usuario = _repository.BuscarPorId(id);
 
-            if (usuario == null)
-            {
-                throw new DomainException("Usuário não encontrado.");
-            }
+        //    if (usuario == null)
+        //    {
+        //        throw new DomainException("Usuário não encontrado.");
+        //    }
 
-            ConversaoUsuario.UpdatePassword(dto, usuario);
-            _repository.Atualizar(usuario, id);
-        }
+        //    ConversaoUsuario.UpdatePassword(dto, usuario);
+        //    _repository.Atualizar(usuario, id);
+        //}
 
         public void Inativar(Guid id)
         {

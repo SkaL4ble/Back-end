@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using API.Applications.Services;
 using API.DTOs.UsuarioDto;
 using API.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,6 +21,7 @@ namespace API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult<List<LerUsuarioDto>> Listar()
         {
             List<LerUsuarioDto> usuarios = _service.Listar();
@@ -27,6 +29,7 @@ namespace API.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult<LerUsuarioDto> BuscarPorId(Guid id)
         {
             try
@@ -41,11 +44,12 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public ActionResult Cadastrar(CriarUsuarioDto dto)
+        [Authorize(Roles = "Tech Lead")]
+        public async Task<ActionResult> Cadastrar(CriarUsuarioDto dto)
         {
             try
             {
-                _service.Cadastrar(dto);
+                await _service.Cadastrar(dto);
                 return StatusCode(StatusCodes.Status201Created);
             }
             catch (DomainException ex)
@@ -55,6 +59,7 @@ namespace API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Atualizar(AtualizarUsuarioDto dto, Guid id)
         {
             try
@@ -68,21 +73,8 @@ namespace API.Controllers
             }
         }
 
-        [HttpPatch("{id}/senha")]
-        public ActionResult AtribuirSenha(Guid id, AtribuirSenha dto)
-        {
-            try
-            {
-                _service.AtribuirSenha(dto, id);
-                return NoContent();
-            }
-            catch (DomainException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
         [HttpPatch("{id}/inativar")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Inativar(Guid id)
         {
             try
