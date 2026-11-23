@@ -3,6 +3,7 @@ using API.Domains;
 using API.DTOs.ProjetoDto;
 using API.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace API.Repositories;
 
@@ -240,5 +241,10 @@ public class ProjetoRepository : IProjetoRepository
             projeto.Usuario.Remove(usuario);
             _context.SaveChanges();
         }
+    }
+
+    public async Task<IDbContextTransaction> ObterTransacaoBanco()
+    {
+        return await _context.Database.BeginTransactionAsync();
     }
 }

@@ -3,6 +3,7 @@ using API.Domains;
 using API.DTOs.ProjetoDto;
 using API.Exceptions;
 using API.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Applications.Services;
 
@@ -12,10 +13,12 @@ public class ProjetoService
     private const int TamanhoMaximoLink = 150;
 
     private readonly IProjetoRepository _repository;
+    private readonly IProjetoSonarRepository _sonarRepository;
 
-    public ProjetoService(IProjetoRepository repository)
+    public ProjetoService(IProjetoRepository repository, IProjetoSonarRepository sonarRepository)
     {
         _repository = repository;
+        _sonarRepository = sonarRepository;
     }
 
     // ================================ VALIDAÇÕES =================================
@@ -109,12 +112,39 @@ public class ProjetoService
         return ConversaoProjeto.ConverterParaDto(BuscarOuFalhar(id));
     }
 
-    public void AdicionarProjeto(CriarProjetoDto dto)
+    public async Task AdicionarProjeto(CriarProjetoDto dto)
     {
         ValidarProjeto(dto);
-        var projeto = ConversaoProjeto.ConverterParaDomain(dto);
-        _repository.CadastrarProjeto(projeto);
-        _repository.AtualizarColaboradores(projeto.ProjetoId, dto.UsuariosId);
+            var projetoId = Guid.NewGuid();
+
+            var projeto = new Projeto
+            {
+                ProjetoId = projetoId,
+                NomeProjeto = dto.Nome.Trim(),
+                Descricao = dto.Descricao?.Trim(),
+                LinkRepositorio = dto.LinkRepositorio.Trim(),
+                Autor = dto.AutorId,
+                Prazo = dto.Prazo,
+                Ativo = true,
+                StatusProjetoId = dto.StatusId,
+                TipoProjetoId = dto.TipoId
+            };
+
+            var projetoSonar = new ProjetoSonar
+            {
+                ProjetoSonarId = Guid.NewGuid(),
+                ProjetoId = projetoId,
+                NomeSonar = dto.Nome.Trim(),
+                Descricao = dto.Descricao?.Trim(),
+                Origem = "LOCAL",
+                WorkflowId = dto.WorkflowId,
+                DataCriacao = DateTime.UtcNow
+            };
+
+            _repository.CadastrarProjeto(projeto);
+            _sonarRepository.Adicionar(projetoSonar);
+            _repository.AtualizarColaboradores(projeto.ProjetoId, dto.UsuariosId);
+        }
     }
 
     public void Atualizar(Guid id, CriarProjetoDto dto)
