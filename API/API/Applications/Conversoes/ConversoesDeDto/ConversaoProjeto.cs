@@ -38,12 +38,11 @@ public static class ConversaoProjeto
         };
     }
 
-    public static Projeto ConverterParaDomain(CriarProjetoDto dto, Guid? projetoId = null)
+    public static Projeto ConverterParaDomain(CriarProjetoDto dto, Guid projetoId)
     {
-
         return new Projeto
         {
-            ProjetoId = projetoId ?? Guid.NewGuid(),
+            ProjetoId = projetoId,
             NomeProjeto = dto.Nome!.Trim(),
             Descricao = string.IsNullOrWhiteSpace(dto.Descricao) ? null : dto.Descricao.Trim(),
             LinkRepositorio = dto.LinkRepositorio!.Trim(),

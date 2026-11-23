@@ -133,6 +133,8 @@ public class ProjetoSonarService
     {
         ValidarProjeto(projeto.ProjetoId);
         var nome = NormalizarNome(projeto.NomeProjeto);
+        if (!_repository.WorkflowExiste(workflowId))
+            workflowId = 1;
         var descricao = NormalizarDescricao(projeto.Descricao);
         var chave = GerarChave(nome);
 
@@ -177,7 +179,12 @@ public class ProjetoSonarService
 
     // ============================== CONSULTAS E TOKENS ==============================
 
-    public ListarProjetoSonarDto ObterPorId(Guid id) => Converter(BuscarOuFalharSonar(id));
+    public ListarProjetoSonarDto ObterPorId(Guid id) {
+        var usuario = Converter(BuscarOuFalharSonar(id));
+        if (usuario == null)
+            throw new DomainException("ID invaliado");
+        return usuario;
+    }
 
     public string ObterTokenSonar(Guid id)
     {

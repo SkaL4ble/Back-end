@@ -58,9 +58,9 @@ public class TicketRepository : ITicketRepository
         _context.Usuario.Any(u => u.UsuarioId == usuarioId && u.Ativo);
 
     public bool ColaboradorExiste(int ticketId, Guid usuarioId) =>
-        _context.Ticket.Any(t =>
-            t.TicketId == ticketId &&
-            t.Usuario.Any(u => u.UsuarioId == usuarioId));
+    _context.TicketUsuario.Any(tu =>
+        tu.TicketId == ticketId &&
+        tu.UsuarioId == usuarioId);
 
     public bool UsuarioParticipaDoProjeto(Guid usuarioId, Guid projetoId) =>
         _context.Projeto.Any(p =>
@@ -77,7 +77,8 @@ public class TicketRepository : ITicketRepository
             .Include(t => t.TipoTicket)
             .Include(t => t.StatusTicket)
             .Include(t => t.UsuarioResponsavelNavigation)
-            .Include(t => t.Usuario)
+            .Include(t => t.TicketUsuario)
+            .ThenInclude(tu => tu.Usuario)
             .AsNoTracking();
 
     public List<Ticket> ListarTickets() => TicketsAtivos().ToList();
@@ -92,8 +93,7 @@ public class TicketRepository : ITicketRepository
 
             query = query.Where(ticket =>
                 ticket.UsuarioResponsavel == usuarioId ||
-                ticket.Usuario.Any(usuario =>
-                    usuario.UsuarioId == usuarioId));
+                ticket.TicketUsuario.Any(tu => tu.UsuarioId == usuarioId));
         }
 
         if (filtro.ProjetoId.HasValue)
@@ -173,7 +173,7 @@ public class TicketRepository : ITicketRepository
         }
         else if (filtro.UsuarioId != Guid.Empty)
         {
-            query = query.Where(t => t.UsuarioResponsavel == filtro.UsuarioId || t.Usuario.Any(u => u.UsuarioId == filtro.UsuarioId));
+            query = query.Where(t => t.UsuarioResponsavel == filtro.UsuarioId || t.TicketUsuario.Any(u => u.UsuarioId == filtro.UsuarioId));
         }
         return query.ToList();
     }
@@ -188,7 +188,7 @@ public class TicketRepository : ITicketRepository
         }
         else if (filtro.UsuarioId != Guid.Empty)
         {
-            query = query.Where(t => t.UsuarioResponsavel == filtro.UsuarioId || t.Usuario.Any(u => u.UsuarioId == filtro.UsuarioId));
+            query = query.Where(t => t.UsuarioResponsavel == filtro.UsuarioId || t.TicketUsuario.Any(u => u.UsuarioId == filtro.UsuarioId));
         }
         return query.ToList();
     }
@@ -208,32 +208,35 @@ public class TicketRepository : ITicketRepository
     public void AdicionarColaborador(int ticketId, Guid usuarioId)
     {
         var ticket = _context.Ticket
-            .Include(t => t.Usuario)
             .FirstOrDefault(t => t.TicketId == ticketId && t.Ativo);
         var usuario = _context.Usuario.FirstOrDefault(u => u.UsuarioId == usuarioId && u.Ativo);
 
-        if (ticket is null || usuario is null || ticket.Usuario.Any(u => u.UsuarioId == usuarioId))
+        if (ticket is null || usuario is null || ColaboradorExiste(ticketId, usuarioId))
             return;
 
-        ticket.Usuario.Add(usuario);
+        ticket.TicketUsuario.Add(new TicketUsuario
+        {
+            Autor = false,
+            TicketId = ticketId,
+            UsuarioId = usuarioId
+        });
         _context.SaveChanges();
     }
 
     public void RemoverColaborador(int ticketId, Guid usuarioId)
     {
         var ticket = _context.Ticket
-            .Include(t => t.Usuario)
             .FirstOrDefault(t => t.TicketId == ticketId);
         var usuario = _context.Usuario.FirstOrDefault(u => u.UsuarioId == usuarioId);
 
         if (ticket is null || usuario is null)
             return;
 
-        var colaborador = ticket.Usuario.FirstOrDefault(u => u.UsuarioId == usuarioId);
+        var colaborador = ticket.TicketUsuario.FirstOrDefault(u => u.UsuarioId == usuarioId);
         if (colaborador is null)
             return;
 
-        ticket.Usuario.Remove(colaborador);
+        ticket.TicketUsuario.Remove(colaborador);
         _context.SaveChanges();
     }
 

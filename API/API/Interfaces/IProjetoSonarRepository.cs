@@ -6,6 +6,7 @@ public interface IProjetoSonarRepository
 {
     ProjetoSonar? ObterPorId(Guid projetoSonarId);
     List<Workflow> ObterWorkflows();
+    bool WorkflowExiste(int workflowId);
 
     bool ProjetoExiste(Guid projetoId);
 

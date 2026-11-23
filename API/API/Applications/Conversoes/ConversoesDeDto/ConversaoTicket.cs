@@ -21,11 +21,11 @@ namespace API.Applications.Conversoes.ConversoesDeDto
                 UsuarioResponsavel = ticket.UsuarioResponsavel,
                 NomeUsuarioResponsavel = ticket.UsuarioResponsavelNavigation?.NomeUsuario,
 
-                Colaboradores = ticket.Usuario.Select(u => new ColaboradorTicketDto
+                Colaboradores = ticket.TicketUsuario.Select(tu => new ColaboradorTicketDto
                 {
-                    UsuarioId = u.UsuarioId,
-                    NomeUsuario = u.NomeUsuario,
-                    ImagemUsuario = u.Imagem is null ? null : Convert.ToBase64String(u.Imagem)
+                    UsuarioId = tu.UsuarioId,
+                    NomeUsuario = tu.Usuario.NomeUsuario,
+                    ImagemUsuario = tu.Usuario.Imagem is null ? null : Convert.ToBase64String(tu.Usuario.Imagem)
                 }).ToList(),
 
                 ProjetoId = ticket.ProjetoId,

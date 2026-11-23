@@ -120,9 +120,9 @@ public class ProjetoService
         var projetoId = Guid.NewGuid();
         dto.ProjetoId = projetoId;
 
-        _repository.CadastrarProjeto(ConversaoProjeto.ConverterParaDomain(dto));
-        _repository.AtualizarColaboradores(ConversaoProjeto.ConverterParaDomain(dto).ProjetoId, dto.UsuariosId);
-        await _sonarService.CriarProjetoSonarJuntoAProjeto(ConversaoProjeto.ConverterParaDomain(dto), dto.WorkflowId);
+        _repository.CadastrarProjeto(ConversaoProjeto.ConverterParaDomain(dto, projetoId));
+        _repository.AtualizarColaboradores(projetoId, dto.UsuariosId);
+        await _sonarService.CriarProjetoSonarJuntoAProjeto(ConversaoProjeto.ConverterParaDomain(dto,projetoId), dto.WorkflowId);
 
     }
 
