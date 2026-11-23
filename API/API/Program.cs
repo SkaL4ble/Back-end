@@ -124,65 +124,64 @@ builder.Services.AddScoped<ProjetoSonarService>();
 builder.Services.AddHttpClient<SonarQubeService>();
 builder.Services.AddScoped<CriptografiaService>();
 
-builder.Services.AddAuthorization();
 
 builder.Services.AddOpenApi();
 
-// Configura o sistema de autenticação da aplicação.
-// Aqui estamos dizendo que o tipo de autenticação padrão será JWT Bearer.
-// Ou seja: a API vai esperar receber um Token JWT nas requisições.
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//// Configura o sistema de autenticação da aplicação.
+//// Aqui estamos dizendo que o tipo de autenticação padrão será JWT Bearer.
+//// Ou seja: a API vai esperar receber um Token JWT nas requisições.
+//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
-    // Adiciona o suporte para autenticação usando JWT.
-    .AddJwtBearer(options =>
-    {
-        // Lê a chave secreta definida no appsettings.json.
-        // Essa chave é usada para ASSINAR o token quando ele é gerado
-        // e também para VALIDAR se o token recebido é verdadeiro.
-        var chave = Environment.GetEnvironmentVariable("JWT_KEY");
+//    // Adiciona o suporte para autenticação usando JWT.
+//    .AddJwtBearer(options =>
+//    {
+//        // Lê a chave secreta definida no appsettings.json.
+//        // Essa chave é usada para ASSINAR o token quando ele é gerado
+//        // e também para VALIDAR se o token recebido é verdadeiro.
+//        var chave = Environment.GetEnvironmentVariable("JWT_KEY");
 
-        // Quem emitiu o token (ex: nome da sua aplicação).
-        // Serve para evitar aceitar tokens de outro sistema.
-        var issuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+//        // Quem emitiu o token (ex: nome da sua aplicação).
+//        // Serve para evitar aceitar tokens de outro sistema.
+//        var issuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
 
-        // Para quem o token foi criado (normalmente o frontend ou a própria API).
-        // Também ajuda a garantir que o token pertence ao seu sistema.
-        var audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+//        // Para quem o token foi criado (normalmente o frontend ou a própria API).
+//        // Também ajuda a garantir que o token pertence ao seu sistema.
+//        var audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
 
-        // Define as regras que serão usadas para validar o token recebido.
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            // Verifica se o emissor do token é válido
-            // (se bate com o issuer configurado).
-            ValidateIssuer = true,
+//        // Define as regras que serão usadas para validar o token recebido.
+//        options.TokenValidationParameters = new TokenValidationParameters
+//        {
+//            // Verifica se o emissor do token é válido
+//            // (se bate com o issuer configurado).
+//            ValidateIssuer = true,
 
-            // Verifica se o destinatário do token é válido
-            // (se bate com o audience configurado).
-            ValidateAudience = true,
+//            // Verifica se o destinatário do token é válido
+//            // (se bate com o audience configurado).
+//            ValidateAudience = true,
 
-            // Verifica se o token ainda está dentro do prazo de validade.
-            // Se já expirou, a requisição será negada.
-            ValidateLifetime = true,
+//            // Verifica se o token ainda está dentro do prazo de validade.
+//            // Se já expirou, a requisição será negada.
+//            ValidateLifetime = true,
 
-            // Verifica se a assinatura do token é válida.
-            // Isso garante que o token não foi alterado.
-            ValidateIssuerSigningKey = true,
+//            // Verifica se a assinatura do token é válida.
+//            // Isso garante que o token não foi alterado.
+//            ValidateIssuerSigningKey = true,
 
-            // Define qual emissor é considerado válido.
-            ValidIssuer = issuer,
+//            // Define qual emissor é considerado válido.
+//            ValidIssuer = issuer,
 
-            // Define qual audience é considerado válido.
-            ValidAudience = audience,
+//            // Define qual audience é considerado válido.
+//            ValidAudience = audience,
 
-            // Define qual chave será usada para validar a assinatura do token.
-            // A mesma chave usada na geração do JWT deve estar aqui.
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(chave)
-            ),
+//            // Define qual chave será usada para validar a assinatura do token.
+//            // A mesma chave usada na geração do JWT deve estar aqui.
+//            IssuerSigningKey = new SymmetricSecurityKey(
+//                Encoding.UTF8.GetBytes(chave)
+//            ),
 
-            RoleClaimType = ClaimTypes.Role // Define que o claim "role" será usado para validar as permissões do usuário.
-        };
-    });
+//            RoleClaimType = ClaimTypes.Role // Define que o claim "role" será usado para validar as permissões do usuário.
+//        };
+//    });
 
 
 var app = builder.Build();
