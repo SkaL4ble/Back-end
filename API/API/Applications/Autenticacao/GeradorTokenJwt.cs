@@ -59,8 +59,8 @@ namespace API.Applications.Autenticacao
                     usuario.EmailPessoal),
 
                 new Claim(
-                    ClaimTypes.Role,
-                    usuario.TipoUsuario.CodigoTipoUsuario)
+                     ClaimTypes.Role,
+                    usuario.TipoUsuario.NomeTipoUsuario)
             };
 
             var token = new JwtSecurityToken(

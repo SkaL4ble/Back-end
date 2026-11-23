@@ -26,6 +26,8 @@ public partial class SkaL4bleContext : DbContext
 
     public virtual DbSet<Projeto> Projeto { get; set; }
 
+    public virtual DbSet<ProjetoSonar> ProjetoSonar { get; set; }
+
     public virtual DbSet<StatusProjeto> StatusProjeto { get; set; }
 
     public virtual DbSet<StatusTicket> StatusTicket { get; set; }
@@ -51,6 +53,8 @@ public partial class SkaL4bleContext : DbContext
     public virtual DbSet<UsuarioEmailGit> UsuarioEmailGit { get; set; }
 
     public virtual DbSet<UsuarioIdeToken> UsuarioIdeToken { get; set; }
+
+    public virtual DbSet<Workflow> Workflow { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -130,6 +134,7 @@ public partial class SkaL4bleContext : DbContext
 
             entity.Property(e => e.ProjetoId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Ativo).HasDefaultValue(true);
+            entity.Property(e => e.DataCriacao).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.Descricao).IsUnicode(false);
             entity.Property(e => e.LinkRepositorio)
                 .HasMaxLength(150)
@@ -166,6 +171,35 @@ public partial class SkaL4bleContext : DbContext
                     {
                         j.HasKey("ProjetoId", "UsuarioId");
                     });
+        });
+
+        modelBuilder.Entity<ProjetoSonar>(entity =>
+        {
+            entity.HasIndex(e => e.ChaveSonar, "UQ_ProjetoSonar_ChaveSonar").IsUnique();
+
+            entity.Property(e => e.ProjetoSonarId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.ChaveSonar)
+                .HasMaxLength(400)
+                .IsUnicode(false);
+            entity.Property(e => e.DataCriacao)
+                .HasDefaultValueSql("(getutcdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Descricao)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+            entity.Property(e => e.NomeSonar)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.Origem)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.TokenSonarCriptografado).IsUnicode(false);
+            entity.Property(e => e.WorkflowId).HasDefaultValue(1);
+
+            entity.HasOne(d => d.Projeto).WithMany(p => p.ProjetoSonar)
+                .HasForeignKey(d => d.ProjetoId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ProjetoSonar_Projeto");
         });
 
         modelBuilder.Entity<StatusProjeto>(entity =>
@@ -372,6 +406,16 @@ public partial class SkaL4bleContext : DbContext
             entity.HasOne(d => d.Usuario).WithMany(p => p.UsuarioIdeToken)
                 .HasForeignKey(d => d.UsuarioId)
                 .HasConstraintName("FK_UsuarioIdeToken_Usuario");
+        });
+
+        modelBuilder.Entity<Workflow>(entity =>
+        {
+            entity.HasIndex(e => e.NomeWorkflow, "UQ_Workflow_Nome").IsUnique();
+
+            entity.Property(e => e.WorkflowId).ValueGeneratedNever();
+            entity.Property(e => e.NomeWorkflow)
+                .HasMaxLength(30)
+                .IsUnicode(false);
         });
 
         OnModelCreatingPartial(modelBuilder);

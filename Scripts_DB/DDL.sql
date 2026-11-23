@@ -97,11 +97,20 @@ GO
 -- TABELAS PRINCIPAIS
 -- =============================================================================
 
+CREATE TABLE Workflow (
+    WorkflowId INT NOT NULL,
+    NomeWorkflow VARCHAR(30) NULL,
+    CONSTRAINT PK_Workflow PRIMARY KEY (WorkflowId),
+    CONSTRAINT UQ_Workflow_Nome UNIQUE (NomeWorkflow)
+);
+GO
+
 CREATE TABLE Usuario (
     UsuarioId UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
     NomeUsuario VARCHAR(50) NOT NULL,
     EmailPessoal VARCHAR(100) NOT NULL,
     Senha VARBINARY(MAX) NULL,
+    DataAdmissao DATETIME2 NULL,
     Imagem VARBINARY(MAX) NULL,
     Ativo BIT NOT NULL DEFAULT 1,
     TipoUsuarioId UNIQUEIDENTIFIER NOT NULL,
@@ -139,7 +148,7 @@ CREATE TABLE TokenRedefinicaoSenha (
 );
 GO
 
-CREATE INDEX IX_TokenRedefinicaoSenha_UsuarioId
+CREATE INDEX IX_TokenRedefinicaoSenha_UsuarioId -- Agiliza a localizacao de tokens associados
     ON TokenRedefinicaoSenha (UsuarioId);
 GO
 
@@ -153,6 +162,7 @@ CREATE TABLE Projeto (
     Ativo BIT NOT NULL DEFAULT 1,
     StatusProjetoId INT NOT NULL,
     TipoProjetoId INT NOT NULL,
+    DataCriacao DATETIME2 NULL DEFAULT GETDATE(),
     CONSTRAINT PK_Projeto PRIMARY KEY (ProjetoId),
 
     CONSTRAINT UQ_Projeto_LinkRepositorio UNIQUE (LinkRepositorio),
@@ -163,6 +173,24 @@ CREATE TABLE Projeto (
         REFERENCES Usuario (UsuarioId),
     CONSTRAINT FK_Projeto_TipoProjeto FOREIGN KEY (TipoProjetoId) 
         REFERENCES TipoProjeto (TipoProjetoId)
+);
+GO
+
+CREATE TABLE ProjetoSonar (
+    ProjetoSonarId UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
+    ProjetoId UNIQUEIDENTIFIER NOT NULL,
+    ChaveSonar VARCHAR(400) NOT NULL,
+    NomeSonar VARCHAR(255) NOT NULL,
+    Descricao VARCHAR(500) NULL,
+    Origem VARCHAR(10) NOT NULL,
+    TokenSonarCriptografado VARCHAR(MAX) NOT NULL,
+    DataCriacao DATETIME NOT NULL DEFAULT GETUTCDATE(),
+    WorkflowId INT NULL DEFAULT 1,
+    CONSTRAINT PK_ProjetoSonar PRIMARY KEY (ProjetoSonarId),
+    CONSTRAINT UQ_ProjetoSonar_ChaveSonar UNIQUE (ChaveSonar),
+    CONSTRAINT FK_ProjetoSonar_Projeto FOREIGN KEY (ProjetoId)
+        REFERENCES Projeto (ProjetoId),
+    CONSTRAINT CK_ProjetoSonar_Origem CHECK (Origem = 'REMOTO' OR Origem = 'LOCAL')
 );
 GO
 
@@ -309,7 +337,7 @@ GO
 -- =============================================================================
 
 -- INATIVA O PROJETO E SEUS TICKETS CORRESPONDENTES
-CREATE TRIGGER TR_Projeto_SoftDeleteCascade 
+CREATE TRIGGER TR_Projeto_SoftDeleteCascade
 ON Projeto
 INSTEAD OF DELETE
 AS
@@ -331,7 +359,7 @@ END;
 GO
 
 -- INATIVA O USUARIO E DESATRELA SEUS TICKETS CORRESPONDENTES
-CREATE OR ALTER TRIGGER TR_Usuario_SoftDeleteCascade 
+CREATE OR ALTER TRIGGER TR_Usuario_SoftDeleteCascade
 ON Usuario
 INSTEAD OF DELETE
 AS

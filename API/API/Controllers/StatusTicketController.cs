@@ -1,6 +1,7 @@
 ﻿using API.Applications.Services;
 using API.DTOs.StatusTicketDto;
 using API.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -22,6 +23,7 @@ namespace API.Controllers
         /// <returns>Todos os status de ticket cadastrados</returns>
         /// <response code="200">Retorna todos os status de ticket do banco</response>
         [HttpGet]
+        [Authorize(Roles = "Tech Lead, Colaborador")]
         public ActionResult<List<ListarStatusTicketDto>> Listar()
         {
             return Ok(_service.ListarStatusTicket());
@@ -35,6 +37,7 @@ namespace API.Controllers
         /// <response code="200">Retorna o status de ticket</response>
         /// <response code="404">Status de ticket não encontrado</response>
         [HttpGet("{id}")]
+        [Authorize(Roles = "Tech Lead, Colaborador")]
         public ActionResult<ListarStatusTicketDto> ObterPorId(int id)
         {
             try
@@ -54,6 +57,7 @@ namespace API.Controllers
         /// <response code="201">Status de ticket criado com sucesso</response>
         /// <response code="400">Dados inválidos ou status de ticket já existente</response>
         [HttpPost]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Adicionar(CriarStatusTicketDto dto)
         {
             try
@@ -75,6 +79,7 @@ namespace API.Controllers
         /// <response code="204">Status de ticket atualizado com sucesso</response>
         /// <response code="400">Dados inválidos, status de ticket não encontrado ou já existente</response>
         [HttpPut("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Atualizar(int id, CriarStatusTicketDto dto)
         {
             try
@@ -95,6 +100,7 @@ namespace API.Controllers
         /// <response code="204">Status de ticket deletado com sucesso</response>
         /// <response code="400">Status de ticket não encontrado ou possui tickets vinculados</response>
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Deletar(int id)
         {
             try

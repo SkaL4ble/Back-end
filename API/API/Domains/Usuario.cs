@@ -13,6 +13,8 @@ public partial class Usuario
 
     public byte[]? Senha { get; set; }
 
+    public DateTime? DataAdmissao { get; set; }
+
     public byte[]? Imagem { get; set; }
 
     public bool Ativo { get; set; }

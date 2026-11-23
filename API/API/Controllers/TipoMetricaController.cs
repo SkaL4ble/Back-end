@@ -1,8 +1,9 @@
+using API.Applications.Services;
+using API.Domains;
+using API.DTOs.TipoMetricaDto;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using API.Applications.Services;
-using API.DTOs.TipoMetricaDto;
-using API.Domains;
 
 namespace API.Controllers
 {
@@ -16,6 +17,7 @@ namespace API.Controllers
             _tipoMetricaService = tipoMetricaService;
         }
         [HttpGet]
+        [Authorize(Roles = "Tech Lead")]
         public IActionResult Listar()
         {
             var tiposMetricas = _tipoMetricaService.Listar();
@@ -27,6 +29,7 @@ namespace API.Controllers
             return Ok(tiposMetricasDto);
         }
         [HttpGet("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public IActionResult BuscarPorId(int id)
         {
             var tipoMetrica = _tipoMetricaService.BuscarPorId(id);
@@ -42,6 +45,7 @@ namespace API.Controllers
             return Ok(tipoMetricaDto);
         }
         [HttpPost]
+        [Authorize(Roles = "Tech Lead")]
         public IActionResult Cadastrar(CriarTipoMetricaDto criarTipoMetricaDto)
         {
             var tipoMetrica = new TipoMetrica
@@ -52,6 +56,7 @@ namespace API.Controllers
             return CreatedAtAction(nameof(BuscarPorId), new { id = tipoMetrica.TipoMetricaId }, tipoMetrica);
         }
         [HttpPut("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public IActionResult Atualizar(int id, CriarTipoMetricaDto criarTipoMetricaDto)
         {
             var tipoMetricaExistente = _tipoMetricaService.BuscarPorId(id);
@@ -69,6 +74,7 @@ namespace API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public IActionResult Remover(int id)
         {
             var tipoMetricaExistente = _tipoMetricaService.BuscarPorId(id);

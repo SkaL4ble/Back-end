@@ -1,6 +1,7 @@
 ﻿using API.Applications.Services;
 using API.DTOs.StatusProjetoDto;
 using API.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -22,6 +23,7 @@ namespace API.Controllers
         /// <returns>Todos os status de projeto cadastrados</returns>
         /// <response code="200">Retorna todos os status de projeto do banco</response>
         [HttpGet]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult<List<ListarStatusProjetoDto>> Listar()
         {
             return Ok(_service.ListarStatusProjeto());
@@ -35,6 +37,7 @@ namespace API.Controllers
         /// <response code="200">Retorna o status de projeto</response>
         /// <response code="404">Status de projeto não encontrado</response>
         [HttpGet("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult<ListarStatusProjetoDto> ObterPorId(int id)
         {
             try
@@ -54,6 +57,7 @@ namespace API.Controllers
         /// <response code="201">Status de projeto criado com sucesso</response>
         /// <response code="400">Dados inválidos ou status de projeto já existente</response>
         [HttpPost]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Adicionar(CriarStatusProjetoDto dto)
         {
             try
@@ -75,6 +79,7 @@ namespace API.Controllers
         /// <response code="204">Status de projeto atualizado com sucesso</response>
         /// <response code="400">Dados inválidos, status de projeto não encontrado ou já existente</response>
         [HttpPut("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Atualizar(int id, CriarStatusProjetoDto dto)
         {
             try
@@ -95,6 +100,7 @@ namespace API.Controllers
         /// <response code="204">Status de projeto deletado com sucesso</response>
         /// <response code="400">Status de projeto não encontrado ou possui projetos vinculados</response>
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Deletar(int id)
         {
             try

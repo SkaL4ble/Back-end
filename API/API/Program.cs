@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -160,7 +161,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             // A mesma chave usada na geração do JWT deve estar aqui.
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(chave)
-            )
+            ),
+
+            RoleClaimType = ClaimTypes.Role // Define que o claim "role" será usado para validar as permissões do usuário.
         };
     });
 

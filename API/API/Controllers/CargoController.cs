@@ -1,6 +1,7 @@
 ﻿using API.Applications.Services;
 using API.DTOs.CargoDto;
 using API.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 [Route("api/[controller]")]
@@ -15,12 +16,14 @@ public class CargoController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Tech Lead")]
     public ActionResult<List<ListarCargoDto>> Listar()
     {
         return Ok(_service.ListarCargo());
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = "Tech Lead")]
     public ActionResult<ListarCargoDto> ObterPorId(int id)
     {
         try
@@ -34,6 +37,7 @@ public class CargoController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Tech Lead")]
     public ActionResult Deletar(int id)
     {
         try
@@ -48,6 +52,7 @@ public class CargoController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Tech Lead")]
     public ActionResult Adicionar(CriarCargoDto dto)
     {
         try
@@ -62,6 +67,7 @@ public class CargoController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Tech Lead")]
     public ActionResult Atualizar(int id, CriarCargoDto dto)
     {
         try

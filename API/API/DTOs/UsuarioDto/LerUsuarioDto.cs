@@ -10,6 +10,8 @@
 
         public List<string> EmailsGit { get; init; } = new();
 
+        public DateTime? DataAdmissao { get; set; }
+
         public string TipoUsuario { get; init; } = null!;
 
         public string Cargo { get; init; } = null!;

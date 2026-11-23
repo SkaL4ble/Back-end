@@ -1,6 +1,7 @@
 ﻿using API.Applications.Services;
 using API.DTOs.TecnologiaDto;
 using API.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -22,6 +23,7 @@ namespace API.Controllers
         /// <returns>Todas as tecnologias cadastradas</returns>
         /// <response code="200">Retorna todas as tecnologias do banco</response>
         [HttpGet]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult<List<ListarTecnologiaDto>> Listar()
         {
             return Ok(_service.ListarTecnologias());
@@ -35,6 +37,7 @@ namespace API.Controllers
         /// <response code="200">Retorna a tecnologia</response>
         /// <response code="404">Tecnologia não encontrada</response>
         [HttpGet("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult<ListarTecnologiaDto> ObterPorId(int id)
         {
             try
@@ -54,6 +57,7 @@ namespace API.Controllers
         /// <response code="201">Tecnologia criada com sucesso</response>
         /// <response code="400">Dados inválidos ou tecnologia já existente</response>
         [HttpPost]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Adicionar(CriarTecnologiaDto dto)
         {
             try
@@ -75,6 +79,7 @@ namespace API.Controllers
         /// <response code="204">Tecnologia atualizada com sucesso</response>
         /// <response code="400">Dados inválidos, tecnologia não encontrada ou já existente</response>
         [HttpPut("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Atualizar(int id, CriarTecnologiaDto dto)
         {
             try
@@ -95,6 +100,7 @@ namespace API.Controllers
         /// <response code="204">Tecnologia deletada com sucesso</response>
         /// <response code="400">Tecnologia não encontrada ou possui registros vinculados</response>
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Deletar(int id)
         {
             try

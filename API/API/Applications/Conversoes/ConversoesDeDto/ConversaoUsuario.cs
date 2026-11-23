@@ -18,6 +18,7 @@ namespace API.Applications.Conversoes.ConversoesDeDto
                 EmailsGit = entity.UsuarioEmailGit?
                     .Select(usuarioEmailGit => usuarioEmailGit.EmailGit)
                     .ToList() ?? new List<string>(),
+                DataAdmissao = entity.DataAdmissao,
                 TipoUsuario = entity.TipoUsuario?.NomeTipoUsuario,
                 Cargo = entity.Cargo?.NomeCargo,
                 Atuacao = entity.Atuacao?.NomeAtuacao,
@@ -56,6 +57,7 @@ namespace API.Applications.Conversoes.ConversoesDeDto
                 UsuarioId = Guid.NewGuid(),
                 NomeUsuario = dto.NomeUsuario,
                 EmailPessoal = dto.EmailPessoal,
+                DataAdmissao = dto.DataAdmissao,
                 CargoId = dto.CargoId,
                 AtuacaoId = dto.AtuacaoId,
                 Imagem = dto.Imagem
@@ -77,6 +79,7 @@ namespace API.Applications.Conversoes.ConversoesDeDto
 
             entity.NomeUsuario = dto.NomeUsuario;
             entity.EmailPessoal = dto.EmailPessoal;
+            entity.DataAdmissao = dto.DataAdmissao;
             entity.CargoId = dto.CargoId;
             entity.AtuacaoId = dto.AtuacaoId;
             entity.Imagem = dto.Imagem;
