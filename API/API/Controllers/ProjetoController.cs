@@ -2,6 +2,7 @@
 using API.DTOs.ProjetoDto;
 using API.DTOs.StatusTicketDto;
 using API.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -27,6 +28,7 @@ namespace API.Controllers
         /// <response code="200">Retorna o projeto</response>
         /// <response code="404">Projeto não encontrado</response>
         [HttpGet("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult<ListarProjetoDto> ObterPorId(Guid id)
         {
             try
@@ -46,6 +48,7 @@ namespace API.Controllers
         /// <response code="201">Projeto criado com sucesso</response>
         /// <response code="400">Dados inválidos ou projeto já existente</response>
         [HttpPost]
+        [Authorize(Roles = "Tech Lead")]
         public async Task<IActionResult> Adicionar([FromBody] CriarProjetoDto dto)
         {
             try
@@ -67,6 +70,7 @@ namespace API.Controllers
         /// <response code="204">Projeto atualizado com sucesso</response>
         /// <response code="400">Dados inválidos, projeto não encontrado ou já existente</response>
         [HttpPut("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Atualizar(Guid id, CriarProjetoDto dto)
         {
             try
@@ -87,6 +91,7 @@ namespace API.Controllers
         /// <response code="204">Projeto deletado com sucesso</response>
         /// <response code="400">Projeto não encontrado ou possui tickets vinculados</response>
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult Deletar(Guid id)
         {
             try
@@ -108,6 +113,7 @@ namespace API.Controllers
         /// <returns>Todos os projetos cadastrados</returns>
         /// <response code="200">Retorna todos os projetos do banco</response>
         [HttpGet]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult<List<ListarProjetoDto>> Listar(
             [FromQuery] FiltroProjetoDto filtro)
         {
@@ -120,6 +126,7 @@ namespace API.Controllers
         /// <returns>Projetos fora do prazo</returns>
         /// <response code="200">Retorna os projetos fora do prazo</response>
         [HttpGet("fora-do-prazo")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult<List<ListarProjetoDto>> ListarProjetosForaDoPrazo(
             [FromQuery] FiltroProjetoDentroOuForaPrazo filtro)
         {
@@ -132,6 +139,7 @@ namespace API.Controllers
         /// <returns>Projetos dentro do prazo</returns>
         /// <response code="200">Retorna os projetos dentro do prazo</response>
         [HttpGet("dentro-do-prazo")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult<List<ListarProjetoDto>> ListarProjetosDentroDoPrazo(
             [FromQuery] FiltroProjetoDentroOuForaPrazo filtro)
         {
@@ -141,12 +149,14 @@ namespace API.Controllers
         // ========================================= FUNCOES =========================================
 
         [HttpGet("{id}/link-repositorio")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult<string?> ObterLinkRepositorio(Guid id)
         {
             return Ok(_service.ObterLinkRepositorioPorId(id));
         }
 
         [HttpPatch("{projetoId}/associar-usuario/{usuarioId}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult AssociarUsuario(Guid projetoId, Guid usuarioId)
         {
             try
@@ -161,6 +171,7 @@ namespace API.Controllers
         }
 
         [HttpPatch("{projetoId}/desassociar-usuario/{usuarioId}")]
+        [Authorize(Roles = "Tech Lead")]
         public ActionResult DesassociarUsuario(Guid projetoId, Guid usuarioId)
         {
             try

@@ -93,6 +93,11 @@ CREATE TABLE TipoMetrica (
 );
 GO
 
+CREATE TABLE AptoEnsinar (
+    AptoEnsinarId INT IDENTITY(1,1) NOT NULL,
+    BIT 
+)
+
 -- =============================================================================
 -- TABELAS PRINCIPAIS
 -- =============================================================================
