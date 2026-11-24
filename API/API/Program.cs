@@ -70,7 +70,7 @@ builder.Services.AddSwaggerGen(c =>
     // NoWarn 1591 desativa avisos sobre métodos sem comentários de documentação.
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    if(File.Exists(xmlPath))
+    if (File.Exists(xmlPath))
     {
         c.IncludeXmlComments(xmlPath);
     }
@@ -127,61 +127,49 @@ builder.Services.AddScoped<CriptografiaService>();
 
 builder.Services.AddOpenApi();
 
-//// Configura o sistema de autenticação da aplicação.
-//// Aqui estamos dizendo que o tipo de autenticação padrão será JWT Bearer.
-//// Ou seja: a API vai esperar receber um Token JWT nas requisições.
-//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY");
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
 
-//    // Adiciona o suporte para autenticação usando JWT.
-//    .AddJwtBearer(options =>
-//    {
-//        // Lê a chave secreta definida no appsettings.json.
-//        // Essa chave é usada para ASSINAR o token quando ele é gerado
-//        // e também para VALIDAR se o token recebido é verdadeiro.
-//        var chave = Environment.GetEnvironmentVariable("JWT_KEY");
+if (string.IsNullOrWhiteSpace(jwtKey) ||
+    string.IsNullOrWhiteSpace(jwtIssuer) ||
+    string.IsNullOrWhiteSpace(jwtAudience))
+{
+    throw new InvalidOperationException(
+        "As configurações JWT estão incompletas no .env.");
+}
 
-//        // Quem emitiu o token (ex: nome da sua aplicação).
-//        // Serve para evitar aceitar tokens de outro sistema.
-//        var issuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+var jwtKeyBytes = Encoding.UTF8.GetBytes(jwtKey);
 
-//        // Para quem o token foi criado (normalmente o frontend ou a própria API).
-//        // Também ajuda a garantir que o token pertence ao seu sistema.
-//        var audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+if (jwtKeyBytes.Length < 32)
+{
+    throw new InvalidOperationException(
+        "JWT_KEY precisa ter pelo menos 32 bytes.");
+}
 
-//        // Define as regras que serão usadas para validar o token recebido.
-//        options.TokenValidationParameters = new TokenValidationParameters
-//        {
-//            // Verifica se o emissor do token é válido
-//            // (se bate com o issuer configurado).
-//            ValidateIssuer = true,
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtIssuer,
 
-//            // Verifica se o destinatário do token é válido
-//            // (se bate com o audience configurado).
-//            ValidateAudience = true,
+            ValidateAudience = true,
+            ValidAudience = jwtAudience,
 
-//            // Verifica se o token ainda está dentro do prazo de validade.
-//            // Se já expirou, a requisição será negada.
-//            ValidateLifetime = true,
+            ValidateLifetime = true,
 
-//            // Verifica se a assinatura do token é válida.
-//            // Isso garante que o token não foi alterado.
-//            ValidateIssuerSigningKey = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes),
 
-//            // Define qual emissor é considerado válido.
-//            ValidIssuer = issuer,
+            RoleClaimType = ClaimTypes.Role,
+            NameClaimType = ClaimTypes.Name
+        };
+    });
 
-//            // Define qual audience é considerado válido.
-//            ValidAudience = audience,
-
-//            // Define qual chave será usada para validar a assinatura do token.
-//            // A mesma chave usada na geração do JWT deve estar aqui.
-//            IssuerSigningKey = new SymmetricSecurityKey(
-//                Encoding.UTF8.GetBytes(chave)
-//            ),
-
-//            RoleClaimType = ClaimTypes.Role // Define que o claim "role" será usado para validar as permissões do usuário.
-//        };
-//    });
+builder.Services.AddAuthorization();
 
 
 var app = builder.Build();
