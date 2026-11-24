@@ -23,7 +23,7 @@ namespace API.Controllers
         /// <returns>Todos os status de projeto cadastrados</returns>
         /// <response code="200">Retorna todos os status de projeto do banco</response>
         [HttpGet]
-        [Authorize(Roles = "Tech Lead")]
+        //[Authorize(Roles = "Tech Lead")]
         public ActionResult<List<ListarStatusProjetoDto>> Listar()
         {
             return Ok(_service.ListarStatusProjeto());

@@ -6,8 +6,8 @@
         public string Nome { get; set; } = null!;
         public string? Descricao { get; set; } = null!;
         public string? LinkRepositorio { get; set; } = null!;
-        public int WorkflowId { get; set; } = 1;
         public Guid AutorId { get; set; }
+        public int WorkflowId { get; set; } = 1;
         public int StatusId { get; set; }
         public int TipoId { get; set; }
         public DateTime? Prazo { get; set; }

@@ -26,10 +26,76 @@ namespace API.Applications.Services
             _autenticacaoService = autenticacaoService;
         }
 
-
-        public List<LerUsuarioDto> Listar()
+        private void ValidarAtuacao(List<int> atuacaoId)
         {
-            List<Usuario> usuarios = _repository.Listar();
+            foreach (int atuacao in atuacaoId.Distinct())
+            {
+                if (!_repository.AtuacaoExiste(atuacao))
+                    throw new DomainException($"Atuacao não encontrado: {atuacao}");
+            }
+        }
+
+        private void ValidarCargo(List<int> cargoIds)
+        {
+            foreach (int cargo in cargoIds.Distinct())
+            {
+                if (!_repository.CargoExiste(cargo))
+                    throw new DomainException($"Cargo não encontrado: {cargo}");
+            }
+        }
+
+        private void ValidarTipoUsuario(Guid tipoUsuarioId)
+        {
+            if (!_repository.TipoUsuarioExiste(tipoUsuarioId))
+                throw new DomainException("Tipo de usuário não encontrado");
+        }
+
+        private void ValidarProjetos(List<Guid> projetosIds)
+        {
+            foreach (Guid projetoId in projetosIds.Distinct())
+            {
+                if (!_repository.ProjetosExiste(projetoId))
+                    throw new DomainException($"Projeto não encontrado ou inativo: {projetoId}");
+            }
+        }
+
+        private void ValidarTecnologias(List<int> tecnologiasIds)
+        {
+            foreach (int tecnologiaId in tecnologiasIds.Distinct())
+            {
+                if (!_repository.TecnologiaExiste(tecnologiaId))
+                    throw new DomainException($"Tecnologia não encontrada: {tecnologiaId}");
+            }
+        }
+
+        public List<LerUsuarioDto> Listar(FiltroUsuarioDto filtro)
+        {
+            if (filtro.AtuacaoIds.Count > 0)
+            {
+                ValidarAtuacao(filtro.AtuacaoIds);
+            }
+
+            if (filtro.CargoIds.Count > 0)
+            {
+                ValidarCargo(filtro.CargoIds);
+            }
+
+            if (filtro.ProjetosIds.Count > 0)
+            {
+                ValidarProjetos(filtro.ProjetosIds);
+            }
+
+            if (filtro.TipoUsuarioId.HasValue)
+            {
+                ValidarTipoUsuario(filtro.TipoUsuarioId.Value);
+            }
+
+            if (filtro.TecnologiasIds.Count > 0)
+            {
+                ValidarTecnologias(filtro.TecnologiasIds);
+            }
+
+            List<Usuario> usuarios = _repository.Listar(filtro);
             return ConversaoUsuario.ToDtoList(usuarios).ToList();
         }
 

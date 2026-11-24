@@ -1,5 +1,6 @@
 ﻿using API.Contexts;
 using API.Domains;
+using API.DTOs.UsuarioDto;
 using API.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,15 +24,42 @@ namespace API.Repositories
                 .Include(u => u.UsuarioEmailGit)
                 .Include(u => u.Projeto)
                 .Include(u => u.Ticket)
-                .Include(u => u.Tecnologia);
+                .Include(u => u.Tecnologia)
+                .AsNoTracking();
         }
 
-        public List<Usuario> Listar()
+        public List<Usuario> Listar(FiltroUsuarioDto filtro)
         {
-            return UsuariosComRelacoes()
-                .AsNoTracking()
-                .OrderBy(u => u.NomeUsuario)
-                .ToList();
+            var query = UsuariosComRelacoes();
+
+            if (filtro.AtuacaoIds.Count > 0)
+            {
+                query = query.Where(u => filtro.AtuacaoIds.Contains(u.AtuacaoId));
+            }
+
+            if (filtro.CargoIds?.Count > 0)
+            {
+                query = query.Where(u => filtro.CargoIds.Contains(u.CargoId));
+            }
+
+            if (filtro.TipoUsuarioId.HasValue)
+            {
+                query = query.Where(u => u.TipoUsuarioId == filtro.TipoUsuarioId.Value);
+            }
+
+            if (filtro.ProjetosIds?.Count > 0)
+            {
+                query = query.Where(u => u.Projeto
+                    .Any(p => filtro.ProjetosIds.Contains(p.ProjetoId)));
+            }
+
+            if (filtro.TecnologiasIds?.Count > 0)
+            {
+                query = query.Where(u => u.Tecnologia
+                    .Any(t => filtro.TecnologiasIds.Contains(t.TecnologiaId)));
+            }
+
+            return query.ToList();
         }
 
         public Usuario BuscarPorId(Guid id)
@@ -39,25 +67,6 @@ namespace API.Repositories
             return UsuariosComRelacoes()
                 .AsNoTracking()
                 .FirstOrDefault(u => u.UsuarioId == id);
-        }
-
-        public bool UsuarioExistente(Guid id)
-        {
-            return _context.Usuario.AsNoTracking().Any(u => u.UsuarioId == id);
-        }
-
-        public bool EmailExistente(string email, Guid id)
-        {
-            return _context.Usuario
-                .AsNoTracking()
-                .Any(u => u.EmailPessoal.ToLower() == email.ToLower() && u.UsuarioId != id);
-        }
-
-        public bool EmailGitExistente(string email, Guid id)
-        {
-            return _context.UsuarioEmailGit
-                .AsNoTracking()
-                .Any(u => u.EmailGit.ToLower() == email.ToLower() && u.UsuarioId != id);
         }
 
         public void Cadastrar(Usuario usuario)
@@ -112,6 +121,46 @@ namespace API.Repositories
             }
             usuario.Ativo = false;
             _context.SaveChanges();
+        }
+
+        //======================== VALIDACOES ===========================
+        public bool UsuarioExistente(Guid id)
+        {
+            return _context.Usuario.AsNoTracking().Any(u => u.UsuarioId == id);
+        }
+
+        public bool EmailExistente(string email, Guid id)
+        {
+            return _context.Usuario
+                .AsNoTracking()
+                .Any(u => u.EmailPessoal.ToLower() == email.ToLower() && u.UsuarioId != id);
+        }
+
+        public bool EmailGitExistente(string email, Guid id)
+        {
+            return _context.UsuarioEmailGit
+                .AsNoTracking()
+                .Any(u => u.EmailGit.ToLower() == email.ToLower() && u.UsuarioId != id);
+        }
+        public bool AtuacaoExiste(int id)
+        {
+            return _context.Atuacao.Any(a => a.AtuacaoId == id);
+        }
+        public bool CargoExiste(int id)
+        {
+            return _context.Cargo.Any(c => c.CargoId == id);
+        }
+        public bool TipoUsuarioExiste(Guid id)
+        {
+            return _context.TipoUsuario.Any(t => t.TipoUsuarioId == id);
+        }
+        public bool TecnologiaExiste(int id)
+        {
+            return _context.Tecnologia.Any(t => t.TecnologiaId == id);
+        }
+        public bool ProjetosExiste(Guid id)
+        {
+            return _context.Projeto.Any(t => t.ProjetoId == id);
         }
     }
 }

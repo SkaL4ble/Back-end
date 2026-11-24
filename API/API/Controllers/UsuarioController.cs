@@ -21,11 +21,18 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Tech Lead")]
-        public ActionResult<List<LerUsuarioDto>> Listar()
+        //[Authorize(Roles = "Tech Lead")]
+        public ActionResult<List<LerUsuarioDto>> Listar([FromQuery] FiltroUsuarioDto filtro)
         {
-            List<LerUsuarioDto> usuarios = _service.Listar();
-            return Ok(usuarios);
+            try
+            {
+                List<LerUsuarioDto> usuarios = _service.Listar(filtro);
+                return Ok(usuarios);
+            }
+            catch (DomainException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet("{id}")]

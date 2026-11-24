@@ -29,6 +29,7 @@ public class ProjetoRepository : IProjetoRepository
 
     public void CadastrarProjeto(Projeto projeto)
     {
+        projeto.Autor = _context.Usuario.Include(u => u.TipoUsuario).FirstOrDefault(u => u.TipoUsuario.NomeTipoUsuario == "Tech Lead").UsuarioId;
         _context.Projeto.Add(projeto);
         _context.SaveChanges();
     }
@@ -41,7 +42,6 @@ public class ProjetoRepository : IProjetoRepository
         existente.NomeProjeto = projeto.NomeProjeto;
         existente.Descricao = projeto.Descricao;
         existente.LinkRepositorio = projeto.LinkRepositorio;
-        existente.Autor = projeto.Autor;
         existente.StatusProjetoId = projeto.StatusProjetoId;
         existente.TipoProjetoId = projeto.TipoProjetoId;
         existente.Prazo = projeto.Prazo;

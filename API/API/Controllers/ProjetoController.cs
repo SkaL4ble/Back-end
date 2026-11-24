@@ -3,6 +3,7 @@ using API.DTOs.ProjetoDto;
 using API.DTOs.StatusTicketDto;
 using API.Exceptions;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace API.Controllers
 {
@@ -46,12 +47,14 @@ namespace API.Controllers
         /// <response code="201">Projeto criado com sucesso</response>
         /// <response code="400">Dados inválidos ou projeto já existente</response>
         [HttpPost]
-        public async Task<IActionResult> Adicionar([FromBody] CriarProjetoDto dto)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> Adicionar([FromForm] CriarProjetoDto dto)
         {
             try
             {
+                //var autorId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
                 await _service.AdicionarProjeto(dto);
-                return StatusCode(StatusCodes.Status201Created);
+                return Created();
             }
             catch (DomainException ex)
             {

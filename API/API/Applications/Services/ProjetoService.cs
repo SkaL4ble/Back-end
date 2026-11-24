@@ -68,8 +68,8 @@ public class ProjetoService
         if (_repository.LinkRepositorioExiste(dto.LinkRepositorio, idIgnorado))
             throw new DomainException("Link de repositório já existe");
 
-        if (dto.AutorId == Guid.Empty || !_repository.UsuarioExiste(dto.AutorId))
-            throw new DomainException("Autor não encontrado ou inativo");
+        //if (dto.AutorId == Guid.Empty || !_repository.UsuarioExiste(dto.AutorId))
+        //    throw new DomainException("Autor não encontrado ou inativo");
 
         if (!_repository.StatusExiste(dto.StatusId))
             throw new DomainException("Status não encontrado");
@@ -119,6 +119,10 @@ public class ProjetoService
         ValidarProjeto(dto);
         var projetoId = Guid.NewGuid();
         dto.ProjetoId = projetoId;
+
+        //if (!_repository.UsuarioExiste(autorId))
+        //    throw new DomainException("Usuário não encontrado ou inativo");
+        //dto.AutorId = autorId;
 
         _repository.CadastrarProjeto(ConversaoProjeto.ConverterParaDomain(dto, projetoId));
         _repository.AtualizarColaboradores(projetoId, dto.UsuariosId);
