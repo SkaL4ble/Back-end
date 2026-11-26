@@ -195,6 +195,20 @@ public class TicketRepository : ITicketRepository
 
     // ================================ FUNCOES =================================
 
+    public string PegarNomeStatusTicket(int id)
+    {
+        string nome = _context.Ticket.Include(t => t.StatusTicket).FirstOrDefault(t => t.TicketId == id).StatusTicket.NomeStatusTicket;
+        if (nome is null)
+        {
+            return nome;
+        }
+        else
+        {
+            nome = _context.StatusTicket.Find(id).NomeStatusTicket;
+            return nome;
+        }
+         
+    }
     public void MudarEstadoTicket(int ticketId, int statusTicketId)
     {
         var ticket = _context.Ticket.FirstOrDefault(t => t.TicketId == ticketId && t.Ativo);
@@ -202,7 +216,7 @@ public class TicketRepository : ITicketRepository
             return;
 
         ticket.StatusTicketId = statusTicketId;
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
 
     public void AdicionarColaborador(int ticketId, Guid usuarioId)
@@ -220,7 +234,7 @@ public class TicketRepository : ITicketRepository
             TicketId = ticketId,
             UsuarioId = usuarioId
         });
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
 
     public void RemoverColaborador(int ticketId, Guid usuarioId)
@@ -237,7 +251,7 @@ public class TicketRepository : ITicketRepository
             return;
 
         ticket.TicketUsuario.Remove(colaborador);
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
 
     public void TransferirResponsavel(int ticketId, Guid usuarioId)
@@ -247,6 +261,31 @@ public class TicketRepository : ITicketRepository
             return;
 
         ticket.UsuarioResponsavel = usuarioId;
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
+    }
+
+    public void EditarNome(int ticketId, string nome)
+    {
+        var ticket = _context.Ticket.Find(ticketId);
+        if(ticket is null)
+        ticket.NomeTicket = nome;
+
+        _context.SaveChangesAsync();
+    }
+    public void EditarPrioridade(int ticketId, int prioridade)
+    {
+        var ticket = _context.Ticket.Find(ticketId);
+        if (ticket is null)
+            ticket.Prioridade = prioridade;
+
+        _context.SaveChangesAsync();
+    }
+    public void EditarTipo(int ticketId, int tipo)
+    {
+        var ticket = _context.Ticket.Find(ticketId);
+        if (ticket is null)
+            ticket.TipoTicketId = tipo;
+
+        _context.SaveChangesAsync();
     }
 }

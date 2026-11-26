@@ -22,6 +22,10 @@ public partial class SkaL4bleContext : DbContext
 
     public virtual DbSet<ConsolidadoMetricaTecnologia> ConsolidadoMetricaTecnologia { get; set; }
 
+    public virtual DbSet<FuncionarioMetricaAtual> FuncionarioMetricaAtual { get; set; }
+
+    public virtual DbSet<FuncionarioMetricaHistorico> FuncionarioMetricaHistorico { get; set; }
+
     public virtual DbSet<HistoricoPontuacaoMetrica> HistoricoPontuacaoMetrica { get; set; }
 
     public virtual DbSet<Projeto> Projeto { get; set; }
@@ -101,6 +105,46 @@ public partial class SkaL4bleContext : DbContext
             entity.HasOne(d => d.Usuario).WithMany(p => p.ConsolidadoMetricaTecnologia)
                 .HasForeignKey(d => d.UsuarioId)
                 .HasConstraintName("FK_ConsTec_Usuario");
+        });
+
+        modelBuilder.Entity<FuncionarioMetricaAtual>(entity =>
+        {
+            entity.HasKey(e => e.UsuarioId);
+
+            entity.Property(e => e.UsuarioId).ValueGeneratedNever();
+            entity.Property(e => e.DataAtualizacao).HasDefaultValueSql("(sysutcdatetime())", "DF_FMA_DataAtualizacao");
+            entity.Property(e => e.NotaQuantidade).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.NotaVelocidade).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.PontosQuantidade).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.QualidadeConfiabilidade).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.QualidadeManutencao).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.QualidadeSeguranca).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.QualidadeSonar).HasColumnType("decimal(5, 2)");
+
+            entity.HasOne(d => d.Usuario).WithOne(p => p.FuncionarioMetricaAtual)
+                .HasForeignKey<FuncionarioMetricaAtual>(d => d.UsuarioId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_FMA_Usuario");
+        });
+
+        modelBuilder.Entity<FuncionarioMetricaHistorico>(entity =>
+        {
+            entity.HasIndex(e => new { e.UsuarioId, e.PeriodoInicio, e.PeriodoFim }, "UQ_FMH_UsuarioPeriodo").IsUnique();
+
+            entity.Property(e => e.DataFechamento).HasDefaultValueSql("(sysutcdatetime())", "DF_FMH_DataFechamento");
+            entity.Property(e => e.NotaQualidade).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.NotaQuantidade).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.NotaVelocidade).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.PontosQuantidade).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.QualidadeConfiabilidade).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.QualidadeManutencao).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.QualidadeSeguranca).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.QualidadeSonar).HasColumnType("decimal(5, 2)");
+
+            entity.HasOne(d => d.Usuario).WithMany(p => p.FuncionarioMetricaHistorico)
+                .HasForeignKey(d => d.UsuarioId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_FMH_Usuario");
         });
 
         modelBuilder.Entity<HistoricoPontuacaoMetrica>(entity =>

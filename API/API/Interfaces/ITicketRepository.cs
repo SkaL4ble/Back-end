@@ -29,9 +29,13 @@ namespace API.Interfaces
         List<Ticket> ListarTicketsDentroDoPrazo(FiltroTicketForaOuDentro filtro);
 
         // ================================ FUNCOES =================================
+        public string PegarNomeStatusTicket(int id);
         public void MudarEstadoTicket(int ticketId, int statusTicketId);
         public void AdicionarColaborador(int ticketId, Guid usuarioId);
         public void RemoverColaborador(int ticketId, Guid usuarioId);
         public void TransferirResponsavel(int ticketId, Guid usuarioId);
+        public void EditarNome(int ticketId, string nome);
+        public void EditarPrioridade(int ticketId, int prioridade);
+        public void EditarTipo(int ticketId, int tipo);
     }
 }

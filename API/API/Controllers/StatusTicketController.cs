@@ -1,5 +1,5 @@
-﻿using API.Applications.Services;
-using API.DTOs.StatusTicketDto;
+﻿using API.Applications.Services.Status;
+using API.DTOs.StatusDto.StatusTicketDto;
 using API.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

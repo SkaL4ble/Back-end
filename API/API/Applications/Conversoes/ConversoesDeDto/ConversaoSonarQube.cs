@@ -67,5 +67,21 @@ namespace API.Applications.Conversoes.ConversoesDeDto
                 Nome = e.NomeWorkflow
             };
         }
+
+        public static ListarProjetoSonarDto ConverterParaDto(ProjetoSonar p, string urlBase)
+        {
+            return new ListarProjetoSonarDto
+            {
+            ProjetoSonarId = p.ProjetoSonarId,
+            ProjetoId = p.ProjetoId,
+            ChaveSonar = p.ChaveSonar,
+            NomeSonar = p.NomeSonar,
+            Descricao = p.Descricao,
+            Origem = p.Origem,
+            WorkflowId = p.WorkflowId,
+            UrlProjeto = $"{urlBase}/dashboard?id={Uri.EscapeDataString(p.ChaveSonar)}",
+            DataCriacao = p.DataCriacao
+            };
+        }
     }
 }

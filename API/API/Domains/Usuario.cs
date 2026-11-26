@@ -31,6 +31,10 @@ public partial class Usuario
 
     public virtual ICollection<ConsolidadoMetricaTecnologia> ConsolidadoMetricaTecnologia { get; set; } = new List<ConsolidadoMetricaTecnologia>();
 
+    public virtual FuncionarioMetricaAtual? FuncionarioMetricaAtual { get; set; }
+
+    public virtual ICollection<FuncionarioMetricaHistorico> FuncionarioMetricaHistorico { get; set; } = new List<FuncionarioMetricaHistorico>();
+
     public virtual ICollection<HistoricoPontuacaoMetrica> HistoricoPontuacaoMetrica { get; set; } = new List<HistoricoPontuacaoMetrica>();
 
     public virtual ICollection<Projeto> Projeto { get; set; } = new List<Projeto>();

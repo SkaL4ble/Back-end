@@ -1,5 +1,5 @@
-﻿using API.Applications.Services;
-using API.DTOs.TipoProjetoDto;
+﻿using API.Applications.Services.Tipo;
+using API.DTOs.TipoDto.TipoProjetoDto;
 using API.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

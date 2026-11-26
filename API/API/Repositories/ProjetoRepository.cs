@@ -29,7 +29,6 @@ public class ProjetoRepository : IProjetoRepository
 
     public void CadastrarProjeto(Projeto projeto)
     {
-        projeto.Autor = _context.Usuario.Include(u => u.TipoUsuario).FirstOrDefault(u => u.TipoUsuario.NomeTipoUsuario == "Tech Lead").UsuarioId;
         _context.Projeto.Add(projeto);
         _context.SaveChanges();
     }
