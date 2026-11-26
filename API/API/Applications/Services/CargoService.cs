@@ -1,5 +1,9 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto;
+<<<<<<< HEAD
 using API.Applications.Validacoes;
+=======
+using API.Applications.Services.Validacoes;
+>>>>>>> 0fb51031abafc356f7cdc6125a16b23b059a7752
 using API.Domains;
 using API.DTOs.CargoDto;
 using API.Exceptions;

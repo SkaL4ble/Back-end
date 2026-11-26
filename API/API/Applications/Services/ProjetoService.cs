@@ -1,5 +1,9 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto;
+<<<<<<< HEAD
 using API.Applications.Validacoes;
+=======
+using API.Applications.Services.Validacoes;
+>>>>>>> 0fb51031abafc356f7cdc6125a16b23b059a7752
 using API.Domains;
 using API.DTOs.ProjetoDto;
 using API.Exceptions;
@@ -51,7 +55,11 @@ public class ProjetoService
 
     private void ValidarProjeto(CriarProjetoDto dto, Guid? idIgnorado = null)
     {
+<<<<<<< HEAD
         dto.Nome = _validacoes.NormalizarNome(dto.Nome);
+=======
+        dto.Nome = ValidacoesGerais.ValidarTamanho(ValidacoesGerais.NormalizarNome(dto.Nome));
+>>>>>>> 0fb51031abafc356f7cdc6125a16b23b059a7752
         dto.LinkRepositorio = NormalizarLink(dto.LinkRepositorio);
 
         _validacoes.ValidarUsuario(dto.AutorId);

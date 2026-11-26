@@ -1,5 +1,9 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto;
+<<<<<<< HEAD
 using API.Applications.Validacoes;
+=======
+using API.Applications.Services.Validacoes;
+>>>>>>> 0fb51031abafc356f7cdc6125a16b23b059a7752
 using API.Domains;
 using API.DTOs.TicketDto;
 using API.Exceptions;
@@ -67,10 +71,14 @@ public class TicketService
         if (usuarioResponsavel.HasValue)
         {
             _validacoes.ValidarUsuario(usuarioResponsavel);
+<<<<<<< HEAD
             if(!_repository.UsuarioParticipaDoProjeto(usuarioResponsavel.Value, projetoId))
             {
                 throw new DomainException("Usuario nao participa do projeto");
             }
+=======
+            ValidarParticipacaoNoProjeto(usuarioResponsavel.Value, projetoId);
+>>>>>>> 0fb51031abafc356f7cdc6125a16b23b059a7752
         }
     }
 
@@ -83,7 +91,11 @@ public class TicketService
 
     public async Task AdicionarTicket(CriarTicketDto dto)
     {
+<<<<<<< HEAD
         var nome = _validacoes.NormalizarNome(dto.NomeTicket);
+=======
+        var nome = ValidacoesGerais.ValidarTamanho(ValidacoesGerais.NormalizarNome(dto.NomeTicket), 3, 125);
+>>>>>>> 0fb51031abafc356f7cdc6125a16b23b059a7752
         ValidarPrioridade(dto.Prioridade);
         ValidarRelacionamentos(dto.ProjetoId, dto.TipoTicketId,
             dto.StatusTicketId, dto.UsuarioResponsavel);
@@ -117,7 +129,11 @@ public class TicketService
     public async Task Atualizar(int id, AtualizarTicketDto dto)
     {
         var ticket = BuscarAtivoOuFalhar(id);
+<<<<<<< HEAD
         var nome = _validacoes.NormalizarNome(dto.NomeTicket);
+=======
+        var nome = ValidacoesGerais.ValidarTamanho(ValidacoesGerais.NormalizarNome(dto.NomeTicket), 3, 125);
+>>>>>>> 0fb51031abafc356f7cdc6125a16b23b059a7752
         ValidarPrioridade(dto.Prioridade);
         ValidarRelacionamentos(dto.ProjetoId, dto.TipoTicketId,
             dto.StatusTicketId, dto.UsuarioResponsavel);

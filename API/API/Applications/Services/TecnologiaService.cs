@@ -1,5 +1,9 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto;
+<<<<<<< HEAD
 using API.Applications.Validacoes;
+=======
+using API.Applications.Services.Validacoes;
+>>>>>>> 0fb51031abafc356f7cdc6125a16b23b059a7752
 using API.Domains;
 using API.DTOs.TecnologiaDto;
 using API.Exceptions;
@@ -34,7 +38,11 @@ public class TecnologiaService
 
     public void AdicionarTecnologia(CriarTecnologiaDto dto)
     {
+<<<<<<< HEAD
         var nome = _validacao.NormalizarNome(dto.NomeTecnologia);
+=======
+        var nome = ValidacoesGerais.ValidarTamanho(ValidacoesGerais.NormalizarNome(dto.NomeTecnologia));
+>>>>>>> 0fb51031abafc356f7cdc6125a16b23b059a7752
         if (_repository.NomeTecnologiaExiste(nome))
             throw new DomainException("Tecnologia já existe");
 
@@ -44,7 +52,11 @@ public class TecnologiaService
     public void Atualizar(int id, CriarTecnologiaDto dto)
     {
         var atual = BuscarOuFalhar(id);
+<<<<<<< HEAD
         var nome = _validacao.NormalizarNome(dto.NomeTecnologia);
+=======
+        var nome = ValidacoesGerais.ValidarTamanho(ValidacoesGerais.NormalizarNome(dto.NomeTecnologia));
+>>>>>>> 0fb51031abafc356f7cdc6125a16b23b059a7752
         var mudou = !string.Equals(atual.NomeTecnologia, nome, StringComparison.OrdinalIgnoreCase);
 
         if (mudou && _repository.NomeTecnologiaExiste(nome))

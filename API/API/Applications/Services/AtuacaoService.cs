@@ -1,5 +1,9 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto;
+<<<<<<< HEAD
 using API.Applications.Validacoes;
+=======
+using API.Applications.Services.Validacoes;
+>>>>>>> 0fb51031abafc356f7cdc6125a16b23b059a7752
 using API.Domains;
 using API.DTOs.AtuacaoDto;
 using API.Exceptions;
@@ -42,7 +46,11 @@ namespace API.Applications.Services
             if (atuacaoDto.NomeAtuacao.Length > 30 || atuacaoDto.NomeAtuacao.Length < 3)
                 throw new DomainException("O nome da atuação deve ter entre 3 e 30 caracteres");
 
+<<<<<<< HEAD
             atuacaoDto.NomeAtuacao = _validacoes.NormalizarNome(atuacaoDto.NomeAtuacao);
+=======
+            atuacaoDto.NomeAtuacao = ValidacoesGerais.NormalizarNome(atuacaoDto.NomeAtuacao);
+>>>>>>> 0fb51031abafc356f7cdc6125a16b23b059a7752
 
             if (_repository.NomeAtuacaoExiste(atuacaoDto.NomeAtuacao))
                 throw new DomainException("Atuação já existe");
@@ -56,7 +64,11 @@ namespace API.Applications.Services
                 throw new DomainException("O nome da atuação deve ter entre 3 e 30 caracteres");
 
             Atuacao atuacaoBanco = BuscarOuFalhar(id);
+<<<<<<< HEAD
             string novoNome = _validacoes.NormalizarNome(atuacaoDto.NomeAtuacao);
+=======
+            string novoNome = ValidacoesGerais.ValidarTamanho(ValidacoesGerais.NormalizarNome(atuacaoBanco.NomeAtuacao));
+>>>>>>> 0fb51031abafc356f7cdc6125a16b23b059a7752
 
             bool nomeMudou = !string.Equals(
                 atuacaoBanco.NomeAtuacao, novoNome, StringComparison.OrdinalIgnoreCase);
