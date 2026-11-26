@@ -23,19 +23,23 @@ public class ProjetoSonarService
     private const int TamanhoMaximoDescricao = 500;
 
     private readonly IProjetoSonarRepository _repository;
+
     private readonly SonarQubeService _sonar;
     private readonly CriptografiaService _criptografia;
-    private readonly string _urlBase;
     private readonly UsuarioService _usuarioService;
+    private readonly MetricaService _metricaService;
+
+    private readonly string _urlBase;
 
     public ProjetoSonarService(IProjetoSonarRepository repository, SonarQubeService sonar,
-        CriptografiaService criptografia, IConfiguration config, UsuarioService usuarioService)
+        CriptografiaService criptografia, IConfiguration config, UsuarioService usuarioService, MetricaService metricaService)
     {
         _repository = repository;
         _sonar = sonar;
         _criptografia = criptografia;
         _urlBase = (config["SonarQube:UrlBase"] ?? string.Empty).TrimEnd('/');
         _usuarioService = usuarioService;
+        _metricaService = metricaService;
     }
 
     // ============================== VALIDACOES ==============================
@@ -93,19 +97,6 @@ public class ProjetoSonarService
 
         return $"{slug}-{Guid.NewGuid().ToString("N")[..8]}";
     }
-
-    private ListarProjetoSonarDto Converter(ProjetoSonar p) => new()
-    {
-        ProjetoSonarId = p.ProjetoSonarId,
-        ProjetoId = p.ProjetoId,
-        ChaveSonar = p.ChaveSonar,
-        NomeSonar = p.NomeSonar,
-        Descricao = p.Descricao,
-        Origem = p.Origem,
-        WorkflowId = p.WorkflowId,
-        UrlProjeto = $"{_urlBase}/dashboard?id={Uri.EscapeDataString(p.ChaveSonar)}",
-        DataCriacao = p.DataCriacao
-    };
 
     // ============================== CRIACAO ==============================
 
@@ -166,7 +157,7 @@ public class ProjetoSonarService
 
             _repository.Adicionar(entidade);
 
-            var dto = Converter(entidade);
+            var dto = ConversaoSonarQube.ConverterParaDto(entidade, _urlBase);
             dto.TokenAnalise = new TokenSonarDto { Token = tokenSonar };
             return dto;
         }
@@ -180,7 +171,7 @@ public class ProjetoSonarService
     // ============================== CONSULTAS E TOKENS ==============================
 
     public ListarProjetoSonarDto ObterPorId(Guid id) {
-        var usuario = Converter(BuscarOuFalharSonar(id));
+        var usuario = ConversaoSonarQube.ConverterParaDto(BuscarOuFalharSonar(id), _urlBase);
         if (usuario == null)
             throw new DomainException("ID invaliado");
         return usuario;
@@ -340,6 +331,11 @@ public class ProjetoSonarService
             metricas.NivelManutencao,
             metricas.NivelConfiabilidade,
             metricas.NivelSeguranca);
+
+        await _metricaService
+    .AtualizarQualidadeSonarAsync(
+        usuarioId,
+        metricas);
 
         foreach (var issue in issues)
         {

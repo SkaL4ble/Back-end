@@ -3,6 +3,7 @@ using API.Domains;
 using API.DTOs.TicketDto;
 using API.Exceptions;
 using API.Interfaces;
+using System.Net.NetworkInformation;
 
 namespace API.Applications.Services;
 
@@ -12,9 +13,15 @@ public class TicketService
     private const int PrioridadeMaxima = 5;
     private const int TamanhoMinimoNome = 3;
     private const int TamanhoMaximoNome = 125;
-    private readonly ITicketRepository _repository;
 
-    public TicketService(ITicketRepository repository) => _repository = repository;
+    private readonly ITicketRepository _repository;
+    private readonly MetricaService _metricaService;
+
+    public TicketService(ITicketRepository repository, MetricaService metricaService) 
+    {
+        _repository = repository;
+        _metricaService = metricaService;
+    }
 
     //================================= VALIDAÇÕES ==========================================
     private Ticket BuscarOuFalhar(int id)
@@ -113,7 +120,7 @@ public class TicketService
     public ListarTicketDto ObterPorId(int id) =>
         ConversaoTicket.ConverterParaDto(BuscarAtivoOuFalhar(id));
 
-    public void AdicionarTicket(CriarTicketDto dto)
+    public async Task AdicionarTicket(CriarTicketDto dto)
     {
         var nome = NormalizarNome(dto.NomeTicket);
         ValidarPrioridade(dto.Prioridade);
@@ -123,7 +130,7 @@ public class TicketService
         var agora = DateTime.UtcNow;
         ValidarDatas(agora, dto.DataPrazo, null);
 
-        _repository.AdicionarTicket(new Ticket
+        var ticket = new Ticket
         {
             NomeTicket = nome,
             Prioridade = dto.Prioridade,
@@ -135,10 +142,18 @@ public class TicketService
             ProjetoId = dto.ProjetoId,
             TipoTicketId = dto.TipoTicketId,
             StatusTicketId = dto.StatusTicketId
-        });
+        };
+        _repository.AdicionarTicket(ticket);
+
+        string status = _repository.PegarNomeStatusTicket(dto.StatusTicketId);
+
+        if (status == "Concluido")
+            await _metricaService.RegistrarTicketConcluidoAsync(ticket);
+        else
+        _metricaService.RegistrarTicketAtribuidoAsync(ticket);
     }
 
-    public void Atualizar(int id, AtualizarTicketDto dto)
+    public async Task Atualizar(int id, AtualizarTicketDto dto)
     {
         var ticket = BuscarAtivoOuFalhar(id);
         var nome = NormalizarNome(dto.NomeTicket);
@@ -147,17 +162,12 @@ public class TicketService
             dto.StatusTicketId, dto.UsuarioResponsavel);
         ValidarDatas(ticket.DataCriacao, dto.DataPrazo, dto.DataEntrega);
 
-        ConversaoTicket.AplicarAtualizacao(ticket, new AtualizarTicketDto
-        {
-            NomeTicket = nome,
-            Prioridade = dto.Prioridade,
-            DataPrazo = dto.DataPrazo,
-            DataEntrega = dto.DataEntrega,
-            UsuarioResponsavel = dto.UsuarioResponsavel,
-            ProjetoId = dto.ProjetoId,
-            TipoTicketId = dto.TipoTicketId,
-            StatusTicketId = dto.StatusTicketId
-        });
+        ConversaoTicket.AplicarAtualizacao(ticket, dto);
+
+        string status = _repository.PegarNomeStatusTicket(id);
+
+        if (status == "Concluido")
+            await _metricaService.RegistrarTicketConcluidoAsync(ticket);
 
         _repository.AtualizarTicket(ticket);
     }
@@ -170,7 +180,7 @@ public class TicketService
     }
 
     //==================================== FUNCOES ====================================
-    public void MudarEstadoTicket(int ticketId, int statusTicketId)
+    public async Task MudarEstadoTicket(int ticketId, int statusTicketId)
     {
         var ticket = BuscarOuFalhar(ticketId);
         ValidarStatusTicket(statusTicketId);
@@ -179,6 +189,10 @@ public class TicketService
             throw new DomainException("Não é possível alterar um ticket inativo");
         if (ticket.StatusTicketId == statusTicketId)
             throw new DomainException("O ticket já está com este status");
+
+        string status = _repository.PegarNomeStatusTicket(ticketId);
+        if (status == "Concluido")
+            await _metricaService.RegistrarTicketConcluidoAsync(ticket);
 
         _repository.MudarEstadoTicket(ticketId, statusTicketId);
     }

@@ -1,5 +1,5 @@
-﻿using API.Applications.Services;
-using API.DTOs.StatusProjetoDto;
+﻿using API.Applications.Services.Status;
+using API.DTOs.StatusDto.StatusProjetoDto;
 using API.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
