@@ -5,9 +5,9 @@ namespace API.Applications.Conversoes.ConversoesDeDto
 {
     public class ConversaoMetrica
     {
-        public static FuncionarioMetricaHistorico ConverterParaHistorico(FuncionarioMetricaAtual metrica)
+        public static Log_FuncionarioMetrica ConverterParaHistorico(FuncionarioMetrica metrica)
         {
-            return new FuncionarioMetricaHistorico
+            return new Log_FuncionarioMetrica
             {
                 UsuarioId = metrica.UsuarioId,
 

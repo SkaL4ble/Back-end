@@ -13,5 +13,6 @@
         bool TicketExiste(int? id);
         bool TipoTicketExiste(int? tipoTicketId);
         bool StatusTicketExiste(int? statusTicketId);
+
     }
 }

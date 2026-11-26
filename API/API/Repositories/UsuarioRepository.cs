@@ -24,7 +24,7 @@ namespace API.Repositories
                 .Include(u => u.UsuarioEmailGit)
                 .Include(u => u.Projeto)
                 .Include(u => u.Ticket)
-                .Include(u => u.Tecnologia)
+                .Include(u => u.TecnologiaUsuario)
                 .AsNoTracking();
         }
 
@@ -55,7 +55,7 @@ namespace API.Repositories
 
             if (filtro.TecnologiasIds?.Count > 0)
             {
-                query = query.Where(u => u.Tecnologia
+                query = query.Where(u => u.TecnologiaUsuario
                     .Any(t => filtro.TecnologiasIds.Contains(t.TecnologiaId)));
             }
 

@@ -3,13 +3,13 @@ using System.Collections.Generic;
 
 namespace API.Domains;
 
-public partial class FuncionarioMetricaAtual
+public partial class FuncionarioMetrica
 {
     public Guid UsuarioId { get; set; }
 
-    public DateTime PeriodoInicio { get; set; }
+    public DateOnly PeriodoInicio { get; set; }
 
-    public DateTime PeriodoFim { get; set; }
+    public DateOnly PeriodoFim { get; set; }
 
     public int TicketsAtribuidos { get; set; }
 
@@ -23,6 +23,8 @@ public partial class FuncionarioMetricaAtual
 
     public decimal PontosQuantidade { get; set; }
 
+    public decimal NotaQuantidade { get; set; }
+
     public int TicketsComPrazo { get; set; }
 
     public int TicketsConcluidosNoPrazo { get; set; }
@@ -35,19 +37,15 @@ public partial class FuncionarioMetricaAtual
 
     public int DiasSemAtividade { get; set; }
 
-    public DateTime? UltimaAtividade { get; set; }
-
-    public decimal NotaQuantidade { get; set; }
-
     public decimal NotaVelocidade { get; set; }
 
     public decimal QualidadeSonar { get; set; }
 
-    public decimal? QualidadeManutencao { get; set; }
+    public decimal QualidadeManutencao { get; set; }
 
-    public decimal? QualidadeConfiabilidade { get; set; }
+    public decimal QualidadeConfiabilidade { get; set; }
 
-    public decimal? QualidadeSeguranca { get; set; }
+    public decimal QualidadeSeguranca { get; set; }
 
     public int IssuesManutencao { get; set; }
 
@@ -56,6 +54,8 @@ public partial class FuncionarioMetricaAtual
     public int IssuesSeguranca { get; set; }
 
     public DateTime? DataUltimaQualidadeSonar { get; set; }
+
+    public DateTime? UltimaAtividade { get; set; }
 
     public DateTime DataAtualizacao { get; set; }
 

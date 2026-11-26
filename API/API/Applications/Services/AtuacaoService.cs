@@ -44,6 +44,7 @@ namespace API.Applications.Services
 
             atuacaoDto.NomeAtuacao = _validacoes.NormalizarNome(atuacaoDto.NomeAtuacao);
 
+
             if (_repository.NomeAtuacaoExiste(atuacaoDto.NomeAtuacao))
                 throw new DomainException("Atuação já existe");
 
@@ -56,6 +57,7 @@ namespace API.Applications.Services
                 throw new DomainException("O nome da atuação deve ter entre 3 e 30 caracteres");
 
             Atuacao atuacaoBanco = BuscarOuFalhar(id);
+
             string novoNome = _validacoes.NormalizarNome(atuacaoDto.NomeAtuacao);
 
             bool nomeMudou = !string.Equals(

@@ -15,19 +15,22 @@ namespace API.Repositories
             _context = context;
         }
 
-        public async Task<FuncionarioMetricaAtual?> ObterAtualAsync
+        public async Task<FuncionarioMetrica?> ObterAtualAsync
             (Guid usuarioId, CancellationToken cancellationToken = default)
         {
-            return _context.FuncionarioMetricaAtual.FirstOrDefault(x => x.UsuarioId == usuarioId);
+            return await _context.FuncionarioMetrica
+                .FirstOrDefaultAsync(
+                    x => x.UsuarioId == usuarioId,
+                    cancellationToken);
         }
 
-        public async Task<List<FuncionarioMetricaAtual>>
+        public async Task<List<FuncionarioMetrica>>
             ListarAtuaisPorPeriodoAsync(
                 DateTime periodoInicio,
                 DateTime periodoFim,
                 CancellationToken cancellationToken = default)
         {
-            return await _context.FuncionarioMetricaAtual.Where(x =>
+            return await _context.FuncionarioMetrica.Where(x =>
                     x.PeriodoInicio == periodoInicio &&
                     x.PeriodoFim == periodoFim)
                 .ToListAsync(cancellationToken);
@@ -39,7 +42,7 @@ namespace API.Repositories
             DateTime periodoFim,
             CancellationToken cancellationToken = default)
         {
-            return await _context.FuncionarioMetricaHistorico
+            return await _context.Log_FuncionarioMetrica
                 .AnyAsync(
                     x =>
                         x.UsuarioId == usuarioId &&
@@ -70,15 +73,15 @@ namespace API.Repositories
         }
 
         public void AdicionarAtual(
-            FuncionarioMetricaAtual metrica)
+            FuncionarioMetrica metrica)
         {
-            _context.FuncionarioMetricaAtual.Add(metrica);
+            _context.FuncionarioMetrica.Add(metrica);
         }
 
         public void AdicionarHistorico(
-            FuncionarioMetricaHistorico historico)
+            Log_FuncionarioMetrica historico)
         {
-            _context.FuncionarioMetricaHistorico.Add(historico);
+            _context.Log_FuncionarioMetrica.Add(historico);
         }
 
         public async Task<int> SalvarAsync(

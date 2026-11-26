@@ -194,6 +194,44 @@ CREATE TABLE ProjetoSonar (
 );
 GO
 
+CREATE TABLE ProjetoTecnologia
+(
+    ProjetoId UNIQUEIDENTIFIER NOT NULL,
+    TecnologiaId INT NOT NULL,
+
+    PercentualCodigo DECIMAL(5,2) NOT NULL
+        CONSTRAINT DF_ProjetoTecnologia_PercentualCodigo
+        DEFAULT 0,
+
+    NumeroAtribuicoes INT NOT NULL
+        CONSTRAINT DF_ProjetoTecnologia_NumeroAtribuicoes
+        DEFAULT 0,
+
+    ValorAtribuicoes BIGINT NOT NULL
+        CONSTRAINT DF_ProjetoTecnologia_ValorAtribuicoes
+        DEFAULT 0,
+
+    CONSTRAINT PK_ProjetoTecnologia
+        PRIMARY KEY (ProjetoId, TecnologiaId),
+
+    CONSTRAINT FK_ProjetoTecnologia_Projeto
+        FOREIGN KEY (ProjetoId)
+        REFERENCES Projeto(ProjetoId)
+        ON DELETE CASCADE,
+
+    CONSTRAINT FK_ProjetoTecnologia_Tecnologia
+        FOREIGN KEY (TecnologiaId)
+        REFERENCES Tecnologia(TecnologiaId)
+        ON DELETE CASCADE,
+
+    CONSTRAINT CK_ProjetoTecnologia_Percentual
+        CHECK (PercentualCodigo >= 0 AND PercentualCodigo <= 100),
+
+    CONSTRAINT CK_ProjetoTecnologia_Atribuicoes
+        CHECK (NumeroAtribuicoes >= 0 AND ValorAtribuicoes >= 0)
+);
+GO
+
 CREATE TABLE Ticket (
     TicketId INT IDENTITY(1,1) NOT NULL,
     NomeTicket VARCHAR(125) NOT NULL,

@@ -3,15 +3,15 @@ using System.Collections.Generic;
 
 namespace API.Domains;
 
-public partial class FuncionarioMetricaHistorico
+public partial class Log_FuncionarioMetrica
 {
-    public long FuncionarioMetricaHistoricoId { get; set; }
+    public long Log_FuncionarioMetricaId { get; set; }
 
     public Guid UsuarioId { get; set; }
 
-    public DateTime PeriodoInicio { get; set; }
+    public DateOnly PeriodoInicio { get; set; }
 
-    public DateTime PeriodoFim { get; set; }
+    public DateOnly PeriodoFim { get; set; }
 
     public decimal NotaQuantidade { get; set; }
 
@@ -45,11 +45,11 @@ public partial class FuncionarioMetricaHistorico
 
     public decimal QualidadeSonar { get; set; }
 
-    public decimal? QualidadeManutencao { get; set; }
+    public decimal QualidadeManutencao { get; set; }
 
-    public decimal? QualidadeConfiabilidade { get; set; }
+    public decimal QualidadeConfiabilidade { get; set; }
 
-    public decimal? QualidadeSeguranca { get; set; }
+    public decimal QualidadeSeguranca { get; set; }
 
     public int IssuesManutencao { get; set; }
 

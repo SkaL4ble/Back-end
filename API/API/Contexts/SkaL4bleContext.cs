@@ -22,21 +22,27 @@ public partial class SkaL4bleContext : DbContext
 
     public virtual DbSet<ConsolidadoMetricaTecnologia> ConsolidadoMetricaTecnologia { get; set; }
 
-    public virtual DbSet<FuncionarioMetricaAtual> FuncionarioMetricaAtual { get; set; }
+    public virtual DbSet<FuncionarioGamificacao> FuncionarioGamificacao { get; set; }
 
-    public virtual DbSet<FuncionarioMetricaHistorico> FuncionarioMetricaHistorico { get; set; }
+    public virtual DbSet<FuncionarioMetrica> FuncionarioMetrica { get; set; }
 
     public virtual DbSet<HistoricoPontuacaoMetrica> HistoricoPontuacaoMetrica { get; set; }
+
+    public virtual DbSet<Log_FuncionarioMetrica> Log_FuncionarioMetrica { get; set; }
 
     public virtual DbSet<Projeto> Projeto { get; set; }
 
     public virtual DbSet<ProjetoSonar> ProjetoSonar { get; set; }
+
+    public virtual DbSet<ProjetoTecnologia> ProjetoTecnologia { get; set; }
 
     public virtual DbSet<StatusProjeto> StatusProjeto { get; set; }
 
     public virtual DbSet<StatusTicket> StatusTicket { get; set; }
 
     public virtual DbSet<Tecnologia> Tecnologia { get; set; }
+
+    public virtual DbSet<TecnologiaUsuario> TecnologiaUsuario { get; set; }
 
     public virtual DbSet<Ticket> Ticket { get; set; }
 
@@ -57,6 +63,8 @@ public partial class SkaL4bleContext : DbContext
     public virtual DbSet<UsuarioEmailGit> UsuarioEmailGit { get; set; }
 
     public virtual DbSet<UsuarioIdeToken> UsuarioIdeToken { get; set; }
+
+    public virtual DbSet<UsuarioProjetoTecnologia> UsuarioProjetoTecnologia { get; set; }
 
     public virtual DbSet<Workflow> Workflow { get; set; }
 
@@ -107,44 +115,38 @@ public partial class SkaL4bleContext : DbContext
                 .HasConstraintName("FK_ConsTec_Usuario");
         });
 
-        modelBuilder.Entity<FuncionarioMetricaAtual>(entity =>
+        modelBuilder.Entity<FuncionarioGamificacao>(entity =>
         {
             entity.HasKey(e => e.UsuarioId);
 
             entity.Property(e => e.UsuarioId).ValueGeneratedNever();
-            entity.Property(e => e.DataAtualizacao).HasDefaultValueSql("(sysutcdatetime())", "DF_FMA_DataAtualizacao");
-            entity.Property(e => e.NotaQuantidade).HasColumnType("decimal(5, 2)");
-            entity.Property(e => e.NotaVelocidade).HasColumnType("decimal(5, 2)");
-            entity.Property(e => e.PontosQuantidade).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.QualidadeConfiabilidade).HasColumnType("decimal(5, 2)");
-            entity.Property(e => e.QualidadeManutencao).HasColumnType("decimal(5, 2)");
-            entity.Property(e => e.QualidadeSeguranca).HasColumnType("decimal(5, 2)");
-            entity.Property(e => e.QualidadeSonar).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.DataAtualizacao).HasDefaultValueSql("(sysutcdatetime())", "DF_FuncionarioGamificacao_Data");
+            entity.Property(e => e.Nivel).HasDefaultValue(1, "DF_FuncionarioGamificacao_Nivel");
 
-            entity.HasOne(d => d.Usuario).WithOne(p => p.FuncionarioMetricaAtual)
-                .HasForeignKey<FuncionarioMetricaAtual>(d => d.UsuarioId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_FMA_Usuario");
+            entity.HasOne(d => d.Usuario).WithOne(p => p.FuncionarioGamificacao)
+                .HasForeignKey<FuncionarioGamificacao>(d => d.UsuarioId)
+                .HasConstraintName("FK_FuncionarioGamificacao_Usuario");
         });
 
-        modelBuilder.Entity<FuncionarioMetricaHistorico>(entity =>
+        modelBuilder.Entity<FuncionarioMetrica>(entity =>
         {
-            entity.HasIndex(e => new { e.UsuarioId, e.PeriodoInicio, e.PeriodoFim }, "UQ_FMH_UsuarioPeriodo").IsUnique();
+            entity.HasKey(e => e.UsuarioId).HasName("PK_FuncionarioMetricaAtual");
 
-            entity.Property(e => e.DataFechamento).HasDefaultValueSql("(sysutcdatetime())", "DF_FMH_DataFechamento");
-            entity.Property(e => e.NotaQualidade).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.UsuarioId).ValueGeneratedNever();
+            entity.Property(e => e.DataAtualizacao).HasDefaultValueSql("(sysutcdatetime())");
             entity.Property(e => e.NotaQuantidade).HasColumnType("decimal(5, 2)");
-            entity.Property(e => e.NotaVelocidade).HasColumnType("decimal(5, 2)");
-            entity.Property(e => e.PontosQuantidade).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.NotaVelocidade)
+                .HasDefaultValue(100m)
+                .HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.PontosQuantidade).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.QualidadeConfiabilidade).HasColumnType("decimal(5, 2)");
             entity.Property(e => e.QualidadeManutencao).HasColumnType("decimal(5, 2)");
             entity.Property(e => e.QualidadeSeguranca).HasColumnType("decimal(5, 2)");
             entity.Property(e => e.QualidadeSonar).HasColumnType("decimal(5, 2)");
 
-            entity.HasOne(d => d.Usuario).WithMany(p => p.FuncionarioMetricaHistorico)
-                .HasForeignKey(d => d.UsuarioId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_FMH_Usuario");
+            entity.HasOne(d => d.Usuario).WithOne(p => p.FuncionarioMetrica)
+                .HasForeignKey<FuncionarioMetrica>(d => d.UsuarioId)
+                .HasConstraintName("FK_FuncionarioMetricaAtual_Usuario");
         });
 
         modelBuilder.Entity<HistoricoPontuacaoMetrica>(entity =>
@@ -172,6 +174,25 @@ public partial class SkaL4bleContext : DbContext
             entity.HasOne(d => d.Usuario).WithMany(p => p.HistoricoPontuacaoMetrica)
                 .HasForeignKey(d => d.UsuarioId)
                 .HasConstraintName("FK_HistPont_Usuario");
+        });
+
+        modelBuilder.Entity<Log_FuncionarioMetrica>(entity =>
+        {
+            entity.HasIndex(e => new { e.UsuarioId, e.PeriodoInicio, e.PeriodoFim }, "UQ_Log_FuncionarioMetricaIdo_Periodo").IsUnique();
+
+            entity.Property(e => e.DataFechamento).HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.NotaQualidade).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.NotaQuantidade).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.NotaVelocidade).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.PontosQuantidade).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.QualidadeConfiabilidade).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.QualidadeManutencao).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.QualidadeSeguranca).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.QualidadeSonar).HasColumnType("decimal(5, 2)");
+
+            entity.HasOne(d => d.Usuario).WithMany(p => p.Log_FuncionarioMetrica)
+                .HasForeignKey(d => d.UsuarioId)
+                .HasConstraintName("FK_Log_FuncionarioMetricaId_Usuario");
         });
 
         modelBuilder.Entity<Projeto>(entity =>
@@ -250,6 +271,21 @@ public partial class SkaL4bleContext : DbContext
                 .HasConstraintName("FK_ProjetoSonar_Projeto");
         });
 
+        modelBuilder.Entity<ProjetoTecnologia>(entity =>
+        {
+            entity.HasKey(e => new { e.ProjetoId, e.TecnologiaId });
+
+            entity.Property(e => e.PercentualCodigo).HasColumnType("decimal(5, 2)");
+
+            entity.HasOne(d => d.Projeto).WithMany(p => p.ProjetoTecnologia)
+                .HasForeignKey(d => d.ProjetoId)
+                .HasConstraintName("FK_ProjetoTecnologia_Projeto");
+
+            entity.HasOne(d => d.Tecnologia).WithMany(p => p.ProjetoTecnologia)
+                .HasForeignKey(d => d.TecnologiaId)
+                .HasConstraintName("FK_ProjetoTecnologia_Tecnologia");
+        });
+
         modelBuilder.Entity<StatusProjeto>(entity =>
         {
             entity.HasIndex(e => e.NomeStatusProjeto, "UQ_StatusProjeto_Nome").IsUnique();
@@ -275,6 +311,23 @@ public partial class SkaL4bleContext : DbContext
             entity.Property(e => e.NomeTecnologia)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<TecnologiaUsuario>(entity =>
+        {
+            entity.HasKey(e => new { e.UsuarioId, e.TecnologiaId });
+
+            entity.Property(e => e.AfinidadeMedia).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.DataUltimaAtualizacao).HasDefaultValueSql("(sysutcdatetime())", "DF_TecnologiaUsuario_Data");
+            entity.Property(e => e.ValorAtribuicoes).HasColumnType("decimal(18, 2)");
+
+            entity.HasOne(d => d.Tecnologia).WithMany(p => p.TecnologiaUsuario)
+                .HasForeignKey(d => d.TecnologiaId)
+                .HasConstraintName("FK_TecnologiaUsuario_Tecnologia");
+
+            entity.HasOne(d => d.Usuario).WithMany(p => p.TecnologiaUsuario)
+                .HasForeignKey(d => d.UsuarioId)
+                .HasConstraintName("FK_TecnologiaUsuario_Usuario");
         });
 
         modelBuilder.Entity<Ticket>(entity =>
@@ -408,20 +461,6 @@ public partial class SkaL4bleContext : DbContext
                 .HasForeignKey(d => d.TipoUsuarioId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Usuario_TipoUsuario");
-
-            entity.HasMany(d => d.Tecnologia).WithMany(p => p.Usuario)
-                .UsingEntity<Dictionary<string, object>>(
-                    "TecnologiaUsuario",
-                    r => r.HasOne<Tecnologia>().WithMany()
-                        .HasForeignKey("TecnologiaId")
-                        .HasConstraintName("FK_TecnologiaUsuario_Tecnologia"),
-                    l => l.HasOne<Usuario>().WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .HasConstraintName("FK_TecnologiaUsuario_Usuario"),
-                    j =>
-                    {
-                        j.HasKey("UsuarioId", "TecnologiaId");
-                    });
         });
 
         modelBuilder.Entity<UsuarioEmailGit>(entity =>
@@ -454,6 +493,26 @@ public partial class SkaL4bleContext : DbContext
             entity.HasOne(d => d.Usuario).WithMany(p => p.UsuarioIdeToken)
                 .HasForeignKey(d => d.UsuarioId)
                 .HasConstraintName("FK_UsuarioIdeToken_Usuario");
+        });
+
+        modelBuilder.Entity<UsuarioProjetoTecnologia>(entity =>
+        {
+            entity.HasKey(e => new { e.ProjetoId, e.UsuarioId, e.TecnologiaId });
+
+            entity.Property(e => e.DataUltimaParticipacao).HasDefaultValueSql("(sysutcdatetime())", "DF_UsuarioProjetoTecnologia_Data");
+            entity.Property(e => e.PontuacaoProjeto).HasColumnType("decimal(5, 2)");
+
+            entity.HasOne(d => d.Projeto).WithMany(p => p.UsuarioProjetoTecnologia)
+                .HasForeignKey(d => d.ProjetoId)
+                .HasConstraintName("FK_UsuarioProjetoTecnologia_Projeto");
+
+            entity.HasOne(d => d.Tecnologia).WithMany(p => p.UsuarioProjetoTecnologia)
+                .HasForeignKey(d => d.TecnologiaId)
+                .HasConstraintName("FK_UsuarioProjetoTecnologia_Tecnologia");
+
+            entity.HasOne(d => d.Usuario).WithMany(p => p.UsuarioProjetoTecnologia)
+                .HasForeignKey(d => d.UsuarioId)
+                .HasConstraintName("FK_UsuarioProjetoTecnologia_Usuario");
         });
 
         modelBuilder.Entity<Workflow>(entity =>

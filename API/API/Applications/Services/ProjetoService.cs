@@ -4,7 +4,6 @@ using API.Domains;
 using API.DTOs.ProjetoDto;
 using API.Exceptions;
 using API.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace API.Applications.Services;
 

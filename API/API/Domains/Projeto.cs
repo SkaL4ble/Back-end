@@ -29,11 +29,15 @@ public partial class Projeto
 
     public virtual ICollection<ProjetoSonar> ProjetoSonar { get; set; } = new List<ProjetoSonar>();
 
+    public virtual ICollection<ProjetoTecnologia> ProjetoTecnologia { get; set; } = new List<ProjetoTecnologia>();
+
     public virtual StatusProjeto StatusProjeto { get; set; } = null!;
 
     public virtual ICollection<Ticket> Ticket { get; set; } = new List<Ticket>();
 
     public virtual TipoProjeto TipoProjeto { get; set; } = null!;
+
+    public virtual ICollection<UsuarioProjetoTecnologia> UsuarioProjetoTecnologia { get; set; } = new List<UsuarioProjetoTecnologia>();
 
     public virtual ICollection<Usuario> Usuario { get; set; } = new List<Usuario>();
 }

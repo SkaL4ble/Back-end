@@ -4,14 +4,13 @@ using API.Domains;
 using API.DTOs.TicketDto;
 using API.Exceptions;
 using API.Interfaces;
-using System.Net.NetworkInformation;
 
 namespace API.Applications.Services;
 
 public class TicketService
 {
     private const int PrioridadeMinima = 1;
-    private const int PrioridadeMaxima = 5;
+    private const int PrioridadeMaxima = 3;
 
     private readonly ITicketRepository _repository;
     private readonly MetricaService _metricaService;
@@ -84,6 +83,7 @@ public class TicketService
     public async Task AdicionarTicket(CriarTicketDto dto)
     {
         var nome = _validacoes.NormalizarNome(dto.NomeTicket);
+
         ValidarPrioridade(dto.Prioridade);
         ValidarRelacionamentos(dto.ProjetoId, dto.TipoTicketId,
             dto.StatusTicketId, dto.UsuarioResponsavel);
@@ -118,6 +118,7 @@ public class TicketService
     {
         var ticket = BuscarAtivoOuFalhar(id);
         var nome = _validacoes.NormalizarNome(dto.NomeTicket);
+
         ValidarPrioridade(dto.Prioridade);
         ValidarRelacionamentos(dto.ProjetoId, dto.TipoTicketId,
             dto.StatusTicketId, dto.UsuarioResponsavel);

@@ -5,11 +5,11 @@ namespace API.Interfaces
 {
     public interface IMetricaRepository
     {
-        Task<FuncionarioMetricaAtual?> ObterAtualAsync(
+        Task<FuncionarioMetrica?> ObterAtualAsync(
         Guid usuarioId,
         CancellationToken cancellationToken = default);
 
-        Task<List<FuncionarioMetricaAtual>> ListarAtuaisPorPeriodoAsync(
+        Task<List<FuncionarioMetrica>> ListarAtuaisPorPeriodoAsync(
             DateTime periodoInicio,
             DateTime periodoFim,
             CancellationToken cancellationToken = default);
@@ -27,10 +27,10 @@ namespace API.Interfaces
             CancellationToken cancellationToken = default);
 
         void AdicionarAtual(
-            FuncionarioMetricaAtual metrica);
+            FuncionarioMetrica metrica);
 
         void AdicionarHistorico(
-            FuncionarioMetricaHistorico historico);
+            Log_FuncionarioMetrica historico);
 
         Task<int> SalvarAsync(
             CancellationToken cancellationToken = default);

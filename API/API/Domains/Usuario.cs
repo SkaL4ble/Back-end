@@ -31,13 +31,17 @@ public partial class Usuario
 
     public virtual ICollection<ConsolidadoMetricaTecnologia> ConsolidadoMetricaTecnologia { get; set; } = new List<ConsolidadoMetricaTecnologia>();
 
-    public virtual FuncionarioMetricaAtual? FuncionarioMetricaAtual { get; set; }
+    public virtual FuncionarioGamificacao? FuncionarioGamificacao { get; set; }
 
-    public virtual ICollection<FuncionarioMetricaHistorico> FuncionarioMetricaHistorico { get; set; } = new List<FuncionarioMetricaHistorico>();
+    public virtual FuncionarioMetrica? FuncionarioMetrica { get; set; }
 
     public virtual ICollection<HistoricoPontuacaoMetrica> HistoricoPontuacaoMetrica { get; set; } = new List<HistoricoPontuacaoMetrica>();
 
+    public virtual ICollection<Log_FuncionarioMetrica> Log_FuncionarioMetrica { get; set; } = new List<Log_FuncionarioMetrica>();
+
     public virtual ICollection<Projeto> Projeto { get; set; } = new List<Projeto>();
+
+    public virtual ICollection<TecnologiaUsuario> TecnologiaUsuario { get; set; } = new List<TecnologiaUsuario>();
 
     public virtual ICollection<Ticket> Ticket { get; set; } = new List<Ticket>();
 
@@ -51,7 +55,7 @@ public partial class Usuario
 
     public virtual ICollection<UsuarioIdeToken> UsuarioIdeToken { get; set; } = new List<UsuarioIdeToken>();
 
-    public virtual ICollection<Projeto> ProjetoNavigation { get; set; } = new List<Projeto>();
+    public virtual ICollection<UsuarioProjetoTecnologia> UsuarioProjetoTecnologia { get; set; } = new List<UsuarioProjetoTecnologia>();
 
-    public virtual ICollection<Tecnologia> Tecnologia { get; set; } = new List<Tecnologia>();
+    public virtual ICollection<Projeto> ProjetoNavigation { get; set; } = new List<Projeto>();
 }
