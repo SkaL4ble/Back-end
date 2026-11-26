@@ -8,8 +8,6 @@ namespace API.Interfaces
 
         TipoUsuario BuscarPorId(Guid id);
 
-        bool TipoUsuarioExistente(Guid id);
-
         bool TipoUsuarioComMesmoNomeExistente(string nome, Guid id);
 
         TipoUsuario BuscarPorCodigo(string codigo);

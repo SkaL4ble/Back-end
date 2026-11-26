@@ -129,7 +129,7 @@ namespace API.Controllers
         [HttpGet("fora-do-prazo")]
         [Authorize(Roles = "Tech Lead")]
         public ActionResult<List<ListarProjetoDto>> ListarProjetosForaDoPrazo(
-            [FromQuery] FiltroProjetoDentroOuForaPrazo filtro)
+            [FromQuery] FiltroProjetoDto filtro)
         {
             return Ok(_service.ListarProjetosForaDoPrazo(filtro));
         }
@@ -142,7 +142,7 @@ namespace API.Controllers
         [HttpGet("dentro-do-prazo")]
         [Authorize(Roles = "Tech Lead")]
         public ActionResult<List<ListarProjetoDto>> ListarProjetosDentroDoPrazo(
-            [FromQuery] FiltroProjetoDentroOuForaPrazo filtro)
+            [FromQuery] FiltroProjetoDto filtro)
         {
             return Ok(_service.ListarProjetosDentroDoPrazo(filtro));
         }

@@ -1,4 +1,5 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto;
+using API.Applications.Validacoes;
 using API.Domains;
 using API.DTOs.AtuacaoDto;
 using API.Exceptions;
@@ -9,24 +10,18 @@ namespace API.Applications.Services
     public class AtuacaoService
     {
         private readonly IAtuacaoRepository _repository;
+        private readonly ValidacoesGerais _validacoes;
 
-        public AtuacaoService(IAtuacaoRepository repository)
+        public AtuacaoService(IAtuacaoRepository repository, ValidacoesGerais validacoes)
         {
             _repository = repository;
+            _validacoes = validacoes;
         }
 
         private Atuacao BuscarOuFalhar(int id)
         {
             return _repository.ObterPorId(id)
                 ?? throw new DomainException("Atuação não encontrada");
-        }
-
-        private static string NormalizarNome(string? nome)
-        {
-            if (string.IsNullOrWhiteSpace(nome))
-                throw new DomainException("O nome da atuação é obrigatório");
-
-            return nome.Trim();
         }
 
         public List<ListarAtuacaoDto> ListarAtuacoes()
@@ -47,7 +42,7 @@ namespace API.Applications.Services
             if (atuacaoDto.NomeAtuacao.Length > 30 || atuacaoDto.NomeAtuacao.Length < 3)
                 throw new DomainException("O nome da atuação deve ter entre 3 e 30 caracteres");
 
-            atuacaoDto.NomeAtuacao = NormalizarNome(atuacaoDto.NomeAtuacao);
+            atuacaoDto.NomeAtuacao = _validacoes.NormalizarNome(atuacaoDto.NomeAtuacao);
 
             if (_repository.NomeAtuacaoExiste(atuacaoDto.NomeAtuacao))
                 throw new DomainException("Atuação já existe");
@@ -61,7 +56,7 @@ namespace API.Applications.Services
                 throw new DomainException("O nome da atuação deve ter entre 3 e 30 caracteres");
 
             Atuacao atuacaoBanco = BuscarOuFalhar(id);
-            string novoNome = NormalizarNome(atuacaoDto.NomeAtuacao);
+            string novoNome = _validacoes.NormalizarNome(atuacaoDto.NomeAtuacao);
 
             bool nomeMudou = !string.Equals(
                 atuacaoBanco.NomeAtuacao, novoNome, StringComparison.OrdinalIgnoreCase);

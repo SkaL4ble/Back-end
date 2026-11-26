@@ -45,18 +45,6 @@ public class TicketRepository : ITicketRepository
     public Usuario? ObterUsuarioPorId(Guid usuarioId) =>
         _context.Usuario.FirstOrDefault(u => u.UsuarioId == usuarioId && u.Ativo);
 
-    public bool ProjetoExiste(Guid projetoId) =>
-        _context.Projeto.Any(p => p.ProjetoId == projetoId && p.Ativo);
-
-    public bool TipoTicketExiste(int tipoTicketId) =>
-        _context.TipoTicket.Any(t => t.TipoTicketId == tipoTicketId);
-
-    public bool StatusTicketExiste(int statusTicketId) =>
-        _context.StatusTicket.Any(s => s.StatusTicketId == statusTicketId);
-
-    public bool UsuarioExiste(Guid usuarioId) =>
-        _context.Usuario.Any(u => u.UsuarioId == usuarioId && u.Ativo);
-
     public bool ColaboradorExiste(int ticketId, Guid usuarioId) =>
     _context.TicketUsuario.Any(tu =>
         tu.TicketId == ticketId &&
@@ -67,6 +55,10 @@ public class TicketRepository : ITicketRepository
             p.ProjetoId == projetoId &&
             p.Ativo &&
             p.Usuario.Any(u => u.UsuarioId == usuarioId && u.Ativo));
+    public bool UsuarioParticipaDoTicket(Guid usuarioId, int ticketId)
+    {
+        return _context.Ticket.Any(t => t.TicketId == ticketId && (t.UsuarioResponsavel == usuarioId || t.TicketUsuario.Any(u => u.UsuarioId == usuarioId)));
+    }
 
     // ================================ CONSULTAS =================================
 

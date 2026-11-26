@@ -1,4 +1,5 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto.ConversoesStatus;
+using API.Applications.Validacoes;
 using API.Domains;
 using API.DTOs.StatusDto.StatusTicketDto;
 using API.Exceptions;
@@ -11,26 +12,17 @@ public class StatusTicketService
     private const int TamanhoMaximoNome = 30;
     private const int TamanhoMinimoNome = 3;
     private readonly IStatusTicketRepository _repository;
+    private readonly ValidacoesGerais _validacoes;
 
-    public StatusTicketService(IStatusTicketRepository repository) => _repository = repository;
+    public StatusTicketService(IStatusTicketRepository repository, ValidacoesGerais validacoes) {
+        _repository = repository;
+        _validacoes = validacoes;
+    } 
 
     private StatusTicket BuscarOuFalhar(int id) =>
         _repository.ObterPorId(id)
         ?? throw new DomainException("Status de ticket não encontrado");
 
-    private static string NormalizarNome(string? nome)
-    {
-        if (string.IsNullOrWhiteSpace(nome))
-            throw new DomainException("O nome do status de ticket é obrigatório");
-
-        var normalizado = nome.Trim();
-        if (normalizado.Length > TamanhoMaximoNome)
-            throw new DomainException($"O nome do status de ticket deve ter no máximo {TamanhoMaximoNome} caracteres");
-        else if (normalizado.Length < TamanhoMinimoNome)
-            throw new DomainException($"O nome do status de ticket deve ter no mínimo {TamanhoMinimoNome} caracteres");
-
-        return normalizado;
-    }
 
     public List<ListarStatusTicketDto> ListarStatusTicket() =>
         _repository.ListarStatusTicket()
@@ -42,7 +34,7 @@ public class StatusTicketService
 
     public void AdicionarStatusTicket(CriarStatusTicketDto dto)
     {
-        var nome = NormalizarNome(dto.NomeStatusTicket);
+        var nome = _validacoes.NormalizarNome(dto.NomeStatusTicket);
         if (_repository.NomeStatusTicketExiste(nome))
             throw new DomainException("Status de ticket já existe");
 
@@ -52,7 +44,7 @@ public class StatusTicketService
     public void Atualizar(int id, CriarStatusTicketDto dto)
     {
         var atual = BuscarOuFalhar(id);
-        var nome = NormalizarNome(dto.NomeStatusTicket);
+        var nome = _validacoes.NormalizarNome(dto.NomeStatusTicket);
         var mudou = !string.Equals(atual.NomeStatusTicket, nome, StringComparison.OrdinalIgnoreCase);
 
         if (mudou && _repository.NomeStatusTicketExiste(nome))

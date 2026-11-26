@@ -12,13 +12,10 @@ namespace API.Interfaces
         public void DeletarTicket(Ticket ticket);
 
         // ================================ VALIDACOES =================================
-        bool ProjetoExiste(Guid projetoId);
-        bool TipoTicketExiste(int tipoTicketId);
-        bool StatusTicketExiste(int statusTicketId);
-        bool UsuarioExiste(Guid usuarioId);
         bool ColaboradorExiste(int ticketId, Guid usuarioId);
         public Usuario? ObterUsuarioPorId(Guid usuarioId);
         bool UsuarioParticipaDoProjeto(Guid usuarioId, Guid projetoId);
+        bool UsuarioParticipaDoTicket(Guid usuarioId, int ticketId);
         // ================================ LISTAGEM =================================
         List<Ticket> ListarTickets(FiltroTicketDto filtro);
         List<Usuario> ListarColaboradores(int ticketId);

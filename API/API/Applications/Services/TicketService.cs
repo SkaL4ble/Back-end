@@ -1,4 +1,5 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto;
+using API.Applications.Validacoes;
 using API.Domains;
 using API.DTOs.TicketDto;
 using API.Exceptions;
@@ -11,16 +12,16 @@ public class TicketService
 {
     private const int PrioridadeMinima = 1;
     private const int PrioridadeMaxima = 5;
-    private const int TamanhoMinimoNome = 3;
-    private const int TamanhoMaximoNome = 125;
 
     private readonly ITicketRepository _repository;
     private readonly MetricaService _metricaService;
+    private readonly ValidacoesGerais _validacoes;
 
-    public TicketService(ITicketRepository repository, MetricaService metricaService) 
+    public TicketService(ITicketRepository repository, MetricaService metricaService, ValidacoesGerais validacoes) 
     {
         _repository = repository;
         _metricaService = metricaService;
+        _validacoes = validacoes;
     }
 
     //================================= VALIDAÇÕES ==========================================
@@ -41,20 +42,6 @@ public class TicketService
         return ticket;
     }
 
-    private static string NormalizarNome(string? nome)
-    {
-        if (string.IsNullOrWhiteSpace(nome))
-            throw new DomainException("O nome do ticket é obrigatório");
-
-        var normalizado = nome.Trim();
-        if (normalizado.Length < TamanhoMinimoNome)
-            throw new DomainException($"O nome do ticket não pode ter menos de {TamanhoMinimoNome} caracteres");
-        if (normalizado.Length > TamanhoMaximoNome)
-            throw new DomainException($"O nome do ticket não pode ter mais de {TamanhoMaximoNome} caracteres");
-
-        return normalizado;
-    }
-
     private static void ValidarPrioridade(int prioridade)
     {
         if (prioridade < PrioridadeMinima || prioridade > PrioridadeMaxima)
@@ -69,47 +56,21 @@ public class TicketService
             throw new DomainException("A data de entrega não pode ser anterior à data de criação");
     }
 
-    private void ValidarUsuario(Guid usuarioId)
-    {
-        if (!_repository.UsuarioExiste(usuarioId))
-            throw new DomainException("Usuário não encontrado ou inativo");
-    }
-
-    private void ValidarProjeto(Guid projetoId)
-    {
-        if (!_repository.ProjetoExiste(projetoId))
-            throw new DomainException("Projeto não encontrado ou inativo");
-    }
-
-    private void ValidarTipoTicket(int tipoTicketId)
-    {
-        if (!_repository.TipoTicketExiste(tipoTicketId))
-            throw new DomainException("Tipo de ticket não encontrado");
-    }
-
-    private void ValidarStatusTicket(int statusTicketId)
-    {
-        if (!_repository.StatusTicketExiste(statusTicketId))
-            throw new DomainException("Status de ticket não encontrado");
-    }
-
-    private void ValidarParticipacaoNoProjeto(Guid usuarioId, Guid projetoId)
-    {
-        if (!_repository.UsuarioParticipaDoProjeto(usuarioId, projetoId))
-            throw new DomainException("O usuário não participa do projeto do ticket");
-    }
 
     private void ValidarRelacionamentos(Guid projetoId, int tipoTicketId,
         int statusTicketId, Guid? usuarioResponsavel)
     {
-        ValidarProjeto(projetoId);
-        ValidarTipoTicket(tipoTicketId);
-        ValidarStatusTicket(statusTicketId);
+        _validacoes.ValidarProjeto(projetoId);
+        _validacoes.ValidarTipoTicket(tipoTicketId);
+        _validacoes.ValidarStatusTicket(statusTicketId);
 
         if (usuarioResponsavel.HasValue)
         {
-            ValidarUsuario(usuarioResponsavel.Value);
-            ValidarParticipacaoNoProjeto(usuarioResponsavel.Value, projetoId);
+            _validacoes.ValidarUsuario(usuarioResponsavel);
+            if(!_repository.UsuarioParticipaDoProjeto(usuarioResponsavel.Value, projetoId))
+            {
+                throw new DomainException("Usuario nao participa do projeto");
+            }
         }
     }
 
@@ -122,7 +83,7 @@ public class TicketService
 
     public async Task AdicionarTicket(CriarTicketDto dto)
     {
-        var nome = NormalizarNome(dto.NomeTicket);
+        var nome = _validacoes.NormalizarNome(dto.NomeTicket);
         ValidarPrioridade(dto.Prioridade);
         ValidarRelacionamentos(dto.ProjetoId, dto.TipoTicketId,
             dto.StatusTicketId, dto.UsuarioResponsavel);
@@ -156,7 +117,7 @@ public class TicketService
     public async Task Atualizar(int id, AtualizarTicketDto dto)
     {
         var ticket = BuscarAtivoOuFalhar(id);
-        var nome = NormalizarNome(dto.NomeTicket);
+        var nome = _validacoes.NormalizarNome(dto.NomeTicket);
         ValidarPrioridade(dto.Prioridade);
         ValidarRelacionamentos(dto.ProjetoId, dto.TipoTicketId,
             dto.StatusTicketId, dto.UsuarioResponsavel);
@@ -183,7 +144,7 @@ public class TicketService
     public async Task MudarEstadoTicket(int ticketId, int statusTicketId)
     {
         var ticket = BuscarOuFalhar(ticketId);
-        ValidarStatusTicket(statusTicketId);
+        _validacoes.ValidarStatusTicket(statusTicketId);
 
         if (!ticket.Ativo)
             throw new DomainException("Não é possível alterar um ticket inativo");
@@ -203,11 +164,12 @@ public class TicketService
         if (!ticket.Ativo)
             throw new DomainException("Não é possível transferir um ticket inativo");
 
-        ValidarUsuario(usuarioId);
-        if (ticket.UsuarioResponsavel == usuarioId)
-            throw new DomainException("Este usuário já é o responsável pelo ticket");
+        _validacoes.ValidarUsuario(usuarioId);
 
-        ValidarParticipacaoNoProjeto(usuarioId, ticket.ProjetoId);
+        if (!_repository.UsuarioParticipaDoProjeto(usuarioId, ticket.ProjetoId))
+        {
+            throw new DomainException("Usuario nao participa do projeto");
+        }
 
         _repository.TransferirResponsavel(ticketId, usuarioId);
     }
@@ -218,11 +180,17 @@ public class TicketService
         if (!ticket.Ativo)
             throw new DomainException("Não é possível adicionar colaborador a um ticket inativo");
 
-        ValidarUsuario(usuarioId);
-        if (ticket.UsuarioResponsavel == usuarioId)
-            throw new DomainException("O responsável não pode ser adicionado como colaborador");
+        _validacoes.ValidarUsuario(usuarioId);
 
-        ValidarParticipacaoNoProjeto(usuarioId, ticket.ProjetoId);
+        if (!_repository.UsuarioParticipaDoTicket(usuarioId, ticketId))
+        {
+            throw new DomainException("Usuario ja esta no ticket");
+        }
+
+        if (!_repository.UsuarioParticipaDoProjeto(usuarioId, ticket.ProjetoId))
+        {
+            throw new DomainException("Usuario nao participa do projeto");
+        }
 
         if (_repository.ColaboradorExiste(ticketId, usuarioId))
             throw new DomainException("Este usuário já é colaborador do ticket");
@@ -253,25 +221,10 @@ public class TicketService
                 "A data de início não pode ser maior que a data de fim");
         }
 
-        if (filtro.UsuarioId.HasValue)
-        {
-            ValidarUsuario(filtro.UsuarioId.Value);
-        }
-
-        if (filtro.ProjetoId.HasValue)
-        {
-            ValidarProjeto(filtro.ProjetoId.Value);
-        }
-
-        if (filtro.StatusTicketId.HasValue)
-        {
-            ValidarStatusTicket(filtro.StatusTicketId.Value);
-        }
-
-        if (filtro.TipoTicketId.HasValue)
-        {
-            ValidarTipoTicket(filtro.TipoTicketId.Value);
-        }
+        _validacoes.ValidarProjeto(filtro.ProjetoId);
+        _validacoes.ValidarUsuario(filtro.UsuarioId);
+        _validacoes.ValidarTipoTicket(filtro.TipoTicketId);
+        _validacoes.ValidarStatusTicket(filtro.StatusTicketId);
 
         if (filtro.Prioridade.HasValue)
         {
@@ -293,20 +246,16 @@ public class TicketService
 
     public List<ListarTicketDto> ListarTicketsForaDoPrazo(FiltroTicketForaOuDentro filtro)
     {
-        if(filtro.ProjetoId != Guid.Empty)
-            ValidarProjeto(filtro.ProjetoId);
-        else if(filtro.UsuarioId != Guid.Empty)
-            ValidarUsuario(filtro.UsuarioId);
+        _validacoes.ValidarProjeto(filtro.ProjetoId);
+        _validacoes.ValidarUsuario(filtro.UsuarioId);
 
         return ParaDtos(_repository.ListarTicketsForaDoPrazo(filtro));
     }
 
     public List<ListarTicketDto> ListarTicketsDentroDoPrazo(FiltroTicketForaOuDentro filtro)
     {
-        if (filtro.ProjetoId != Guid.Empty)
-            ValidarProjeto(filtro.ProjetoId);
-        else if (filtro.UsuarioId != Guid.Empty)
-            ValidarUsuario(filtro.UsuarioId);
+        _validacoes.ValidarProjeto(filtro.ProjetoId);
+        _validacoes.ValidarUsuario(filtro.UsuarioId);
 
         return ParaDtos(_repository.ListarTicketsDentroDoPrazo(filtro));
     }

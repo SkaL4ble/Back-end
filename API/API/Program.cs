@@ -4,6 +4,7 @@ using API.Applications.Services;
 using API.Applications.Services.SonarCube;
 using API.Applications.Services.Status;
 using API.Applications.Services.Tipo;
+using API.Applications.Validacoes;
 using API.Contexts;
 using API.Interfaces;
 using API.Repositories;
@@ -78,6 +79,9 @@ builder.Services.AddSwaggerGen(c =>
     }
 });
 
+// ======================= VALIDACAO =======================
+builder.Services.AddScoped<IValidacoesRepository, ValidacoesRepository>();
+builder.Services.AddScoped<ValidacoesGerais>();
 
 // ======================= PROJETOS =======================
 builder.Services.AddScoped<IProjetoRepository, ProjetoRepository>();
