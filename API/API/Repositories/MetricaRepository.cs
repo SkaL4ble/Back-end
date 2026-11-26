@@ -18,7 +18,7 @@ namespace API.Repositories
         public async Task<FuncionarioMetrica?> ObterAtualAsync
             (Guid usuarioId, CancellationToken cancellationToken = default)
         {
-            return await _context.FuncionarioMetrica
+                return await _context.FuncionarioMetrica
                 .FirstOrDefaultAsync(
                     x => x.UsuarioId == usuarioId,
                     cancellationToken);

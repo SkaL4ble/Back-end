@@ -19,7 +19,7 @@ namespace API.Controllers
         }
 
         [HttpPost("fechar-trimestre")]
-        [Authorize(Roles = "Tech Lead")]
+        //[Authorize(Roles = "Tech Lead")]
         public async Task<IActionResult> FecharTrimestre(
             CancellationToken cancellationToken)
         {

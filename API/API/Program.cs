@@ -137,7 +137,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 
 
 // ======================= MÉTRICAS =======================
-// builder.Services.AddScoped<IMetricaRepository, MetricaRepository>();
+builder.Services.AddScoped<IMetricaRepository, MetricaRepository>();
 builder.Services.AddScoped<MetricaService>();
 
 

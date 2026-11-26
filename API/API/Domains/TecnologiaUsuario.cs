@@ -5,9 +5,9 @@ namespace API.Domains;
 
 public partial class TecnologiaUsuario
 {
-    public Guid UsuarioId { get; set; }
-
     public int TecnologiaId { get; set; }
+
+    public Guid UsuarioId { get; set; }
 
     public decimal AfinidadeMedia { get; set; }
 

@@ -1,5 +1,5 @@
 ﻿using API.Applications.Services;
-using API.DTOs.ProjetoDto;
+using API.DTOs.ProjetoDto;  
 using API.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -157,7 +157,7 @@ namespace API.Controllers
         }
 
         [HttpPatch("{projetoId}/associar-usuario/{usuarioId}")]
-        [Authorize(Roles = "Tech Lead")]
+        //[Authorize(Roles = "Tech Lead")]
         public ActionResult AssociarUsuario(Guid projetoId, Guid usuarioId)
         {
             try

@@ -64,9 +64,7 @@ namespace API.Repositories
 
         public Usuario BuscarPorId(Guid id)
         {
-            return UsuariosComRelacoes()
-                .AsNoTracking()
-                .FirstOrDefault(u => u.UsuarioId == id);
+            return _context.Usuario.Find(id);
         }
 
         public void Cadastrar(Usuario usuario)
