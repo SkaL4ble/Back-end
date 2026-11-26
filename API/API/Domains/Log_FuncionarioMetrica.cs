@@ -9,9 +9,9 @@ public partial class Log_FuncionarioMetrica
 
     public Guid UsuarioId { get; set; }
 
-    public DateOnly PeriodoInicio { get; set; }
+    public DateTime PeriodoInicio { get; set; }
 
-    public DateOnly PeriodoFim { get; set; }
+    public DateTime PeriodoFim { get; set; }
 
     public decimal NotaQuantidade { get; set; }
 

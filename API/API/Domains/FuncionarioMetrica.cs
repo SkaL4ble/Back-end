@@ -7,9 +7,9 @@ public partial class FuncionarioMetrica
 {
     public Guid UsuarioId { get; set; }
 
-    public DateOnly PeriodoInicio { get; set; }
+    public DateTime PeriodoInicio { get; set; }
 
-    public DateOnly PeriodoFim { get; set; }
+    public DateTime PeriodoFim { get; set; }
 
     public int TicketsAtribuidos { get; set; }
 
