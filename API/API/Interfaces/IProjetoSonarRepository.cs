@@ -8,8 +8,6 @@ public interface IProjetoSonarRepository
     List<Workflow> ObterWorkflows();
     bool WorkflowExiste(int workflowId);
 
-    bool ProjetoExiste(Guid projetoId);
-
     void Adicionar(ProjetoSonar projetoSonar);
 
     void Atualizar(ProjetoSonar projetoSonar);

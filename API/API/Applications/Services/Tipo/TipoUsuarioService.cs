@@ -1,5 +1,6 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto.ConversoesTipo;
 using API.Applications.Regras;
+using API.Applications.Services.Validacoes;
 using API.Domains;
 using API.DTOs.TipoDto.TipoUsuarioDto;
 using API.Exceptions;
@@ -10,10 +11,12 @@ namespace API.Applications.Services.Tipo
     public class TipoUsuarioService
     {
         private readonly ITipoUsuarioRepository _repository;
+        private readonly ValidacoesGerais _validacao;
 
-        public TipoUsuarioService(ITipoUsuarioRepository repository)
+        public TipoUsuarioService(ITipoUsuarioRepository repository, ValidacoesGerais validacao)
         {
             _repository = repository;
+            _validacao = validacao;
         }
 
         public List<LerTipoUsuarioDto> Listar()
@@ -60,10 +63,7 @@ namespace API.Applications.Services.Tipo
                 throw new DomainException("Preencha o campo de ID do usuário.");
             }
 
-            if (!_repository.TipoUsuarioExistente(id))
-            {
-                throw new DomainException("Tipo de usuário não encontrado.");
-            }
+            _validacao.ValidarTipoUsuario(dto.TipoUsuarioId);
 
             CampoObrigatorio.TipoUsuario(dto.NomeTipoUsuario);
 

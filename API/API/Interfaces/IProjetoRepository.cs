@@ -20,9 +20,6 @@ public interface IProjetoRepository
     // ================================ VALIDAÇÕES =================================
     bool NomeProjetoExiste(string nome, Guid? idIgnorado = null);
     bool LinkRepositorioExiste(string linkRepositorio, Guid? idIgnorado = null);
-    bool UsuarioExiste(Guid? usuarioId);
-    bool StatusExiste(int? statusId);
-    bool TipoExiste(int? tipoId);
     bool UsuarioEstaAssociadoAoProjetoPorNome(Guid usuarioId, string nomeProjeto);
     bool UsuarioEstaAssociadoAoProjeto(Guid usuarioId, Guid projetoId);
     bool UsuarioEstaAssociadoAoProjetoPorId(Guid usuarioId, Guid projetoId);

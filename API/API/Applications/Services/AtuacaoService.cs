@@ -1,4 +1,5 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto;
+using API.Applications.Services.Validacoes;
 using API.Domains;
 using API.DTOs.AtuacaoDto;
 using API.Exceptions;
@@ -21,14 +22,6 @@ namespace API.Applications.Services
                 ?? throw new DomainException("Atuação não encontrada");
         }
 
-        private static string NormalizarNome(string? nome)
-        {
-            if (string.IsNullOrWhiteSpace(nome))
-                throw new DomainException("O nome da atuação é obrigatório");
-
-            return nome.Trim();
-        }
-
         public List<ListarAtuacaoDto> ListarAtuacoes()
         {
             return _repository.ListarAtuacoes()
@@ -47,7 +40,7 @@ namespace API.Applications.Services
             if (atuacaoDto.NomeAtuacao.Length > 30 || atuacaoDto.NomeAtuacao.Length < 3)
                 throw new DomainException("O nome da atuação deve ter entre 3 e 30 caracteres");
 
-            atuacaoDto.NomeAtuacao = NormalizarNome(atuacaoDto.NomeAtuacao);
+            atuacaoDto.NomeAtuacao = ValidacoesGerais.NormalizarNome(atuacaoDto.NomeAtuacao);
 
             if (_repository.NomeAtuacaoExiste(atuacaoDto.NomeAtuacao))
                 throw new DomainException("Atuação já existe");
@@ -61,7 +54,7 @@ namespace API.Applications.Services
                 throw new DomainException("O nome da atuação deve ter entre 3 e 30 caracteres");
 
             Atuacao atuacaoBanco = BuscarOuFalhar(id);
-            string novoNome = NormalizarNome(atuacaoDto.NomeAtuacao);
+            string novoNome = ValidacoesGerais.ValidarTamanho(ValidacoesGerais.NormalizarNome(atuacaoBanco.NomeAtuacao));
 
             bool nomeMudou = !string.Equals(
                 atuacaoBanco.NomeAtuacao, novoNome, StringComparison.OrdinalIgnoreCase);

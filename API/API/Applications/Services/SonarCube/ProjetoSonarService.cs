@@ -1,6 +1,7 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto;
 using API.Applications.GerarYml;
 using API.Applications.Services.SonarCube;
+using API.Applications.Services.Validacoes;
 using API.Domains;
 using API.DTOs.SonarQubeDto;
 using API.DTOs.SonarQubeDto.CommitDto;
@@ -18,11 +19,11 @@ namespace API.Applications.Services;
 
 public class ProjetoSonarService
 {
-    private const int TamanhoMinimoNome = 3;
-    private const int TamanhoMaximoNome = 255;
-    private const int TamanhoMaximoDescricao = 500;
+
 
     private readonly IProjetoSonarRepository _repository;
+
+    private readonly ValidacoesGerais _validacoes;
 
     private readonly SonarQubeService _sonar;
     private readonly CriptografiaService _criptografia;
@@ -31,7 +32,7 @@ public class ProjetoSonarService
 
     private readonly string _urlBase;
 
-    public ProjetoSonarService(IProjetoSonarRepository repository, SonarQubeService sonar,
+    public ProjetoSonarService(IProjetoSonarRepository repository, SonarQubeService sonar, ValidacoesGerais validacoes,
         CriptografiaService criptografia, IConfiguration config, UsuarioService usuarioService, MetricaService metricaService)
     {
         _repository = repository;
@@ -40,6 +41,7 @@ public class ProjetoSonarService
         _urlBase = (config["SonarQube:UrlBase"] ?? string.Empty).TrimEnd('/');
         _usuarioService = usuarioService;
         _metricaService = metricaService;
+        _validacoes = validacoes;
     }
 
     // ============================== VALIDACOES ==============================
@@ -47,38 +49,6 @@ public class ProjetoSonarService
     private ProjetoSonar BuscarOuFalharSonar(Guid id) =>
         _repository.ObterPorId(id)
         ?? throw new DomainException("Projeto do SonarQube não encontrado");
-
-    private void ValidarProjeto(Guid projetoId)
-    {
-        if (!_repository.ProjetoExiste(projetoId))
-            throw new DomainException("Projeto não encontrado ou inativo");
-    }
-
-    private static string NormalizarNome(string? nome)
-    {
-        if (string.IsNullOrWhiteSpace(nome))
-            throw new DomainException("O nome do projeto é obrigatório");
-
-        var normalizado = nome.Trim();
-        if (normalizado.Length < TamanhoMinimoNome)
-            throw new DomainException($"O nome do projeto não pode ter menos de {TamanhoMinimoNome} caracteres");
-        if (normalizado.Length > TamanhoMaximoNome)
-            throw new DomainException($"O nome do projeto não pode ter mais de {TamanhoMaximoNome} caracteres");
-
-        return normalizado;
-    }
-
-    private static string? NormalizarDescricao(string? descricao)
-    {
-        if (string.IsNullOrWhiteSpace(descricao))
-            return null;
-
-        var normalizada = descricao.Trim();
-        if (normalizada.Length > TamanhoMaximoDescricao)
-            throw new DomainException($"A descrição não pode ter mais de {TamanhoMaximoDescricao} caracteres");
-
-        return normalizada;
-    }
 
 
     // Chave do SonarQube: só aceita letras, números, '-', '_', '.' e ':'.
@@ -110,9 +80,9 @@ public class ProjetoSonarService
 
     public async Task<ListarProjetoSonarDto> CriarProjetoAsync(CriarProjetoSonarDto dto)
     {
-        ValidarProjeto(dto.ProjetoId);
-        var nome = NormalizarNome(dto.Nome);
-        var descricao = NormalizarDescricao(dto.Descricao);
+        _validacoes.ValidarProjeto(dto.ProjetoId);
+        var nome = _validacoes.NormalizarNome(dto.Nome);
+        var descricao = _validacoes.NormalizarNome(dto.Descricao, 3, 500);
         var chave = GerarChave(nome);
 
         await _sonar.CriarProjetoAsync(chave, nome);
@@ -122,11 +92,11 @@ public class ProjetoSonarService
 
     public async Task<ListarProjetoSonarDto> CriarProjetoSonarJuntoAProjeto(Projeto projeto, int workflowId)
     {
-        ValidarProjeto(projeto.ProjetoId);
-        var nome = NormalizarNome(projeto.NomeProjeto);
+        _validacoes.ValidarProjeto(projeto.ProjetoId);
+        var nome = _validacoes.NormalizarNome(projeto.NomeProjeto);
+        var descricao = _validacoes.NormalizarNome(projeto.Descricao, 3, 500);
         if (!_repository.WorkflowExiste(workflowId))
             workflowId = 1;
-        var descricao = NormalizarDescricao(projeto.Descricao);
         var chave = GerarChave(nome);
 
         await _sonar.CriarProjetoAsync(chave, nome);

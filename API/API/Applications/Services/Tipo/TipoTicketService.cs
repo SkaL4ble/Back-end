@@ -1,4 +1,5 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto.ConversoesTipo;
+using API.Applications.Services.Validacoes;
 using API.Domains;
 using API.DTOs.TipoDto.TipoTicketDto;
 using API.Exceptions;
@@ -8,29 +9,17 @@ namespace API.Applications.Services.Tipo;
 
 public class TipoTicketService
 {
-    private const int TamanhoMaximoNome = 30;
-    private const int TamanhoMinimoNome = 3;
     private readonly ITipoTicketRepository _repository;
+    private readonly ValidacoesGerais _validacoes;
 
-    public TipoTicketService(ITipoTicketRepository repository) => _repository = repository;
+    public TipoTicketService(ITipoTicketRepository repository, ValidacoesGerais validacoes) {
+        _repository = repository;
+        _validacoes = validacoes;
+    } 
 
     private TipoTicket BuscarOuFalhar(int id) =>
         _repository.ObterPorId(id)
         ?? throw new DomainException("Tipo de ticket não encontrado");
-
-    private static string NormalizarNome(string? nome)
-    {
-        if (string.IsNullOrWhiteSpace(nome))
-            throw new DomainException("O nome do tipo de ticket é obrigatório");
-
-        var normalizado = nome.Trim();
-        if (normalizado.Length > TamanhoMaximoNome)
-            throw new DomainException($"O nome do tipo de ticket deve ter no máximo {TamanhoMaximoNome} caracteres");
-        else if(normalizado.Length < TamanhoMinimoNome)
-            throw new DomainException($"O nome do tipo de ticket deve ter no mínimo {TamanhoMinimoNome} caracteres");
-
-        return normalizado;
-    }
 
     public List<ListarTipoTicketDto> ListarTiposTicket() =>
         _repository.ListarTiposTicket()
@@ -42,7 +31,7 @@ public class TipoTicketService
 
     public void AdicionarTipoTicket(CriarTipoTicketDto dto)
     {
-        var nome = NormalizarNome(dto.NomeTipoTicket);
+        var nome = _validacoes.NormalizarNome(dto.NomeTipoTicket);
         if (_repository.NomeTipoTicketExiste(nome))
             throw new DomainException("Tipo de ticket já existe");
 
@@ -52,7 +41,7 @@ public class TipoTicketService
     public void Atualizar(int id, CriarTipoTicketDto dto)
     {
         var atual = BuscarOuFalhar(id);
-        var nome = NormalizarNome(dto.NomeTipoTicket);
+        var nome = _validacoes.NormalizarNome(dto.NomeTipoTicket);
         var mudou = !string.Equals(atual.NomeTipoTicket, nome, StringComparison.OrdinalIgnoreCase);
 
         if (mudou && _repository.NomeTipoTicketExiste(nome))

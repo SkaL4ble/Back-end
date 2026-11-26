@@ -1,4 +1,5 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto;
+using API.Applications.Services.Validacoes;
 using API.Domains;
 using API.DTOs.ProjetoDto;
 using API.Exceptions;
@@ -9,7 +10,6 @@ namespace API.Applications.Services;
 
 public class ProjetoService
 {
-    private const int TamanhoMaximoNome = 50;
     private const int TamanhoMaximoLink = 150;
 
     private readonly IProjetoRepository _repository;
@@ -24,17 +24,7 @@ public class ProjetoService
     }
 
     // ================================ VALIDAÇÕES =================================
-    public static string NormalizarNome(string? nome)
-    {
-        if (string.IsNullOrWhiteSpace(nome))
-            throw new DomainException("O nome do projeto é obrigatório");
 
-        var nomeNormalizado = nome.Trim();
-        if (nomeNormalizado.Length > TamanhoMaximoNome)
-            throw new DomainException($"O nome do projeto deve ter no máximo {TamanhoMaximoNome} caracteres");
-
-        return nomeNormalizado;
-    }
 
     private static string NormalizarLink(string? link)
     {
@@ -59,7 +49,7 @@ public class ProjetoService
 
     private void ValidarProjeto(CriarProjetoDto dto, Guid? idIgnorado = null)
     {
-        dto.Nome = NormalizarNome(dto.Nome);
+        dto.Nome = ValidacoesGerais.ValidarTamanho(ValidacoesGerais.NormalizarNome(dto.Nome));
         dto.LinkRepositorio = NormalizarLink(dto.LinkRepositorio);
 
         if (_repository.NomeProjetoExiste(dto.Nome, idIgnorado))

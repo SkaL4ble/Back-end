@@ -1,4 +1,5 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto;
+using API.Applications.Services.Validacoes;
 using API.Domains;
 using API.DTOs.TicketDto;
 using API.Exceptions;
@@ -11,16 +12,16 @@ public class TicketService
 {
     private const int PrioridadeMinima = 1;
     private const int PrioridadeMaxima = 5;
-    private const int TamanhoMinimoNome = 3;
-    private const int TamanhoMaximoNome = 125;
 
     private readonly ITicketRepository _repository;
     private readonly MetricaService _metricaService;
+    private readonly ValidacoesGerais _validacoes;
 
-    public TicketService(ITicketRepository repository, MetricaService metricaService) 
+    public TicketService(ITicketRepository repository, MetricaService metricaService, ValidacoesGerais validacoes) 
     {
         _repository = repository;
         _metricaService = metricaService;
+        _validacoes = validacoes;
     }
 
     //================================= VALIDAÇÕES ==========================================
@@ -41,20 +42,6 @@ public class TicketService
         return ticket;
     }
 
-    private static string NormalizarNome(string? nome)
-    {
-        if (string.IsNullOrWhiteSpace(nome))
-            throw new DomainException("O nome do ticket é obrigatório");
-
-        var normalizado = nome.Trim();
-        if (normalizado.Length < TamanhoMinimoNome)
-            throw new DomainException($"O nome do ticket não pode ter menos de {TamanhoMinimoNome} caracteres");
-        if (normalizado.Length > TamanhoMaximoNome)
-            throw new DomainException($"O nome do ticket não pode ter mais de {TamanhoMaximoNome} caracteres");
-
-        return normalizado;
-    }
-
     private static void ValidarPrioridade(int prioridade)
     {
         if (prioridade < PrioridadeMinima || prioridade > PrioridadeMaxima)
@@ -69,46 +56,17 @@ public class TicketService
             throw new DomainException("A data de entrega não pode ser anterior à data de criação");
     }
 
-    private void ValidarUsuario(Guid usuarioId)
-    {
-        if (!_repository.UsuarioExiste(usuarioId))
-            throw new DomainException("Usuário não encontrado ou inativo");
-    }
-
-    private void ValidarProjeto(Guid projetoId)
-    {
-        if (!_repository.ProjetoExiste(projetoId))
-            throw new DomainException("Projeto não encontrado ou inativo");
-    }
-
-    private void ValidarTipoTicket(int tipoTicketId)
-    {
-        if (!_repository.TipoTicketExiste(tipoTicketId))
-            throw new DomainException("Tipo de ticket não encontrado");
-    }
-
-    private void ValidarStatusTicket(int statusTicketId)
-    {
-        if (!_repository.StatusTicketExiste(statusTicketId))
-            throw new DomainException("Status de ticket não encontrado");
-    }
-
-    private void ValidarParticipacaoNoProjeto(Guid usuarioId, Guid projetoId)
-    {
-        if (!_repository.UsuarioParticipaDoProjeto(usuarioId, projetoId))
-            throw new DomainException("O usuário não participa do projeto do ticket");
-    }
 
     private void ValidarRelacionamentos(Guid projetoId, int tipoTicketId,
         int statusTicketId, Guid? usuarioResponsavel)
     {
-        ValidarProjeto(projetoId);
-        ValidarTipoTicket(tipoTicketId);
-        ValidarStatusTicket(statusTicketId);
+        _validacoes.ValidarProjeto(projetoId);
+        _validacoes.ValidarTipoTicket(tipoTicketId);
+        _validacoes.ValidarStatusTicket(statusTicketId);
 
         if (usuarioResponsavel.HasValue)
         {
-            ValidarUsuario(usuarioResponsavel.Value);
+            _validacoes.ValidarUsuario(usuarioResponsavel);
             ValidarParticipacaoNoProjeto(usuarioResponsavel.Value, projetoId);
         }
     }
@@ -122,7 +80,7 @@ public class TicketService
 
     public async Task AdicionarTicket(CriarTicketDto dto)
     {
-        var nome = NormalizarNome(dto.NomeTicket);
+        var nome = ValidacoesGerais.ValidarTamanho(ValidacoesGerais.NormalizarNome(dto.NomeTicket), 3, 125);
         ValidarPrioridade(dto.Prioridade);
         ValidarRelacionamentos(dto.ProjetoId, dto.TipoTicketId,
             dto.StatusTicketId, dto.UsuarioResponsavel);
@@ -156,7 +114,7 @@ public class TicketService
     public async Task Atualizar(int id, AtualizarTicketDto dto)
     {
         var ticket = BuscarAtivoOuFalhar(id);
-        var nome = NormalizarNome(dto.NomeTicket);
+        var nome = ValidacoesGerais.ValidarTamanho(ValidacoesGerais.NormalizarNome(dto.NomeTicket), 3, 125);
         ValidarPrioridade(dto.Prioridade);
         ValidarRelacionamentos(dto.ProjetoId, dto.TipoTicketId,
             dto.StatusTicketId, dto.UsuarioResponsavel);
