@@ -1,6 +1,6 @@
-using API.Applications.Services;
+using API.Applications.Services.Tipo;
 using API.Domains;
-using API.DTOs.TipoMetricaDto;
+using API.DTOs.TipoDto.TipoMetricaDto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

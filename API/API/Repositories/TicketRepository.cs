@@ -45,18 +45,6 @@ public class TicketRepository : ITicketRepository
     public Usuario? ObterUsuarioPorId(Guid usuarioId) =>
         _context.Usuario.FirstOrDefault(u => u.UsuarioId == usuarioId && u.Ativo);
 
-    public bool ProjetoExiste(Guid projetoId) =>
-        _context.Projeto.Any(p => p.ProjetoId == projetoId && p.Ativo);
-
-    public bool TipoTicketExiste(int tipoTicketId) =>
-        _context.TipoTicket.Any(t => t.TipoTicketId == tipoTicketId);
-
-    public bool StatusTicketExiste(int statusTicketId) =>
-        _context.StatusTicket.Any(s => s.StatusTicketId == statusTicketId);
-
-    public bool UsuarioExiste(Guid usuarioId) =>
-        _context.Usuario.Any(u => u.UsuarioId == usuarioId && u.Ativo);
-
     public bool ColaboradorExiste(int ticketId, Guid usuarioId) =>
     _context.TicketUsuario.Any(tu =>
         tu.TicketId == ticketId &&
@@ -67,6 +55,10 @@ public class TicketRepository : ITicketRepository
             p.ProjetoId == projetoId &&
             p.Ativo &&
             p.Usuario.Any(u => u.UsuarioId == usuarioId && u.Ativo));
+    public bool UsuarioParticipaDoTicket(Guid usuarioId, int ticketId)
+    {
+        return _context.Ticket.Any(t => t.TicketId == ticketId && (t.UsuarioResponsavel == usuarioId || t.TicketUsuario.Any(u => u.UsuarioId == usuarioId)));
+    }
 
     // ================================ CONSULTAS =================================
 
@@ -195,6 +187,20 @@ public class TicketRepository : ITicketRepository
 
     // ================================ FUNCOES =================================
 
+    public string PegarNomeStatusTicket(int id)
+    {
+        string nome = _context.Ticket.Include(t => t.StatusTicket).FirstOrDefault(t => t.TicketId == id).StatusTicket.NomeStatusTicket;
+        if (nome is null)
+        {
+            return nome;
+        }
+        else
+        {
+            nome = _context.StatusTicket.Find(id).NomeStatusTicket;
+            return nome;
+        }
+
+    }
     public void MudarEstadoTicket(int ticketId, int statusTicketId)
     {
         var ticket = _context.Ticket.FirstOrDefault(t => t.TicketId == ticketId && t.Ativo);
@@ -220,7 +226,7 @@ public class TicketRepository : ITicketRepository
             TicketId = ticketId,
             UsuarioId = usuarioId
         });
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
 
     public void RemoverColaborador(int ticketId, Guid usuarioId)
@@ -237,7 +243,7 @@ public class TicketRepository : ITicketRepository
             return;
 
         ticket.TicketUsuario.Remove(colaborador);
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
 
     public void TransferirResponsavel(int ticketId, Guid usuarioId)
@@ -247,6 +253,31 @@ public class TicketRepository : ITicketRepository
             return;
 
         ticket.UsuarioResponsavel = usuarioId;
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
+    }
+
+    public void EditarNome(int ticketId, string nome)
+    {
+        var ticket = _context.Ticket.Find(ticketId);
+        if (ticket is null)
+            ticket.NomeTicket = nome;
+
+        _context.SaveChangesAsync();
+    }
+    public void EditarPrioridade(int ticketId, int prioridade)
+    {
+        var ticket = _context.Ticket.Find(ticketId);
+        if (ticket is null)
+            ticket.Prioridade = prioridade;
+
+        _context.SaveChangesAsync();
+    }
+    public void EditarTipo(int ticketId, int tipo)
+    {
+        var ticket = _context.Ticket.Find(ticketId);
+        if (ticket is null)
+            ticket.TipoTicketId = tipo;
+
+        _context.SaveChangesAsync();
     }
 }

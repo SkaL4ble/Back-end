@@ -36,7 +36,7 @@ namespace API.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Tech Lead")]
+        //[Authorize(Roles = "Tech Lead")]
         public ActionResult<LerUsuarioDto> BuscarPorId(Guid id)
         {
             try

@@ -1,40 +1,31 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto;
+using API.Applications.Validacoes;
 using API.Domains;
 using API.DTOs.ProjetoDto;
 using API.Exceptions;
 using API.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace API.Applications.Services;
 
 public class ProjetoService
 {
-    private const int TamanhoMaximoNome = 50;
     private const int TamanhoMaximoLink = 150;
 
     private readonly IProjetoRepository _repository;
     private readonly IProjetoSonarRepository _sonarRepository;
     private readonly ProjetoSonarService _sonarService;
+    private readonly ValidacoesGerais _validacoes;
 
-    public ProjetoService(IProjetoRepository repository, IProjetoSonarRepository sonarRepository, ProjetoSonarService sonarService)
+    public ProjetoService(IProjetoRepository repository, IProjetoSonarRepository sonarRepository, ProjetoSonarService sonarService, ValidacoesGerais validacoes)
     {
         _repository = repository;
         _sonarRepository = sonarRepository;
         _sonarService = sonarService;
+        _validacoes = validacoes;
     }
 
     // ================================ VALIDAÇÕES =================================
-    public static string NormalizarNome(string? nome)
-    {
-        if (string.IsNullOrWhiteSpace(nome))
-            throw new DomainException("O nome do projeto é obrigatório");
 
-        var nomeNormalizado = nome.Trim();
-        if (nomeNormalizado.Length > TamanhoMaximoNome)
-            throw new DomainException($"O nome do projeto deve ter no máximo {TamanhoMaximoNome} caracteres");
-
-        return nomeNormalizado;
-    }
 
     private static string NormalizarLink(string? link)
     {
@@ -59,8 +50,12 @@ public class ProjetoService
 
     private void ValidarProjeto(CriarProjetoDto dto, Guid? idIgnorado = null)
     {
-        dto.Nome = NormalizarNome(dto.Nome);
+        dto.Nome = _validacoes.NormalizarNome(dto.Nome);
         dto.LinkRepositorio = NormalizarLink(dto.LinkRepositorio);
+
+        _validacoes.ValidarUsuario(dto.AutorId);
+        _validacoes.ValidarStatusProjeto(dto.StatusId);
+        _validacoes.ValidarTipoProjeto(dto.TipoId);
 
         if (_repository.NomeProjetoExiste(dto.Nome, idIgnorado))
             throw new DomainException("Projeto já existe");
@@ -68,14 +63,6 @@ public class ProjetoService
         if (_repository.LinkRepositorioExiste(dto.LinkRepositorio, idIgnorado))
             throw new DomainException("Link de repositório já existe");
 
-        //if (dto.AutorId == Guid.Empty || !_repository.UsuarioExiste(dto.AutorId))
-        //    throw new DomainException("Autor não encontrado ou inativo");
-
-        if (!_repository.StatusExiste(dto.StatusId))
-            throw new DomainException("Status não encontrado");
-
-        if (!_repository.TipoExiste(dto.TipoId))
-            throw new DomainException("Tipo de projeto não encontrado");
 
         foreach (var usuarioId in dto.UsuariosId.Distinct())
         {
@@ -86,26 +73,9 @@ public class ProjetoService
 
     private void ValidarFiltro(FiltroProjetoDto filtro)
     {
-        if (filtro.UsuarioId.HasValue && !_repository.UsuarioExiste(filtro.UsuarioId))
-            throw new DomainException("Autor não encontrado ou inativo");
-
-        if (filtro.StatusId.HasValue && !_repository.StatusExiste(filtro.StatusId))
-            throw new DomainException("Status não encontrado");
-
-        if (filtro.TipoId.HasValue && !_repository.TipoExiste(filtro.TipoId))
-            throw new DomainException("Tipo de projeto não encontrado");
-    }
-
-    private void ValidarFiltroPrazo(FiltroProjetoDentroOuForaPrazo filtro)
-    {
-        if (filtro.AutorId.HasValue && !_repository.UsuarioExiste(filtro.AutorId))
-            throw new DomainException("Autor não encontrado ou inativo");
-
-        if (filtro.StatusId.HasValue && !_repository.StatusExiste(filtro.StatusId))
-            throw new DomainException("Status não encontrado");
-
-        if (filtro.TipoId.HasValue && !_repository.TipoExiste(filtro.TipoId))
-            throw new DomainException("Tipo de projeto não encontrado");
+        _validacoes.ValidarUsuario(filtro.UsuarioId);
+        _validacoes.ValidarStatusProjeto(filtro.StatusId);
+        _validacoes.ValidarTipoProjeto(filtro.TipoId);
     }
 
     // ================================ CRUD =================================
@@ -114,19 +84,19 @@ public class ProjetoService
         return ConversaoProjeto.ConverterParaDto(BuscarOuFalhar(id));
     }
 
-    public async Task AdicionarProjeto(CriarProjetoDto dto)
+    public async Task AdicionarProjeto(CriarProjetoDto dto, Guid autorId)
     {
         ValidarProjeto(dto);
         var projetoId = Guid.NewGuid();
         dto.ProjetoId = projetoId;
 
-        //if (!_repository.UsuarioExiste(autorId))
-        //    throw new DomainException("Usuário não encontrado ou inativo");
-        //dto.AutorId = autorId;
+        _validacoes.ValidarUsuario(dto.AutorId);
+
+        dto.AutorId = autorId;
 
         _repository.CadastrarProjeto(ConversaoProjeto.ConverterParaDomain(dto, projetoId));
         _repository.AtualizarColaboradores(projetoId, dto.UsuariosId);
-        await _sonarService.CriarProjetoSonarJuntoAProjeto(ConversaoProjeto.ConverterParaDomain(dto,projetoId), dto.WorkflowId);
+        await _sonarService.CriarProjetoSonarJuntoAProjeto(ConversaoProjeto.ConverterParaDomain(dto, projetoId), dto.WorkflowId);
 
     }
 
@@ -153,17 +123,17 @@ public class ProjetoService
             .ToList();
     }
 
-    public List<ListarProjetoDto> ListarProjetosForaDoPrazo(FiltroProjetoDentroOuForaPrazo filtro)
+    public List<ListarProjetoDto> ListarProjetosForaDoPrazo(FiltroProjetoDto filtro)
     {
-        ValidarFiltroPrazo(filtro);
+        ValidarFiltro(filtro);
         return _repository.ListarProjetosForaDoPrazo(filtro)
             .Select(ConversaoProjeto.ConverterParaDto)
             .ToList();
     }
 
-    public List<ListarProjetoDto> ListarProjetosDentroDoPrazo(FiltroProjetoDentroOuForaPrazo filtro)
+    public List<ListarProjetoDto> ListarProjetosDentroDoPrazo(FiltroProjetoDto filtro)
     {
-        ValidarFiltroPrazo(filtro);
+        ValidarFiltro(filtro);
         return _repository.ListarProjetosDentroDoPrazo(filtro)
             .Select(ConversaoProjeto.ConverterParaDto)
             .ToList();

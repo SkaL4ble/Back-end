@@ -33,7 +33,7 @@ namespace API.Applications.Conversoes.ConversoesDeDto
                 TicketsIds = entity.Ticket?
                     .Select(ticket => ticket.TicketId)
                     .ToList() ?? new List<int>(),
-                TecnologiasIds = entity.Tecnologia?
+                TecnologiasIds = entity.TecnologiaUsuario?
                     .Select(tecnologia => tecnologia.TecnologiaId)
                     .ToList() ?? new List<int>()
             };

@@ -13,5 +13,11 @@ public partial class Tecnologia
 
     public virtual ICollection<HistoricoPontuacaoMetrica> HistoricoPontuacaoMetrica { get; set; } = new List<HistoricoPontuacaoMetrica>();
 
-    public virtual ICollection<Usuario> Usuario { get; set; } = new List<Usuario>();
+    public virtual ICollection<ProjetoTecnologia> ProjetoTecnologia { get; set; } = new List<ProjetoTecnologia>();
+
+    public virtual ICollection<TecnologiaUsuario> TecnologiaUsuario { get; set; } = new List<TecnologiaUsuario>();
+
+    public virtual ICollection<TrilhaTreinamentoTecnologia> TrilhaTreinamentoTecnologia { get; set; } = new List<TrilhaTreinamentoTecnologia>();
+
+    public virtual ICollection<UsuarioProjetoTecnologia> UsuarioProjetoTecnologia { get; set; } = new List<UsuarioProjetoTecnologia>();
 }

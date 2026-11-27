@@ -1,7 +1,6 @@
 ﻿using API.Applications.Services;
 using API.DTOs.TicketDto;
 using API.Exceptions;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -27,7 +26,6 @@ namespace API.Controllers
         /// <response code="200">Retorna o ticket</response>
         /// <response code="404">Ticket não encontrado</response>
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "Tech Lead, Colaborador")]
         public ActionResult<ListarTicketDto> ObterPorId(int id)
         {
             try
@@ -47,9 +45,7 @@ namespace API.Controllers
         /// <response code="201">Ticket criado com sucesso</response>
         /// <response code="400">Dados inválidos ou relacionamento não encontrado</response>
         [HttpPost]
-        [Authorize(Roles = "Tech Lead, Colaborador")]
         public ActionResult Adicionar(CriarTicketDto dto)
-
         {
             try
             {
@@ -70,12 +66,11 @@ namespace API.Controllers
         /// <response code="204">Ticket atualizado com sucesso</response>
         /// <response code="400">Dados inválidos, ticket não encontrado ou relacionamento não encontrado</response>
         [HttpPut("{id:int}")]
-        [Authorize(Roles = "Tech Lead, Colaborador")]
-        public ActionResult Atualizar(int id, AtualizarTicketDto dto)
+        public async Task<ActionResult> Atualizar(int id, AtualizarTicketDto dto)
         {
             try
             {
-                _service.Atualizar(id, dto);
+                await _service.Atualizar(id, dto);
                 return NoContent();
             }
             catch (DomainException ex)
@@ -91,7 +86,6 @@ namespace API.Controllers
         /// <response code="204">Ticket deletado com sucesso</response>
         /// <response code="404">Ticket não encontrado</response>
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Tech Lead, Colaborador")]
         public ActionResult Deletar(int id)
         {
             try
@@ -115,12 +109,11 @@ namespace API.Controllers
         /// <response code="204">Status do ticket alterado com sucesso</response>
         /// <response code="400">Ticket ou status não encontrado, ou ticket já está com este status</response>
         [HttpPatch("{id:int}/status/{statusTicketId:int}")]
-        [Authorize(Roles = "Tech Lead, Colaborador")]
-        public ActionResult MudarEstadoTicket(int id, int statusTicketId)
+        public async Task<ActionResult> MudarEstadoTicket(int id, int statusTicketId)
         {
             try
             {
-                _service.MudarEstadoTicket(id, statusTicketId);
+                await _service.MudarEstadoTicket(id, statusTicketId);
                 return NoContent();
             }
             catch (DomainException ex)
@@ -137,7 +130,6 @@ namespace API.Controllers
         /// <response code="204">Responsável transferido com sucesso</response>
         /// <response code="400">Ticket ou usuário não encontrado, ou usuário já é o responsável</response>
         [HttpPatch("{id:int}/responsavel/{usuarioId:guid}")]
-        [Authorize(Roles = "Tech Lead, Colaborador")]
         public ActionResult TransferirResponsavel(int id, Guid usuarioId)
         {
             try
@@ -159,7 +151,6 @@ namespace API.Controllers
         /// <response code="204">Colaborador adicionado com sucesso</response>
         /// <response code="400">Ticket ou usuário não encontrado, ou usuário já é colaborador</response>
         [HttpPost("{id:int}/colaboradores/{usuarioId:guid}")]
-        [Authorize(Roles = "Tech Lead, Colaborador")]
         public ActionResult AdicionarColaborador(int id, Guid usuarioId)
         {
             try
@@ -181,7 +172,6 @@ namespace API.Controllers
         /// <response code="204">Colaborador removido com sucesso</response>
         /// <response code="400">Ticket não encontrado ou usuário não é colaborador</response>
         [HttpDelete("{id:int}/colaboradores/{usuarioId:guid}")]
-        [Authorize(Roles = "Tech Lead, Colaborador")]
         public ActionResult RemoverColaborador(int id, Guid usuarioId)
         {
             try
@@ -203,7 +193,6 @@ namespace API.Controllers
         /// <returns>Todos os tickets cadastrados</returns>
         /// <response code="200">Retorna todos os tickets do banco</response>
         [HttpGet]
-        [Authorize(Roles = "Tech Lead, Colaborador")]
         public ActionResult<List<ListarTicketDto>> Listar(
         [FromQuery] FiltroTicketDto filtro)
         {
@@ -227,7 +216,6 @@ namespace API.Controllers
         /// <response code="200">Retorna os tickets criados no período</response>
         /// <response code="400">Data de início maior que a data de fim</response>
         [HttpGet("Periodo")]
-        [Authorize(Roles = "Tech Lead, Colaborador")]
         public ActionResult<List<ListarTicketDto>> ListarPorPeriodo(
             [FromQuery] DateTime dataInicio, [FromQuery] DateTime dataFim)
         {
@@ -242,7 +230,6 @@ namespace API.Controllers
         }
 
         [HttpGet("ForaDoPrazo")]
-        [Authorize(Roles = "Tech Lead, Colaborador")]
         public ActionResult<List<ListarTicketDto>> ListarForaDoPrazo([FromQuery] FiltroTicketForaOuDentro filtro)
         {
             try
@@ -256,7 +243,6 @@ namespace API.Controllers
         }
 
         [HttpGet("DentroDoPrazo")]
-        [Authorize(Roles = "Tech Lead, Colaborador")]
         public ActionResult<List<ListarTicketDto>> ListarDentroDoPrazo([FromQuery] FiltroTicketForaOuDentro filtro)
         {
             try

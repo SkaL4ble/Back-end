@@ -1,16 +1,18 @@
+
 using API.Applications.Autenticacao;
+using API.Applications.Auxiliares;
 using API.Applications.Services;
 using API.Applications.Services.SonarCube;
+using API.Applications.Services.Status;
+using API.Applications.Services.Tipo;
+using API.Applications.Validacoes;
 using API.Contexts;
 using API.Interfaces;
 using API.Repositories;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Reflection;
-using System.Security.Claims;
-using System.Text;
+
 
 // CARREGA O .env
 DotNetEnv.Env.Load();
@@ -21,13 +23,10 @@ var builder = WebApplication.CreateBuilder(args);
 string connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING")
     ?? throw new InvalidOperationException("CONNECTION_STRING não definida no .env");
 
-// CONECTA AO BANCO COM A CONNECTION STRING DO .env
 builder.Services.AddDbContext<SkaL4bleContext>(options => options.UseSqlServer(connectionString));
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
 
 builder.Services.AddCors(options =>
 {
@@ -37,6 +36,7 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
+
     options.AddPolicy("CorsPolicy", policy =>
     {
         policy.AllowAnyOrigin()
@@ -45,7 +45,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// HABILITA JWT NO SWAGGER
+// ======================= SWAGGER =======================
 builder.Services.AddSwaggerGen(c =>
 {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -70,46 +70,63 @@ builder.Services.AddSwaggerGen(c =>
     // NoWarn 1591 desativa avisos sobre métodos sem comentários de documentação.
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+
     if (File.Exists(xmlPath))
     {
         c.IncludeXmlComments(xmlPath);
     }
 });
 
+// ======================= VALIDACAO =======================
+builder.Services.AddScoped<IValidacoesRepository, ValidacoesRepository>();
+builder.Services.AddScoped<ValidacoesGerais>();
 
+// ======================= PROJETOS =======================
 builder.Services.AddScoped<IProjetoRepository, ProjetoRepository>();
 builder.Services.AddScoped<ProjetoService>();
 
+// ======================= CARGOS =======================
 builder.Services.AddScoped<ICargoRepository, CargoRepository>();
 builder.Services.AddScoped<CargoService>();
 
+// ======================= ATUAÇÕES =======================
 builder.Services.AddScoped<IAtuacaoRepository, AtuacaoRepository>();
 builder.Services.AddScoped<AtuacaoService>();
 
+// ======================= TECNOLOGIAS =======================
 builder.Services.AddScoped<ITecnologiaRepository, TecnologiaRepository>();
 builder.Services.AddScoped<TecnologiaService>();
 
+// ======================= TIPOS DE PROJETO =======================
 builder.Services.AddScoped<ITipoProjetoRepository, TipoProjetoRepository>();
 builder.Services.AddScoped<TipoProjetoService>();
 
+// ======================= STATUS DE PROJETO =======================
 builder.Services.AddScoped<IStatusProjetoRepository, StatusProjetoRepository>();
 builder.Services.AddScoped<StatusProjetoService>();
 
+// ======================= TIPOS DE TICKET =======================
 builder.Services.AddScoped<ITipoTicketRepository, TipoTicketRepository>();
 builder.Services.AddScoped<TipoTicketService>();
 
+// ======================= STATUS DE TICKET =======================
 builder.Services.AddScoped<IStatusTicketRepository, StatusTicketRepository>();
 builder.Services.AddScoped<StatusTicketService>();
 
+// ======================= TICKETS =======================
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 builder.Services.AddScoped<TicketService>();
 
+// ======================= USUÁRIOS =======================
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<UsuarioService>();
 
+// ======================= TIPOS DE USUÁRIO =======================
 builder.Services.AddScoped<ITipoUsuarioRepository, TipoUsuarioRepository>();
 builder.Services.AddScoped<TipoUsuarioService>();
 
+
+// ======================= AUTENTICAÇÃO =======================
 builder.Services.AddScoped<GeradorTokenJwt>();
 builder.Services.AddScoped<GeradorTokenRecuperacaoSenha>();
 builder.Services.AddScoped<AutenticacaoService>();
@@ -117,75 +134,41 @@ builder.Services.AddScoped<ITokenRedefinicaoSenhaRepository, TokenRedefinicaoSen
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 
-//======================= SONARQUBE =======================
+// ======================= MÉTRICAS =======================
+builder.Services.AddScoped<IMetricaRepository, MetricaRepository>();
+builder.Services.AddScoped<MetricaService>();
+
+
+// ======================= SONARQUBE =======================
 builder.Services.AddDataProtection();
 builder.Services.AddScoped<IProjetoSonarRepository, ProjetoSonarRepository>();
 builder.Services.AddScoped<ProjetoSonarService>();
 builder.Services.AddHttpClient<SonarQubeService>();
 builder.Services.AddScoped<CriptografiaService>();
 
+// ====================== GAMEFICACAO ======================
+builder.Services.AddScoped<IGameficacaoRepository, GameficacaoRepository>();
+builder.Services.AddScoped<GameficacaoService>();
+builder.Services.AddScoped<CriarRecomendacaoTreinamento>();
 
 builder.Services.AddOpenApi();
 
-var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY");
-var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
-var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
-
-if (string.IsNullOrWhiteSpace(jwtKey) ||
-    string.IsNullOrWhiteSpace(jwtIssuer) ||
-    string.IsNullOrWhiteSpace(jwtAudience))
-{
-    throw new InvalidOperationException(
-        "As configurações JWT estão incompletas no .env.");
-}
-
-var jwtKeyBytes = Encoding.UTF8.GetBytes(jwtKey);
-
-if (jwtKeyBytes.Length < 32)
-{
-    throw new InvalidOperationException(
-        "JWT_KEY precisa ter pelo menos 32 bytes.");
-}
-
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = jwtIssuer,
-
-            ValidateAudience = true,
-            ValidAudience = jwtAudience,
-
-            ValidateLifetime = true,
-
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes),
-
-            RoleClaimType = ClaimTypes.Role,
-            NameClaimType = ClaimTypes.Name
-        };
-    });
-
-builder.Services.AddAuthorization();
 
 
 var app = builder.Build();
 
 
-// Configure the HTTP request pipeline.
+// ======================= PIPELINE HTTP =======================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 else
 {
     app.UseHttpsRedirection();
 }
+
 
 app.UseCors("CorsPolicy");
 

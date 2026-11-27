@@ -1,4 +1,5 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto;
+using API.Applications.Validacoes;
 using API.Domains;
 using API.DTOs.TecnologiaDto;
 using API.Exceptions;
@@ -8,26 +9,20 @@ namespace API.Applications.Services;
 
 public class TecnologiaService
 {
-    private const int TamanhoMaximoNome = 50;
     private readonly ITecnologiaRepository _repository;
+    private readonly ValidacoesGerais _validacao;
 
-    public TecnologiaService(ITecnologiaRepository repository) => _repository = repository;
+    public TecnologiaService(ITecnologiaRepository repository, ValidacoesGerais validacoes)
+    {
+        _repository = repository;
+        _validacao = validacoes;
+    }
+
 
     private Tecnologia BuscarOuFalhar(int id) =>
         _repository.ObterPorId(id)
         ?? throw new DomainException("Tecnologia não encontrada");
 
-    private static string NormalizarNome(string? nome)
-    {
-        if (string.IsNullOrWhiteSpace(nome))
-            throw new DomainException("O nome da tecnologia é obrigatório");
-
-        var normalizado = nome.Trim();
-        if (normalizado.Length > TamanhoMaximoNome)
-            throw new DomainException($"O nome da tecnologia deve ter no máximo {TamanhoMaximoNome} caracteres");
-
-        return normalizado;
-    }
 
     public List<ListarTecnologiaDto> ListarTecnologias() =>
         _repository.ListarTecnologias()
@@ -39,7 +34,7 @@ public class TecnologiaService
 
     public void AdicionarTecnologia(CriarTecnologiaDto dto)
     {
-        var nome = NormalizarNome(dto.NomeTecnologia);
+        var nome = _validacao.NormalizarNome(dto.NomeTecnologia);
         if (_repository.NomeTecnologiaExiste(nome))
             throw new DomainException("Tecnologia já existe");
 
@@ -49,7 +44,7 @@ public class TecnologiaService
     public void Atualizar(int id, CriarTecnologiaDto dto)
     {
         var atual = BuscarOuFalhar(id);
-        var nome = NormalizarNome(dto.NomeTecnologia);
+        var nome = _validacao.NormalizarNome(dto.NomeTecnologia);
         var mudou = !string.Equals(atual.NomeTecnologia, nome, StringComparison.OrdinalIgnoreCase);
 
         if (mudou && _repository.NomeTecnologiaExiste(nome))
