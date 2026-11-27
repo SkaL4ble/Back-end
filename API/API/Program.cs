@@ -148,7 +148,9 @@ builder.Services.AddScoped<ProjetoSonarService>();
 builder.Services.AddHttpClient<SonarQubeService>();
 builder.Services.AddScoped<CriptografiaService>();
 
-
+// ====================== GAMEFICACAO ======================
+builder.Services.AddScoped<IGameficacaoRepository, GameficacaoRepository>();
+builder.Services.AddScoped<GameficacaoService>();
 
 builder.Services.AddOpenApi();
 

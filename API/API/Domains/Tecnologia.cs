@@ -17,5 +17,7 @@ public partial class Tecnologia
 
     public virtual ICollection<TecnologiaUsuario> TecnologiaUsuario { get; set; } = new List<TecnologiaUsuario>();
 
+    public virtual ICollection<TrilhaTreinamentoTecnologia> TrilhaTreinamentoTecnologia { get; set; } = new List<TrilhaTreinamentoTecnologia>();
+
     public virtual ICollection<UsuarioProjetoTecnologia> UsuarioProjetoTecnologia { get; set; } = new List<UsuarioProjetoTecnologia>();
 }

@@ -1,17 +1,27 @@
 ﻿using API.Domains;
+using API.DTOs;
 
 namespace API.Interfaces;
 
-public interface IGamificacaoRepository
+public interface IGameficacaoRepository
 {
-    Task<FuncionarioGamificacao?>
-        ObterGamificacaoAsync(
-            Guid usuarioId,
-            CancellationToken cancellationToken = default);
+    UsuarioGameficacao? ObterPorUsuarioId(Guid usuarioId);
 
-    void AdicionarGamificacao(
-        FuncionarioGamificacao gamificacao);
+    List<TecnologiaUsuario> ListarTecnologiasPorUsuarioId(Guid usuarioId);
 
-    Task<int> SalvarAsync(
-        CancellationToken cancellationToken = default);
+    TecnologiaUsuario? ObterTecnologiaDoUsuario(Guid usuarioId, int tecnologiaId);
+
+    List<DemandaTecnologiaDto> ListarDemandasTecnologicas();
+
+    List<TrilhaTreinamento> ListarTrilhasPorTecnologia(int tecnologiaId);
+
+    void AdicionarGameficacao(UsuarioGameficacao gameficacao);
+
+    void AtualizarGameficacao(UsuarioGameficacao gameficacao);
+
+    void AdicionarTecnologiaUsuario( TecnologiaUsuario tecnologiaUsuario);
+
+    void AtualizarTecnologiaUsuario(TecnologiaUsuario tecnologiaUsuario);
+
+    void Salvar();
 }

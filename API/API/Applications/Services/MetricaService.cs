@@ -9,10 +9,12 @@ namespace API.Applications.Services;
 public class MetricaService
 {
     private readonly IMetricaRepository _repository;
+    private readonly GameficacaoService _service;
 
-    public MetricaService(IMetricaRepository repository)
+    public MetricaService(IMetricaRepository repository, GameficacaoService service)
     {
         _repository = repository;
+        _service = service;
     }
 
     public async Task RegistrarTicketAtribuidoAsync(Ticket ticket, CancellationToken cancellationToken = default)
@@ -38,6 +40,8 @@ public class MetricaService
         {
             return;
         }
+
+        _service.AdicionarExperienciaGeral(ticket.UsuarioResponsavel.Value, 10);
 
         DateTime dataEntrega = ticket.DataEntrega ?? DateTime.UtcNow;
         FuncionarioMetrica metrica = 

@@ -1,31 +1,25 @@
-﻿using API.Applications.Services;
+﻿
+using API.Applications.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
 
 [ApiController]
-[Route("api/gamificacao")]
-public sealed class GameficacaoController
-    : ControllerBase
+[Route("api/funcionarios-gameficacao")]
+public class FuncionarioGameficacaoController : ControllerBase
 {
     private readonly GameficacaoService _service;
 
-    public GameficacaoController( GameficacaoService service)
+    public FuncionarioGameficacaoController(GameficacaoService service)
     {
         _service = service;
     }
 
-    [HttpGet("funcionarios/{usuarioId:guid}")]
-    public async Task<IActionResult>
-    ObterPerfil(Guid usuarioId, CancellationToken cancellationToken)
+    [HttpGet("{usuarioId}")]
+    public IActionResult ListarPorFuncionario(Guid usuarioId)
     {
-        var perfil = await _service.ObterPerfilAsync(usuarioId, cancellationToken);
+        var resultado = _service.ListarPorFuncionario(usuarioId);
 
-        return Ok(new{
-            perfil.UsuarioId,
-            perfil.ExperienciaTotal,
-            perfil.Nivel,
-            perfil.DataAtualizacao
-        });
+        return Ok(resultado);
     }
 }

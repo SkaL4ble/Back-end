@@ -35,10 +35,6 @@ public partial class Usuario
 
     public virtual FuncionarioMetrica? FuncionarioMetrica { get; set; }
 
-    public virtual FuncionarioMetricaAtual? FuncionarioMetricaAtual { get; set; }
-
-    public virtual ICollection<FuncionarioMetricaHistorico> FuncionarioMetricaHistorico { get; set; } = new List<FuncionarioMetricaHistorico>();
-
     public virtual ICollection<HistoricoPontuacaoMetrica> HistoricoPontuacaoMetrica { get; set; } = new List<HistoricoPontuacaoMetrica>();
 
     public virtual ICollection<Log_FuncionarioMetrica> Log_FuncionarioMetrica { get; set; } = new List<Log_FuncionarioMetrica>();
@@ -56,6 +52,8 @@ public partial class Usuario
     public virtual ICollection<TokenRedefinicaoSenha> TokenRedefinicaoSenha { get; set; } = new List<TokenRedefinicaoSenha>();
 
     public virtual ICollection<UsuarioEmailGit> UsuarioEmailGit { get; set; } = new List<UsuarioEmailGit>();
+
+    public virtual UsuarioGameficacao? UsuarioGameficacao { get; set; }
 
     public virtual ICollection<UsuarioIdeToken> UsuarioIdeToken { get; set; } = new List<UsuarioIdeToken>();
 

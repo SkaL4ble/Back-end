@@ -1,11 +1,13 @@
-﻿using API.Contexts;
+﻿
+using API.Contexts;
 using API.Domains;
+using API.DTOs;
 using API.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Repositories;
 
-public sealed class GameficacaoRepository : IGameficacaoRepository
+public class GameficacaoRepository : IGameficacaoRepository
 {
     private readonly SkaL4bleContext _context;
 
@@ -14,47 +16,125 @@ public sealed class GameficacaoRepository : IGameficacaoRepository
         _context = context;
     }
 
-    public async Task<FuncionarioGamificacao?>
-        ObterGameficacaoAsync(
-            Guid usuarioId,
-            CancellationToken cancellationToken = default)
+    // ================================ CONSULTAS ================================
+
+    public UsuarioGameficacao? ObterPorUsuarioId(Guid usuarioId)
     {
-        return await _context.FuncionarioGamificacao
-            .FirstOrDefaultAsync(
-                x => x.UsuarioId == usuarioId,
-                cancellationToken);
+        return _context.UsuarioGameficacao
+            .FirstOrDefault(x => x.UsuarioId == usuarioId);
     }
 
-    public async Task<TecnologiaUsuario?>
-        ObterTecnologiaUsuarioAsync(
-            Guid usuarioId,
-            int tecnologiaId,
-            CancellationToken cancellationToken = default)
+    public List<TecnologiaUsuario> ListarTecnologiasPorUsuarioId(Guid usuarioId)
     {
-        return await _context.TecnologiaUsuario
-            .FirstOrDefaultAsync(
+        return _context.TecnologiaUsuario
+            .Include(x => x.Tecnologia)
+            .Where(x => x.UsuarioId == usuarioId)
+            .OrderByDescending(x => x.NivelTecnologia)
+            .ThenByDescending(x => x.AfinidadeMedia)
+            .ToList();
+    }
+
+    public TecnologiaUsuario? ObterTecnologiaDoUsuario(Guid usuarioId, int tecnologiaId)
+    {
+        return _context.TecnologiaUsuario
+            .Include(x => x.Tecnologia)
+            .FirstOrDefault(
                 x =>
                     x.UsuarioId == usuarioId &&
-                    x.TecnologiaId == tecnologiaId,
-                cancellationToken);
+                    x.TecnologiaId == tecnologiaId);
     }
 
-    public void AdicionarGameficacao(
-        FuncionarioGamificacao gamificacao)
+    public List<DemandaTecnologiaDto> ListarDemandasTecnologicas()
     {
-        _context.FuncionarioGamificacao.Add(gamificacao);
+        var demandas = _context.ProjetoTecnologia
+            .AsNoTracking()
+            .SelectMany(
+                projetoTecnologia =>
+                    _context.Ticket
+                        .Where(
+                            ticket =>
+                                ticket.Ativo &&
+                                ticket.ProjetoId == projetoTecnologia.ProjetoId)
+                        .Select(
+                            ticket => new
+                            {
+                                projetoTecnologia.TecnologiaId,
+                                ticket.ProjetoId
+                            }))
+            .GroupBy(x => x.TecnologiaId)
+            .Select(
+                grupo => new DemandaTecnologiaDto
+                {
+                    TecnologiaId = grupo.Key,
+
+                    QuantidadeTickets = grupo.Count(),
+
+                    QuantidadeProjetos = grupo
+                        .Select(x => x.ProjetoId)
+                        .Distinct()
+                        .Count()
+                })
+            .ToList();
+
+        var tecnologiaIds = demandas
+            .Select(x => x.TecnologiaId)
+            .ToList();
+
+        var tecnologias = _context.Tecnologia
+            .Where(x => tecnologiaIds.Contains(x.TecnologiaId))
+            .ToDictionary(
+                x => x.TecnologiaId,
+                x => x.NomeTecnologia);
+
+        foreach (var demanda in demandas)
+        {
+            if (tecnologias.TryGetValue( demanda.TecnologiaId, out var nomeTecnologia))
+            {
+                demanda.NomeTecnologia = nomeTecnologia;
+            }
+        }
+
+        return demandas;
     }
 
-    public void AdicionarTecnologiaUsuario(
-        TecnologiaUsuario tecnologiaUsuario)
+    public List<TrilhaTreinamento> ListarTrilhasPorTecnologia(int tecnologiaId)
+    {
+        return _context.TrilhaTreinamento
+            .Include(x => x.TrilhaTreinamentoTecnologia
+                .Where(x => x.TecnologiaId == tecnologiaId))
+            .Where(x => x.Ativa)
+            .OrderBy(x => x.NivelInicial)
+            .ToList();
+    }
+
+    // ================================ CADASTRO ================================
+
+    public void AdicionarGameficacao(UsuarioGameficacao gameficacao)
+    {
+        _context.UsuarioGameficacao.Add(gameficacao);
+    }
+
+    public void AdicionarTecnologiaUsuario(TecnologiaUsuario tecnologiaUsuario)
     {
         _context.TecnologiaUsuario.Add(tecnologiaUsuario);
     }
 
-    public async Task<int> SalvarAsync(
-        CancellationToken cancellationToken = default)
+    // ================================ ATUALIZAÇÃO ================================
+
+    public void AtualizarGameficacao(UsuarioGameficacao gameficacao)
     {
-        return await _context.SaveChangesAsync(
-            cancellationToken);
+        _context.UsuarioGameficacao.Update(gameficacao);
+    }
+
+    public void AtualizarTecnologiaUsuario(TecnologiaUsuario tecnologiaUsuario)
+    {
+        _context.TecnologiaUsuario.Update(tecnologiaUsuario);
+    }
+
+    // ================================ PERSISTÊNCIA ================================
+
+    public void Salvar()
+    {
+        _context.SaveChanges();
     }
 }

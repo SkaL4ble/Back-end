@@ -1,171 +1,160 @@
-﻿using API.Domains;
+﻿
+using API.Applications.Auxiliares;
+using API.Applications.Conversoes.ConversoesDeDto;
+using API.Domains;
+using API.DTOs;
+using API.DTOs.GameficacaoDto;
+using API.Exceptions;
 using API.Interfaces;
-using API.Repositories;
 
 namespace API.Applications.Services;
 
-public sealed class GameficacaoService
+public class GameficacaoService
 {
     private readonly IGameficacaoRepository _repository;
+    private readonly CriarRecomedacaoTreinamento _recomendacao;
 
-    public GameficacaoService(IGameficacaoRepository repository)
+    public GameficacaoService(IGameficacaoRepository repository, CriarRecomedacaoTreinamento recomendacao)
     {
         _repository = repository;
+        _recomendacao = recomendacao;
     }
 
-    public async Task AdicionarExperienciaAsync(
-        Guid usuarioId,
-        int quantidade,
-        CancellationToken cancellationToken = default)
+        // ================================ VALIDAÇÕES ================================
+
+    private static void ValidarQuantidadeExperiencia(int quantidade)
     {
         if (quantidade <= 0)
         {
-            throw new ArgumentException(
-                "A experiência deve ser maior que zero.",
-                nameof(quantidade));
+            throw new DomainException("Quantidade não pode ser menor ou igual a zero.");
         }
+    }
 
-        var gamificacao =
-            await ObterOuCriarGamificacaoAsync(
-                usuarioId,
-                cancellationToken);
+    // ================================ LISTAGEM ================================
 
-        checked
+    public ListarGameficacaoDto ListarPorFuncionario(Guid usuarioId)
+    {
+        var gameficacao = ObterOuCriarGameficacao(usuarioId);
+
+        var tecnologias = _repository.ListarTecnologiasPorUsuarioId(usuarioId);
+
+        var recomendacoes = _recomendacao.CriarRecomendacoes(tecnologias);
+
+        return ConversaoGameficacao.ConverterParaDto(gameficacao, tecnologias, recomendacoes);
+    }
+
+    // ================================ EXPERIÊNCIA ================================
+
+    public void AdicionarExperienciaGeral(Guid usuarioId, int quantidade)
+    {
+        ValidarQuantidadeExperiencia(quantidade);
+
+        var gameficacao = ObterOuCriarGameficacao(usuarioId);
+
+        gameficacao.ExperienciaTotal += quantidade;
+
+        gameficacao.DataAtualizacao = DateTime.UtcNow;
+
+        AtualizarNivelGeral(gameficacao, usuarioId);
+
+        _repository.AtualizarGameficacao(gameficacao);
+
+        _repository.Salvar();
+    }
+
+    public void AdicionarExperienciaTecnologia(Guid usuarioId, int tecnologiaId, int quantidade, decimal? pontuacao = null)
+    {
+        ValidarQuantidadeExperiencia(quantidade);
+
+        var tecnologiaUsuario = _repository.ObterTecnologiaDoUsuario(usuarioId, tecnologiaId);
+
+        if (tecnologiaUsuario is null)
         {
-            gamificacao.ExperienciaTotal += quantidade;
+            tecnologiaUsuario = ConversaoGameficacao.CriarTecnologiaUsuario(usuarioId, tecnologiaId, quantidade, pontuacao);
+
+            _repository.AdicionarTecnologiaUsuario(tecnologiaUsuario);
+        }
+        else
+        {
+            AtualizarTecnologiaUsuario(tecnologiaUsuario, quantidade, pontuacao);
+
+            _repository.AtualizarTecnologiaUsuario(tecnologiaUsuario);
         }
 
-        gamificacao.Nivel =
-            CalcularNivel(
-                gamificacao.ExperienciaTotal);
+        var gameficacao = ObterOuCriarGameficacao(usuarioId);
 
-        gamificacao.DataAtualizacao =
-            DateTime.UtcNow;
+        AtualizarNivelGeral(gameficacao, usuarioId);
 
-        await _repository.SalvarAsync(
-            cancellationToken);
+        gameficacao.DataAtualizacao = DateTime.UtcNow;
+
+        _repository.AtualizarGameficacao(gameficacao);
+
+        _repository.Salvar();
     }
 
-    public async Task RegistrarTicketConcluidoAsync(
-    Ticket ticket,
-    CancellationToken cancellationToken = default)
+    // ================================ FUNÇÕES ================================
+
+    private UsuarioGameficacao ObterOuCriarGameficacao(Guid usuarioId)
     {
-        if (!ticket.UsuarioResponsavel.HasValue)
-            return;
+        var gameficacao = _repository.ObterPorUsuarioId(usuarioId);
 
-        await AdicionarExperienciaAsync(
-            ticket.UsuarioResponsavel.Value,
-            quantidade: 10,
-            cancellationToken);
-    }
+        if (gameficacao is not null)
+            return gameficacao;
 
-    private async Task<FuncionarioGamificacao>
-    ObterOuCriarGamificacaoAsync(
-        Guid usuarioId,
-        CancellationToken cancellationToken)
-    {
-        var gamificacao =
-            await _repository.ObterGamificacaoAsync(
-                usuarioId,
-                cancellationToken);
-
-        if (gamificacao is not null)
-            return gamificacao;
-
-        gamificacao = new FuncionarioGamificacao
+        gameficacao = new UsuarioGameficacao
         {
             UsuarioId = usuarioId,
+
             ExperienciaTotal = 0,
-            Nivel = 1,
+
+            NivelGeral = 0,
+
             DataAtualizacao = DateTime.UtcNow
         };
 
-        _repository.AdicionarGamificacao(
-            gamificacao);
+        _repository.AdicionarGameficacao(gameficacao);
 
-        return gamificacao;
+        _repository.Salvar();
+
+        return gameficacao;
     }
 
-    public async Task RegistrarTicketNoPrazoAsync(Ticket ticket, CancellationToken cancellationToken = default)
+    private void AtualizarNivelGeral(UsuarioGameficacao gameficacao, Guid usuarioId)
     {
-        if (!ticket.UsuarioResponsavel.HasValue)
-            return;
+        var tecnologias = _repository.ListarTecnologiasPorUsuarioId(usuarioId);
 
-        if (!ticket.DataPrazo.HasValue || !ticket.DataEntrega.HasValue)
-            return;
-
-        if (ticket.DataEntrega.Value > ticket.DataPrazo.Value)
-            return;
-        
-
-        await AdicionarExperienciaAsync(ticket.UsuarioResponsavel.Value, quantidade: 15, cancellationToken);
-    }
-
-    public async Task RegistrarParticipacaoTecnologiaAsync(Guid usuarioId, CancellationToken cancellationToken = default)
-    {
-        await AdicionarExperienciaAsync(usuarioId, quantidade: 40, cancellationToken);
-    }
-
-    public async Task<FuncionarioGamificacao>
-        ObterPerfilAsync(
-            Guid usuarioId,
-            CancellationToken cancellationToken = default)
-    {
-        var gamificacao =
-            await _repository.ObterGamificacaoAsync(
-                usuarioId,
-                cancellationToken);
-
-        if (gamificacao is null)
+        if (tecnologias.Count == 0)
         {
-            gamificacao = new FuncionarioGamificacao
-            {
-                UsuarioId = usuarioId,
-                ExperienciaTotal = 0,
-                Nivel = 1,
-                DataAtualizacao = DateTime.UtcNow
-            };
-
-            _repository.AdicionarGamificacao(
-                gamificacao);
-
-            await _repository.SalvarAsync(
-                cancellationToken);
+            gameficacao.NivelGeral = 0;
+            return;
         }
 
-        return gamificacao;
+        var media = tecnologias.Average(x => x.NivelTecnologia);
+
+        gameficacao.NivelGeral = Math.Clamp( (int)Math.Round(media, MidpointRounding.AwayFromZero), 0, 10);
     }
 
-    private static int CalcularNivel(
-        int experienciaTotal)
+    private static void AtualizarTecnologiaUsuario(TecnologiaUsuario tecnologia, int quantidade, decimal? pontuacao)
     {
-        if (experienciaTotal >= 6000)
-            return 10;
+        checked
+        {
+            tecnologia.ExperienciaTecnologia += quantidade;
+        }
 
-        if (experienciaTotal >= 4200)
-            return 9;
+        if (pontuacao.HasValue)
+        {
+            tecnologia.NumeroAtribuicoes++;
 
-        if (experienciaTotal >= 3000)
-            return 8;
+            tecnologia.ValorAtribuicoes += pontuacao.Value;
 
-        if (experienciaTotal >= 2100)
-            return 7;
+            tecnologia.AfinidadeMedia = Math.Round(
+                tecnologia.ValorAtribuicoes / tecnologia.NumeroAtribuicoes,
+                2,
+                MidpointRounding.AwayFromZero);
+        }
 
-        if (experienciaTotal >= 1400)
-            return 6;
+        tecnologia.NivelTecnologia = CalcularNivelGameficacao.CalcularNivel(tecnologia.ExperienciaTecnologia);
 
-        if (experienciaTotal >= 900)
-            return 5;
-
-        if (experienciaTotal >= 500)
-            return 4;
-
-        if (experienciaTotal >= 250)
-            return 3;
-
-        if (experienciaTotal >= 100)
-            return 2;
-
-        return 1;
+        tecnologia.DataAtualizacao = DateTime.UtcNow;
     }
 }
