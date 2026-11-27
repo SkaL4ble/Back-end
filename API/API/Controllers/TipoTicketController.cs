@@ -1,5 +1,5 @@
-﻿using API.Applications.Services;
-using API.DTOs.TipoTicketDto;
+﻿using API.Applications.Services.Tipo;
+using API.DTOs.TipoDto.TipoTicketDto;
 using API.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

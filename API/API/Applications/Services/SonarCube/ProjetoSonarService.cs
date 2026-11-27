@@ -1,14 +1,13 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto;
 using API.Applications.GerarYml;
 using API.Applications.Services.SonarCube;
+using API.Applications.Validacoes;
 using API.Domains;
 using API.DTOs.SonarQubeDto;
-using API.DTOs.SonarQubeDto.CommitDto;
 using API.DTOs.SonarQubeDto.ListagemDto;
 using API.DTOs.SonarQubeDto.WorkFlowDto;
 using API.Exceptions;
 using API.Interfaces;
-using API.Repositories;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -18,24 +17,29 @@ namespace API.Applications.Services;
 
 public class ProjetoSonarService
 {
-    private const int TamanhoMinimoNome = 3;
-    private const int TamanhoMaximoNome = 255;
-    private const int TamanhoMaximoDescricao = 500;
+
 
     private readonly IProjetoSonarRepository _repository;
+
+    private readonly ValidacoesGerais _validacoes;
+
     private readonly SonarQubeService _sonar;
     private readonly CriptografiaService _criptografia;
-    private readonly string _urlBase;
     private readonly UsuarioService _usuarioService;
+    private readonly MetricaService _metricaService;
 
-    public ProjetoSonarService(IProjetoSonarRepository repository, SonarQubeService sonar,
-        CriptografiaService criptografia, IConfiguration config, UsuarioService usuarioService)
+    private readonly string _urlBase;
+
+    public ProjetoSonarService(IProjetoSonarRepository repository, SonarQubeService sonar, ValidacoesGerais validacoes,
+        CriptografiaService criptografia, IConfiguration config, UsuarioService usuarioService, MetricaService metricaService)
     {
         _repository = repository;
         _sonar = sonar;
         _criptografia = criptografia;
         _urlBase = (config["SonarQube:UrlBase"] ?? string.Empty).TrimEnd('/');
         _usuarioService = usuarioService;
+        _metricaService = metricaService;
+        _validacoes = validacoes;
     }
 
     // ============================== VALIDACOES ==============================
@@ -43,38 +47,6 @@ public class ProjetoSonarService
     private ProjetoSonar BuscarOuFalharSonar(Guid id) =>
         _repository.ObterPorId(id)
         ?? throw new DomainException("Projeto do SonarQube não encontrado");
-
-    private void ValidarProjeto(Guid projetoId)
-    {
-        if (!_repository.ProjetoExiste(projetoId))
-            throw new DomainException("Projeto não encontrado ou inativo");
-    }
-
-    private static string NormalizarNome(string? nome)
-    {
-        if (string.IsNullOrWhiteSpace(nome))
-            throw new DomainException("O nome do projeto é obrigatório");
-
-        var normalizado = nome.Trim();
-        if (normalizado.Length < TamanhoMinimoNome)
-            throw new DomainException($"O nome do projeto não pode ter menos de {TamanhoMinimoNome} caracteres");
-        if (normalizado.Length > TamanhoMaximoNome)
-            throw new DomainException($"O nome do projeto não pode ter mais de {TamanhoMaximoNome} caracteres");
-
-        return normalizado;
-    }
-
-    private static string? NormalizarDescricao(string? descricao)
-    {
-        if (string.IsNullOrWhiteSpace(descricao))
-            return null;
-
-        var normalizada = descricao.Trim();
-        if (normalizada.Length > TamanhoMaximoDescricao)
-            throw new DomainException($"A descrição não pode ter mais de {TamanhoMaximoDescricao} caracteres");
-
-        return normalizada;
-    }
 
 
     // Chave do SonarQube: só aceita letras, números, '-', '_', '.' e ':'.
@@ -94,19 +66,6 @@ public class ProjetoSonarService
         return $"{slug}-{Guid.NewGuid().ToString("N")[..8]}";
     }
 
-    private ListarProjetoSonarDto Converter(ProjetoSonar p) => new()
-    {
-        ProjetoSonarId = p.ProjetoSonarId,
-        ProjetoId = p.ProjetoId,
-        ChaveSonar = p.ChaveSonar,
-        NomeSonar = p.NomeSonar,
-        Descricao = p.Descricao,
-        Origem = p.Origem,
-        WorkflowId = p.WorkflowId,
-        UrlProjeto = $"{_urlBase}/dashboard?id={Uri.EscapeDataString(p.ChaveSonar)}",
-        DataCriacao = p.DataCriacao
-    };
-
     // ============================== CRIACAO ==============================
 
     public List<ListarWorkFlowDto> ListarTiposWorkflow()
@@ -119,9 +78,9 @@ public class ProjetoSonarService
 
     public async Task<ListarProjetoSonarDto> CriarProjetoAsync(CriarProjetoSonarDto dto)
     {
-        ValidarProjeto(dto.ProjetoId);
-        var nome = NormalizarNome(dto.Nome);
-        var descricao = NormalizarDescricao(dto.Descricao);
+        _validacoes.ValidarProjeto(dto.ProjetoId);
+        var nome = _validacoes.NormalizarNome(dto.Nome);
+        var descricao = _validacoes.NormalizarNome(dto.Descricao, 3, 500);
         var chave = GerarChave(nome);
 
         await _sonar.CriarProjetoAsync(chave, nome);
@@ -131,11 +90,11 @@ public class ProjetoSonarService
 
     public async Task<ListarProjetoSonarDto> CriarProjetoSonarJuntoAProjeto(Projeto projeto, int workflowId)
     {
-        ValidarProjeto(projeto.ProjetoId);
-        var nome = NormalizarNome(projeto.NomeProjeto);
+        _validacoes.ValidarProjeto(projeto.ProjetoId);
+        var nome = _validacoes.NormalizarNome(projeto.NomeProjeto);
+        var descricao = _validacoes.NormalizarNome(projeto.Descricao, 3, 500);
         if (!_repository.WorkflowExiste(workflowId))
             workflowId = 1;
-        var descricao = NormalizarDescricao(projeto.Descricao);
         var chave = GerarChave(nome);
 
         await _sonar.CriarProjetoAsync(chave, nome);
@@ -166,7 +125,7 @@ public class ProjetoSonarService
 
             _repository.Adicionar(entidade);
 
-            var dto = Converter(entidade);
+            var dto = ConversaoSonarQube.ConverterParaDto(entidade, _urlBase);
             dto.TokenAnalise = new TokenSonarDto { Token = tokenSonar };
             return dto;
         }
@@ -179,8 +138,9 @@ public class ProjetoSonarService
 
     // ============================== CONSULTAS E TOKENS ==============================
 
-    public ListarProjetoSonarDto ObterPorId(Guid id) {
-        var usuario = Converter(BuscarOuFalharSonar(id));
+    public ListarProjetoSonarDto ObterPorId(Guid id)
+    {
+        var usuario = ConversaoSonarQube.ConverterParaDto(BuscarOuFalharSonar(id), _urlBase);
         if (usuario == null)
             throw new DomainException("ID invaliado");
         return usuario;
@@ -222,7 +182,8 @@ public class ProjetoSonarService
             ProjetoSonarId = projetoSonar.ProjetoSonarId,
             ChaveSonar = projetoSonar.ChaveSonar,
             TokenSonar = token,
-            UrlSonarQube = _urlBase,            Branch = branch,
+            UrlSonarQube = _urlBase,
+            Branch = branch,
             ConteudoYaml = yaml,
             SecretsGithub = new List<SecretWorkFlowDto>
             {
@@ -341,6 +302,11 @@ public class ProjetoSonarService
             metricas.NivelConfiabilidade,
             metricas.NivelSeguranca);
 
+        await _metricaService
+    .AtualizarQualidadeSonarAsync(
+        usuarioId,
+        metricas);
+
         foreach (var issue in issues)
         {
             var esforco = ConverterEsforcoParaMinutos(
@@ -363,144 +329,144 @@ public class ProjetoSonarService
     }
 
     private static bool EhIssueDeManutencao(IssueSonarDto issue)
-{
-    return string.Equals(
-        issue.Tipo,
-        "CODE_SMELL",
-        StringComparison.OrdinalIgnoreCase);
-}
-
-private static bool EhIssueDeConfiabilidade(IssueSonarDto issue)
-{
-    return string.Equals(
-        issue.Tipo,
-        "BUG",
-        StringComparison.OrdinalIgnoreCase);
-}
-
-private static bool EhIssueDeSeguranca(IssueSonarDto issue)
-{
-    return string.Equals(
-               issue.Tipo,
-               "VULNERABILITY",
-               StringComparison.OrdinalIgnoreCase)
-           ||
-           string.Equals(
-               issue.Tipo,
-               "SECURITY_HOTSPOT",
-               StringComparison.OrdinalIgnoreCase);
-}
-
-
-private static decimal CalcularNivel(
-    IReadOnlyCollection<IssueSonarDto> issues)
-{
-    if (issues.Count == 0)
-        return 100m;
-
-    var media = issues
-        .Select(issue => PontuacaoDaIssue(issue.Severidade))
-        .Average();
-
-    return Math.Round(
-        Math.Clamp((decimal)media, 0m, 100m),
-        2,
-        MidpointRounding.AwayFromZero);
-}
-
-private static decimal CalcularMediaGeral(
-    decimal manutencao,
-    decimal confiabilidade,
-    decimal seguranca)
-{
-    return Math.Round(
-        (manutencao + confiabilidade + seguranca) / 3m,
-        2,
-        MidpointRounding.AwayFromZero);
-}
-
-private static decimal PontuacaoDaIssue(string? severidade)
-{
-    var penalidade = severidade?.Trim().ToUpperInvariant() switch
     {
-        "INFO" => 2m,
-        "MINOR" => 10m,
-        "MAJOR" => 25m,
-        "CRITICAL" => 50m,
-        "BLOCKER" => 80m,
-        _ => 25m
-    };
-
-    return 100m - penalidade;
-}
-
-private static void AdicionarSeveridade(
-    MetricasAutorSonarDto metricas,
-    string? severidade)
-{
-    switch (severidade?.Trim().ToUpperInvariant())
-    {
-        case "INFO":
-            metricas.IssuesInfo++;
-            break;
-
-        case "MINOR":
-            metricas.IssuesBaixa++;
-            break;
-
-        case "MAJOR":
-            metricas.IssuesMedia++;
-            break;
-
-        case "CRITICAL":
-            metricas.IssuesAlta++;
-            break;
-
-        case "BLOCKER":
-            metricas.IssuesBloqueadora++;
-            break;
+        return string.Equals(
+            issue.Tipo,
+            "CODE_SMELL",
+            StringComparison.OrdinalIgnoreCase);
     }
-}
 
-private static int ConverterEsforcoParaMinutos(
-    string? esforco)
-{
-    if (string.IsNullOrWhiteSpace(esforco))
+    private static bool EhIssueDeConfiabilidade(IssueSonarDto issue)
+    {
+        return string.Equals(
+            issue.Tipo,
+            "BUG",
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool EhIssueDeSeguranca(IssueSonarDto issue)
+    {
+        return string.Equals(
+                   issue.Tipo,
+                   "VULNERABILITY",
+                   StringComparison.OrdinalIgnoreCase)
+               ||
+               string.Equals(
+                   issue.Tipo,
+                   "SECURITY_HOTSPOT",
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
+
+    private static decimal CalcularNivel(
+        IReadOnlyCollection<IssueSonarDto> issues)
+    {
+        if (issues.Count == 0)
+            return 100m;
+
+        var media = issues
+            .Select(issue => PontuacaoDaIssue(issue.Severidade))
+            .Average();
+
+        return Math.Round(
+            Math.Clamp((decimal)media, 0m, 100m),
+            2,
+            MidpointRounding.AwayFromZero);
+    }
+
+    private static decimal CalcularMediaGeral(
+        decimal manutencao,
+        decimal confiabilidade,
+        decimal seguranca)
+    {
+        return Math.Round(
+            (manutencao + confiabilidade + seguranca) / 3m,
+            2,
+            MidpointRounding.AwayFromZero);
+    }
+
+    private static decimal PontuacaoDaIssue(string? severidade)
+    {
+        var penalidade = severidade?.Trim().ToUpperInvariant() switch
+        {
+            "INFO" => 2m,
+            "MINOR" => 10m,
+            "MAJOR" => 25m,
+            "CRITICAL" => 50m,
+            "BLOCKER" => 80m,
+            _ => 25m
+        };
+
+        return 100m - penalidade;
+    }
+
+    private static void AdicionarSeveridade(
+        MetricasAutorSonarDto metricas,
+        string? severidade)
+    {
+        switch (severidade?.Trim().ToUpperInvariant())
+        {
+            case "INFO":
+                metricas.IssuesInfo++;
+                break;
+
+            case "MINOR":
+                metricas.IssuesBaixa++;
+                break;
+
+            case "MAJOR":
+                metricas.IssuesMedia++;
+                break;
+
+            case "CRITICAL":
+                metricas.IssuesAlta++;
+                break;
+
+            case "BLOCKER":
+                metricas.IssuesBloqueadora++;
+                break;
+        }
+    }
+
+    private static int ConverterEsforcoParaMinutos(
+        string? esforco)
+    {
+        if (string.IsNullOrWhiteSpace(esforco))
+            return 0;
+
+        var valor = esforco.Trim().ToLowerInvariant();
+
+        if (valor.EndsWith("min") &&
+            decimal.TryParse(
+                valor[..^3].Trim(),
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var minutos))
+        {
+            return (int)Math.Round(minutos);
+        }
+
+        if (valor.EndsWith("h") &&
+            decimal.TryParse(
+                valor[..^1].Trim(),
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var horas))
+        {
+            return (int)Math.Round(horas * 60m);
+        }
+
+        if (valor.EndsWith("d") &&
+            decimal.TryParse(
+                valor[..^1].Trim(),
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var dias))
+        {
+            // Um dia de trabalho do SonarQube equivale a 8 horas.
+            return (int)Math.Round(dias * 8m * 60m);
+        }
+
         return 0;
-
-    var valor = esforco.Trim().ToLowerInvariant();
-
-    if (valor.EndsWith("min") &&
-        decimal.TryParse(
-            valor[..^3].Trim(),
-            System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture,
-            out var minutos))
-    {
-        return (int)Math.Round(minutos);
     }
-
-    if (valor.EndsWith("h") &&
-        decimal.TryParse(
-            valor[..^1].Trim(),
-            System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture,
-            out var horas))
-    {
-        return (int)Math.Round(horas * 60m);
-    }
-
-    if (valor.EndsWith("d") &&
-        decimal.TryParse(
-            valor[..^1].Trim(),
-            System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture,
-            out var dias))
-    {
-        // Um dia de trabalho do SonarQube equivale a 8 horas.
-        return (int)Math.Round(dias * 8m * 60m);
-    }
-
-    return 0;
-}
 }

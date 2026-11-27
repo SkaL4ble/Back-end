@@ -14,15 +14,13 @@ public interface IProjetoRepository
 
     // ================================ LISTAGEM =================================
     List<Projeto> ListarProjetos(FiltroProjetoDto filtro);
-    List<Projeto> ListarProjetosForaDoPrazo(FiltroProjetoDentroOuForaPrazo filtro);
-    List<Projeto> ListarProjetosDentroDoPrazo(FiltroProjetoDentroOuForaPrazo filtro);
+    List<Projeto> ListarProjetosForaDoPrazo(FiltroProjetoDto filtro);
+    List<Projeto> ListarProjetosDentroDoPrazo(FiltroProjetoDto filtro);
 
     // ================================ VALIDAÇÕES =================================
     bool NomeProjetoExiste(string nome, Guid? idIgnorado = null);
+    bool UsuarioExiste(Guid id);
     bool LinkRepositorioExiste(string linkRepositorio, Guid? idIgnorado = null);
-    bool UsuarioExiste(Guid? usuarioId);
-    bool StatusExiste(int? statusId);
-    bool TipoExiste(int? tipoId);
     bool UsuarioEstaAssociadoAoProjetoPorNome(Guid usuarioId, string nomeProjeto);
     bool UsuarioEstaAssociadoAoProjeto(Guid usuarioId, Guid projetoId);
     bool UsuarioEstaAssociadoAoProjetoPorId(Guid usuarioId, Guid projetoId);

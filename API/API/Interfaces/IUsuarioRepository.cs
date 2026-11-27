@@ -21,16 +21,8 @@ namespace API.Interfaces
         void Inativar(Guid id);
 
         //====================== VALIDACOES ===========================
-        bool UsuarioExistente(Guid id);
-
         bool EmailExistente(string email, Guid id);
 
         bool EmailGitExistente(string emailGit, Guid id);
-
-        bool AtuacaoExiste(int id);
-        bool CargoExiste(int id);
-        bool TipoUsuarioExiste(Guid id);
-        bool TecnologiaExiste(int id);
-        bool ProjetosExiste(Guid id);
     }
 }

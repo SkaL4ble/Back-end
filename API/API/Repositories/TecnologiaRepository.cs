@@ -36,7 +36,7 @@ namespace API.Repositories
         {
             return _context.Tecnologia.Any(t =>
                 t.TecnologiaId == id &&
-                (t.Usuario.Any() ||
+                (t.TecnologiaUsuario.Any() ||
                  t.ConsolidadoMetricaTecnologia.Any() ||
                  t.HistoricoPontuacaoMetrica.Any()));
         }

@@ -134,6 +134,38 @@ CREATE TABLE Usuario (
 );
 GO
 
+CREATE TABLE FuncionarioGamificacao
+(
+    UsuarioId UNIQUEIDENTIFIER NOT NULL,
+
+    ExperienciaTotal INT NOT NULL
+        CONSTRAINT DF_FuncionarioGamificacao_Experiencia
+        DEFAULT 0,
+
+    Nivel INT NOT NULL
+        CONSTRAINT DF_FuncionarioGamificacao_Nivel
+        DEFAULT 1,
+
+    DataAtualizacao DATETIME2 NOT NULL
+        CONSTRAINT DF_FuncionarioGamificacao_Data
+        DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT PK_FuncionarioGamificacao
+        PRIMARY KEY (UsuarioId),
+
+    CONSTRAINT FK_FuncionarioGamificacao_Usuario
+        FOREIGN KEY (UsuarioId)
+        REFERENCES Usuario(UsuarioId)
+        ON DELETE CASCADE,
+
+    CONSTRAINT CK_FuncionarioGamificacao_Experiencia
+        CHECK (ExperienciaTotal >= 0),
+
+    CONSTRAINT CK_FuncionarioGamificacao_Nivel
+        CHECK (Nivel BETWEEN 1 AND 10)
+);
+GO
+
 CREATE TABLE TokenRedefinicaoSenha (
     TokenRedefinicaoSenhaId INT IDENTITY(1,1) NOT NULL,
     UsuarioId UNIQUEIDENTIFIER NOT NULL,
@@ -190,7 +222,7 @@ CREATE TABLE ProjetoSonar (
     Origem VARCHAR(10) NOT NULL,
     TokenSonarCriptografado VARCHAR(MAX) NOT NULL,
     DataCriacao DATETIME NOT NULL DEFAULT GETUTCDATE(),
-    WorkflowId INT NULL DEFAULT 1,
+    WorkflowId INT NOT NULL DEFAULT 1,
     CONSTRAINT PK_ProjetoSonar PRIMARY KEY (ProjetoSonarId),
     CONSTRAINT UQ_ProjetoSonar_ChaveSonar UNIQUE (ChaveSonar),
     CONSTRAINT FK_ProjetoSonar_Projeto FOREIGN KEY (ProjetoId)
@@ -221,6 +253,134 @@ CREATE TABLE Ticket (
         REFERENCES TipoTicket (TipoTicketId),
     CONSTRAINT FK_Ticket_StatusTicket FOREIGN KEY (StatusTicketId)
         REFERENCES StatusTicket (StatusTicketId)
+);
+GO
+
+--Metricas de cada funcionario
+CREATE TABLE FuncionarioMetrica
+(
+    UsuarioId UNIQUEIDENTIFIER NOT NULL,
+
+    PeriodoInicio DATETIME2 NOT NULL,
+    PeriodoFim DATETIME2 NOT NULL,
+
+    TicketsAtribuidos INT NOT NULL DEFAULT 0,
+    TicketsConcluidos INT NOT NULL DEFAULT 0,
+
+    TicketsAltaConcluidos INT NOT NULL DEFAULT 0,
+    TicketsMediaConcluidos INT NOT NULL DEFAULT 0,
+    TicketsBaixaConcluidos INT NOT NULL DEFAULT 0,
+
+    PontosQuantidade DECIMAL(18,2) NOT NULL DEFAULT 0,
+    NotaQuantidade DECIMAL(5,2) NOT NULL DEFAULT 0,
+
+    TicketsComPrazo INT NOT NULL DEFAULT 0,
+    TicketsConcluidosNoPrazo INT NOT NULL DEFAULT 0,
+    TicketsConcluidosAtrasados INT NOT NULL DEFAULT 0,
+    TicketsAbertosAtrasados INT NOT NULL DEFAULT 0,
+
+    DiasAtrasoAcumulados INT NOT NULL DEFAULT 0,
+    DiasSemAtividade INT NOT NULL DEFAULT 0,
+
+    NotaVelocidade DECIMAL(5,2) NOT NULL DEFAULT 100,
+
+    QualidadeSonar DECIMAL(5,2) NOT NULL DEFAULT 0,
+    QualidadeManutencao DECIMAL(5,2) NOT NULL DEFAULT 0,
+    QualidadeConfiabilidade DECIMAL(5,2) NOT NULL DEFAULT 0,
+    QualidadeSeguranca DECIMAL(5,2) NOT NULL DEFAULT 0,
+
+    IssuesManutencao INT NOT NULL DEFAULT 0,
+    IssuesConfiabilidade INT NOT NULL DEFAULT 0,
+    IssuesSeguranca INT NOT NULL DEFAULT 0,
+
+    DataUltimaQualidadeSonar DATETIME2 NULL,
+    UltimaAtividade DATETIME2 NULL,
+    DataAtualizacao DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT PK_FuncionarioMetricaAtual
+        PRIMARY KEY (UsuarioId),
+
+    CONSTRAINT FK_FuncionarioMetricaAtual_Usuario
+        FOREIGN KEY (UsuarioId)
+        REFERENCES Usuario(UsuarioId)
+        ON DELETE CASCADE,
+
+    CONSTRAINT CK_FuncionarioMetricaAtual_Notas
+        CHECK
+        (
+            NotaQuantidade BETWEEN 0 AND 100
+            AND NotaVelocidade BETWEEN 0 AND 100
+            AND QualidadeSonar BETWEEN 0 AND 100
+            AND QualidadeManutencao BETWEEN 0 AND 100
+            AND QualidadeConfiabilidade BETWEEN 0 AND 100
+            AND QualidadeSeguranca BETWEEN 0 AND 100
+        ),
+
+    CONSTRAINT CK_FuncionarioMetrica_Periodo
+        CHECK (PeriodoFim >= PeriodoInicio)
+);
+GO
+
+CREATE TABLE Log_FuncionarioMetrica
+(
+    Log_FuncionarioMetricaId BIGINT IDENTITY(1,1) NOT NULL,
+
+    UsuarioId UNIQUEIDENTIFIER NOT NULL,
+
+    PeriodoInicio DATETIME2 NOT NULL,
+    PeriodoFim DATETIME2 NOT NULL,
+
+    NotaQuantidade DECIMAL(5,2) NOT NULL,
+    NotaVelocidade DECIMAL(5,2) NOT NULL,
+    NotaQualidade DECIMAL(5,2) NOT NULL,
+
+    TicketsAtribuidos INT NOT NULL DEFAULT 0,
+    TicketsConcluidos INT NOT NULL DEFAULT 0,
+
+    TicketsAltaConcluidos INT NOT NULL DEFAULT 0,
+    TicketsMediaConcluidos INT NOT NULL DEFAULT 0,
+    TicketsBaixaConcluidos INT NOT NULL DEFAULT 0,
+
+    PontosQuantidade DECIMAL(18,2) NOT NULL DEFAULT 0,
+
+    TicketsComPrazo INT NOT NULL DEFAULT 0,
+    TicketsConcluidosNoPrazo INT NOT NULL DEFAULT 0,
+    TicketsConcluidosAtrasados INT NOT NULL DEFAULT 0,
+    TicketsAbertosAtrasados INT NOT NULL DEFAULT 0,
+
+    DiasAtrasoAcumulados INT NOT NULL DEFAULT 0,
+    DiasSemAtividade INT NOT NULL DEFAULT 0,
+
+    QualidadeSonar DECIMAL(5,2) NOT NULL DEFAULT 0,
+    QualidadeManutencao DECIMAL(5,2) NOT NULL DEFAULT 0,
+    QualidadeConfiabilidade DECIMAL(5,2) NOT NULL DEFAULT 0,
+    QualidadeSeguranca DECIMAL(5,2) NOT NULL DEFAULT 0,
+
+    IssuesManutencao INT NOT NULL DEFAULT 0,
+    IssuesConfiabilidade INT NOT NULL DEFAULT 0,
+    IssuesSeguranca INT NOT NULL DEFAULT 0,
+
+    DataQualidadeSonar DATETIME2 NULL,
+    DataFechamento DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT PK_Log_FuncionarioMetrica
+        PRIMARY KEY (Log_FuncionarioMetricaId),
+
+    CONSTRAINT FK_Log_FuncionarioMetricaId_Usuario
+        FOREIGN KEY (UsuarioId)
+        REFERENCES Usuario(UsuarioId)
+        ON DELETE CASCADE,
+
+    CONSTRAINT UQ_Log_FuncionarioMetricaIdo_Periodo
+        UNIQUE (UsuarioId, PeriodoInicio, PeriodoFim),
+
+    CONSTRAINT CK_Log_FuncionarioMetricaId_Notas
+        CHECK
+        (
+            NotaQuantidade BETWEEN 0 AND 100
+            AND NotaVelocidade BETWEEN 0 AND 100
+            AND NotaQualidade BETWEEN 0 AND 100
+        )
 );
 GO
 
@@ -300,15 +460,83 @@ GO
 -- TABELAS INTERMEDIARIAS
 -- =============================================================================
 
-CREATE TABLE TecnologiaUsuario (
+CREATE TABLE ProjetoTecnologia
+(
+    ProjetoId UNIQUEIDENTIFIER NOT NULL,
     TecnologiaId INT NOT NULL,
-    UsuarioId UNIQUEIDENTIFIER NOT NULL,
-    CONSTRAINT PK_TecnologiaUsuario PRIMARY KEY (UsuarioId, TecnologiaId),
 
-    CONSTRAINT FK_TecnologiaUsuario_Tecnologia FOREIGN KEY (TecnologiaId) 
-        REFERENCES Tecnologia (TecnologiaId) ON DELETE CASCADE,
-    CONSTRAINT FK_TecnologiaUsuario_Usuario FOREIGN KEY (UsuarioId) 
-        REFERENCES Usuario (UsuarioId) ON DELETE CASCADE
+    PercentualCodigo DECIMAL(5,2) NOT NULL
+        CONSTRAINT DF_ProjetoTecnologia_PercentualCodigo
+        DEFAULT 0,
+
+    NumeroAtribuicoes INT NOT NULL
+        CONSTRAINT DF_ProjetoTecnologia_NumeroAtribuicoes
+        DEFAULT 0,
+
+    ValorAtribuicoes BIGINT NOT NULL
+        CONSTRAINT DF_ProjetoTecnologia_ValorAtribuicoes
+        DEFAULT 0,
+
+    CONSTRAINT PK_ProjetoTecnologia
+        PRIMARY KEY (ProjetoId, TecnologiaId),
+
+    CONSTRAINT FK_ProjetoTecnologia_Projeto
+        FOREIGN KEY (ProjetoId)
+        REFERENCES Projeto(ProjetoId)
+        ON DELETE CASCADE,
+
+    CONSTRAINT FK_ProjetoTecnologia_Tecnologia
+        FOREIGN KEY (TecnologiaId)
+        REFERENCES Tecnologia(TecnologiaId)
+        ON DELETE CASCADE,
+
+    CONSTRAINT CK_ProjetoTecnologia_Percentual
+        CHECK (PercentualCodigo >= 0 AND PercentualCodigo <= 100),
+
+    CONSTRAINT CK_ProjetoTecnologia_Atribuicoes
+        CHECK (NumeroAtribuicoes >= 0 AND ValorAtribuicoes >= 0)
+);
+GO
+
+CREATE TABLE TecnologiaUsuario
+(
+    UsuarioId UNIQUEIDENTIFIER NOT NULL,
+    TecnologiaId INT NOT NULL,
+
+    AfinidadeMedia DECIMAL(5,2) NOT NULL
+        CONSTRAINT DF_TecnologiaUsuario_Afinidade
+        DEFAULT 0,
+
+    NumeroAtribuicoes INT NOT NULL
+        CONSTRAINT DF_TecnologiaUsuario_Numero
+        DEFAULT 0,
+
+    ValorAtribuicoes DECIMAL(18,2) NOT NULL
+        CONSTRAINT DF_TecnologiaUsuario_Valor
+        DEFAULT 0,
+
+    DataUltimaAtualizacao DATETIME2 NOT NULL
+        CONSTRAINT DF_TecnologiaUsuario_Data
+        DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT PK_TecnologiaUsuario
+        PRIMARY KEY (UsuarioId, TecnologiaId),
+
+    CONSTRAINT FK_TecnologiaUsuario_Usuario
+        FOREIGN KEY (UsuarioId)
+        REFERENCES Usuario(UsuarioId)
+        ON DELETE CASCADE,
+
+    CONSTRAINT FK_TecnologiaUsuario_Tecnologia
+        FOREIGN KEY (TecnologiaId)
+        REFERENCES Tecnologia(TecnologiaId)
+        ON DELETE CASCADE,
+
+    CONSTRAINT CK_TecnologiaUsuario_Afinidade
+        CHECK (AfinidadeMedia >= 0 AND AfinidadeMedia <= 100),
+
+    CONSTRAINT CK_TecnologiaUsuario_Atribuicoes
+        CHECK (NumeroAtribuicoes >= 0 AND ValorAtribuicoes >= 0)
 );
 GO
 
@@ -334,6 +562,50 @@ CREATE TABLE TicketUsuario (
         REFERENCES Ticket (TicketId) ON DELETE CASCADE,
     CONSTRAINT FK_TicketUsuario_Usuario FOREIGN KEY (UsuarioId) 
         REFERENCES Usuario (UsuarioId) ON DELETE CASCADE
+);
+GO
+
+CREATE TABLE UsuarioProjetoTecnologia
+(
+    ProjetoId UNIQUEIDENTIFIER NOT NULL,
+    UsuarioId UNIQUEIDENTIFIER NOT NULL,
+    TecnologiaId INT NOT NULL,
+
+    LinhasAdicionadas BIGINT NOT NULL
+        CONSTRAINT DF_UsuarioProjetoTecnologia_Linhas
+        DEFAULT 0,
+
+    PontuacaoProjeto DECIMAL(5,2) NOT NULL
+        CONSTRAINT DF_UsuarioProjetoTecnologia_Pontuacao
+        DEFAULT 0,
+
+    DataUltimaParticipacao DATETIME2 NOT NULL
+        CONSTRAINT DF_UsuarioProjetoTecnologia_Data
+        DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT PK_UsuarioProjetoTecnologia
+        PRIMARY KEY (ProjetoId, UsuarioId, TecnologiaId),
+
+    CONSTRAINT FK_UsuarioProjetoTecnologia_Projeto
+        FOREIGN KEY (ProjetoId)
+        REFERENCES Projeto(ProjetoId)
+        ON DELETE CASCADE,
+
+    CONSTRAINT FK_UsuarioProjetoTecnologia_Usuario
+        FOREIGN KEY (UsuarioId)
+        REFERENCES Usuario(UsuarioId)
+        ON DELETE CASCADE,
+
+    CONSTRAINT FK_UsuarioProjetoTecnologia_Tecnologia
+        FOREIGN KEY (TecnologiaId)
+        REFERENCES Tecnologia(TecnologiaId)
+        ON DELETE CASCADE,
+
+    CONSTRAINT CK_UsuarioProjetoTecnologia_Linhas
+        CHECK (LinhasAdicionadas >= 0),
+
+    CONSTRAINT CK_UsuarioProjetoTecnologia_Pontuacao
+        CHECK (PontuacaoProjeto >= 0 AND PontuacaoProjeto <= 100)
 );
 GO
 

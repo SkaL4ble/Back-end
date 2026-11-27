@@ -4,11 +4,9 @@ namespace API.Interfaces;
 
 public interface IProjetoSonarRepository
 {
-    ProjetoSonar? ObterPorId(Guid projetoSonarId);
+    ProjetoSonar? ObterPorId(Guid projetoId);
     List<Workflow> ObterWorkflows();
     bool WorkflowExiste(int workflowId);
-
-    bool ProjetoExiste(Guid projetoId);
 
     void Adicionar(ProjetoSonar projetoSonar);
 

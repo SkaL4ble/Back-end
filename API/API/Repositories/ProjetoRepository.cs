@@ -29,7 +29,6 @@ public class ProjetoRepository : IProjetoRepository
 
     public void CadastrarProjeto(Projeto projeto)
     {
-        projeto.Autor = _context.Usuario.Include(u => u.TipoUsuario).FirstOrDefault(u => u.TipoUsuario.NomeTipoUsuario == "Tech Lead").UsuarioId;
         _context.Projeto.Add(projeto);
         _context.SaveChanges();
     }
@@ -80,7 +79,7 @@ public class ProjetoRepository : IProjetoRepository
         return query.OrderByDescending(p => p.DataCriacao).ToList();
     }
 
-    public List<Projeto> ListarProjetosForaDoPrazo(FiltroProjetoDentroOuForaPrazo filtro)
+    public List<Projeto> ListarProjetosForaDoPrazo(FiltroProjetoDto filtro)
     {
         var query = AplicarFiltrosPrazo(filtro);
         return query
@@ -89,7 +88,7 @@ public class ProjetoRepository : IProjetoRepository
             .ToList();
     }
 
-    public List<Projeto> ListarProjetosDentroDoPrazo(FiltroProjetoDentroOuForaPrazo filtro)
+    public List<Projeto> ListarProjetosDentroDoPrazo(FiltroProjetoDto filtro)
     {
         var query = AplicarFiltrosPrazo(filtro);
         return query
@@ -98,12 +97,12 @@ public class ProjetoRepository : IProjetoRepository
             .ToList();
     }
 
-    private IQueryable<Projeto> AplicarFiltrosPrazo(FiltroProjetoDentroOuForaPrazo filtro)
+    private IQueryable<Projeto> AplicarFiltrosPrazo(FiltroProjetoDto filtro)
     {
         var query = ListarAtivos();
 
-        if (filtro.AutorId.HasValue)
-            query = query.Where(p => p.Autor == filtro.AutorId.Value);
+        if (filtro.UsuarioId.HasValue)
+            query = query.Where(p => p.Autor == filtro.UsuarioId.Value);
 
         if (filtro.TipoId.HasValue)
             query = query.Where(p => p.TipoProjetoId == filtro.TipoId.Value);
@@ -127,6 +126,10 @@ public class ProjetoRepository : IProjetoRepository
 
     // ================================ VALIDAÇÕES =================================
 
+    public bool UsuarioExiste(Guid id)
+    {
+        return _context.Usuario.Any(u => u.UsuarioId == id);
+    }
     public bool NomeProjetoExiste(string nome, Guid? idIgnorado = null)
     {
         return _context.Projeto.Any(p =>
@@ -141,21 +144,6 @@ public class ProjetoRepository : IProjetoRepository
             p.Ativo &&
             p.LinkRepositorio == linkRepositorio &&
             (!idIgnorado.HasValue || p.ProjetoId != idIgnorado.Value));
-    }
-
-    public bool UsuarioExiste(Guid? usuarioId)
-    {
-        return usuarioId.HasValue && _context.Usuario.Any(u => u.UsuarioId == usuarioId.Value && u.Ativo);
-    }
-
-    public bool StatusExiste(int? statusId)
-    {
-        return statusId.HasValue && _context.StatusProjeto.Any(s => s.StatusProjetoId == statusId.Value);
-    }
-
-    public bool TipoExiste(int? tipoId)
-    {
-        return tipoId.HasValue && _context.TipoProjeto.Any(t => t.TipoProjetoId == tipoId.Value);
     }
 
     public void AtualizarColaboradores(Guid projetoId, IEnumerable<Guid> usuariosIds)

@@ -7,6 +7,7 @@ using API.Exceptions;
 using API.Interfaces;
 using API.DTOs.AutenticacaoDto;
 using API.Repositories;
+using API.Applications.Validacoes;
 
 namespace API.Applications.Services
 {
@@ -15,23 +16,25 @@ namespace API.Applications.Services
         private readonly IUsuarioRepository _repository;
         private readonly ITipoUsuarioRepository _tipoUsuarioRepository;
         private readonly AutenticacaoService _autenticacaoService;
+        private readonly ValidacoesGerais _validacoes;
 
         public UsuarioService(
     IUsuarioRepository repository,
     ITipoUsuarioRepository tipoUsuarioRepository,
-    AutenticacaoService autenticacaoService)
+    AutenticacaoService autenticacaoService,
+    ValidacoesGerais validacoes)
         {
             _repository = repository;
             _tipoUsuarioRepository = tipoUsuarioRepository;
             _autenticacaoService = autenticacaoService;
+            _validacoes = validacoes;
         }
 
         private void ValidarAtuacao(List<int> atuacaoId)
         {
             foreach (int atuacao in atuacaoId.Distinct())
             {
-                if (!_repository.AtuacaoExiste(atuacao))
-                    throw new DomainException($"Atuacao não encontrado: {atuacao}");
+                _validacoes.ValidarAtuacao(atuacao);
             }
         }
 
@@ -39,23 +42,15 @@ namespace API.Applications.Services
         {
             foreach (int cargo in cargoIds.Distinct())
             {
-                if (!_repository.CargoExiste(cargo))
-                    throw new DomainException($"Cargo não encontrado: {cargo}");
+                _validacoes.ValidarCargo(cargo);
             }
-        }
-
-        private void ValidarTipoUsuario(Guid tipoUsuarioId)
-        {
-            if (!_repository.TipoUsuarioExiste(tipoUsuarioId))
-                throw new DomainException("Tipo de usuário não encontrado");
         }
 
         private void ValidarProjetos(List<Guid> projetosIds)
         {
             foreach (Guid projetoId in projetosIds.Distinct())
             {
-                if (!_repository.ProjetosExiste(projetoId))
-                    throw new DomainException($"Projeto não encontrado ou inativo: {projetoId}");
+                _validacoes.ValidarProjeto(projetoId);
             }
         }
 
@@ -63,8 +58,7 @@ namespace API.Applications.Services
         {
             foreach (int tecnologiaId in tecnologiasIds.Distinct())
             {
-                if (!_repository.TecnologiaExiste(tecnologiaId))
-                    throw new DomainException($"Tecnologia não encontrada: {tecnologiaId}");
+                _validacoes.ValidarTecnologia(tecnologiaId);
             }
         }
 
@@ -85,15 +79,12 @@ namespace API.Applications.Services
                 ValidarProjetos(filtro.ProjetosIds);
             }
 
-            if (filtro.TipoUsuarioId.HasValue)
-            {
-                ValidarTipoUsuario(filtro.TipoUsuarioId.Value);
-            }
-
             if (filtro.TecnologiasIds.Count > 0)
             {
                 ValidarTecnologias(filtro.TecnologiasIds);
             }
+
+            _validacoes.ValidarTipoUsuario(filtro.TipoUsuarioId);
 
             List<Usuario> usuarios = _repository.Listar(filtro);
             return ConversaoUsuario.ToDtoList(usuarios).ToList();
@@ -168,10 +159,7 @@ namespace API.Applications.Services
                 throw new DomainException("Informe os dados do usuário.");
             }
 
-            if (!_repository.UsuarioExistente(id))
-            {
-                throw new DomainException("Usuário não encontrado.");
-            }
+            _validacoes.ValidarUsuario(id);
 
             dto.NomeUsuario.Nome();
             dto.EmailPessoal.EmailPessoal();
@@ -211,15 +199,7 @@ namespace API.Applications.Services
 
         public void Inativar(Guid id)
         {
-            if (id == Guid.Empty)
-            {
-                throw new DomainException("Preencha o campo de ID do usuário.");
-            }
-
-            if (!_repository.UsuarioExistente(id))
-            {
-                throw new DomainException("Usuário não encontrado.");
-            }
+            _validacoes.ValidarUsuario(id);
 
             _repository.Inativar(id);
         }

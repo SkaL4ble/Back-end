@@ -13,8 +13,8 @@ public class ProjetoSonarRepository : IProjetoSonarRepository
         _context = context;
     }
 
-    public ProjetoSonar? ObterPorId(Guid projetoSonarId) =>
-    _context.ProjetoSonar.FirstOrDefault(p => p.ProjetoSonarId == projetoSonarId);
+    public ProjetoSonar? ObterPorId(Guid projetoId) =>
+    _context.ProjetoSonar.FirstOrDefault(p => p.ProjetoId == projetoId);
 
     public bool WorkflowExiste(int workflowId) =>
     _context.Workflow.Any(w =>
