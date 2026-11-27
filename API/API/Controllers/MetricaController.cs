@@ -39,6 +39,10 @@ namespace API.Controllers
                 var metricas = await _service.ObterMetricasPorFuncionarioAsync(usuarioId, cancellationToken);
                 return Ok(metricas);
             }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
             catch (DomainException ex)
             {
                 return BadRequest(ex.Message);

@@ -19,6 +19,6 @@ public readonly record struct PeriodoMetrica(DateTime Inicio, DateTime Fim)
 
         return new PeriodoMetrica(
             inicio,
-            inicio.AddMonths(3).AddDays(-1));
+            inicio.AddMonths(3).AddTicks(-1));
     }
 }

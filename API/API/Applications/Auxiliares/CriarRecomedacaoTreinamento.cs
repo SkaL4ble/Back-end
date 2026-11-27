@@ -72,6 +72,8 @@ public class CriarRecomendacaoTreinamento
                 x => x.Prioridade)
             .ThenByDescending(
                 x => x.QuantidadeTicketsRelacionados)
+            .ThenBy(
+                x => x.TipoTicketId)
             .Take(10)
             .ToList();
     }
@@ -161,8 +163,8 @@ public class CriarRecomendacaoTreinamento
                 trilhas
                     .Where(
                         x =>
-                            x.NivelFinal >=
-                            nivelAtual)
+                            x.NivelInicial <= nivelRecomendado &&
+                            x.NivelFinal >= nivelAtual)
                     .Select(
                         x => new TrilhaRecomendadaDto
                         {

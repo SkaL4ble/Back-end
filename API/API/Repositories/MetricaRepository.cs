@@ -18,10 +18,10 @@ namespace API.Repositories
         public async Task<FuncionarioMetrica?> ObterAtualAsync
             (Guid usuarioId, CancellationToken cancellationToken = default)
         {
-                return await _context.FuncionarioMetrica
-                .FirstOrDefaultAsync(
-                    x => x.UsuarioId == usuarioId,
-                    cancellationToken);
+            return await _context.FuncionarioMetrica
+            .FirstOrDefaultAsync(
+                x => x.UsuarioId == usuarioId,
+                cancellationToken);
         }
 
         public async Task<List<FuncionarioMetrica>>
@@ -66,7 +66,8 @@ namespace API.Repositories
                     x.DataCriacao <= periodoFim &&
                     (
                         !x.DataEntrega.HasValue ||
-                        x.DataEntrega.Value >= periodoInicio
+                        (x.DataEntrega.Value >= periodoInicio &&
+                         x.DataEntrega.Value <= periodoFim)
                     ))
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);

@@ -9,13 +9,10 @@ using API.Applications.Validacoes;
 using API.Contexts;
 using API.Interfaces;
 using API.Repositories;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Reflection;
-using System.Security.Claims;
-using System.Text;
+
 
 // CARREGA O .env
 DotNetEnv.Env.Load();

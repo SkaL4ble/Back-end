@@ -199,7 +199,7 @@ public class TicketRepository : ITicketRepository
             nome = _context.StatusTicket.Find(id).NomeStatusTicket;
             return nome;
         }
-         
+
     }
     public void MudarEstadoTicket(int ticketId, int statusTicketId)
     {
@@ -208,7 +208,7 @@ public class TicketRepository : ITicketRepository
             return;
 
         ticket.StatusTicketId = statusTicketId;
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
 
     public void AdicionarColaborador(int ticketId, Guid usuarioId)
@@ -259,8 +259,8 @@ public class TicketRepository : ITicketRepository
     public void EditarNome(int ticketId, string nome)
     {
         var ticket = _context.Ticket.Find(ticketId);
-        if(ticket is null)
-        ticket.NomeTicket = nome;
+        if (ticket is null)
+            ticket.NomeTicket = nome;
 
         _context.SaveChangesAsync();
     }

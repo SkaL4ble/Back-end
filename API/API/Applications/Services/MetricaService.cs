@@ -49,9 +49,7 @@ public class MetricaService
         }
 
         _service.RegistrarTicketConcluido(ticket);
-
-
-        _service.AdicionarExperienciaGeral(ticket.UsuarioResponsavel.Value, 10);
+        _service.RegistrarTicketEntregueNoPrazo(ticket);
 
         DateTime dataEntrega = ticket.DataEntrega ?? DateTime.UtcNow;
         FuncionarioMetrica metrica =
@@ -167,18 +165,21 @@ public class MetricaService
 
         metrica.TicketsAbertosAtrasados = 0;
         int diasAtraso = 0;
+        DateTime dataReferenciaAtraso = agora <= periodo.Fim ? agora : periodo.Fim;
 
         foreach (Ticket ticket in tickets)
         {
             if (!ticket.DataPrazo.HasValue ||
                 MetricaCalculos.EstaConcluido(ticket) ||
-                agora <= ticket.DataPrazo.Value)
+                dataReferenciaAtraso <= ticket.DataPrazo.Value)
             {
                 continue;
             }
 
             metrica.TicketsAbertosAtrasados++;
-            diasAtraso += MetricaCalculos.CalcularDiasAtraso(ticket.DataPrazo.Value, agora);
+            diasAtraso += MetricaCalculos.CalcularDiasAtraso(
+                ticket.DataPrazo.Value,
+                dataReferenciaAtraso);
         }
 
         metrica.DiasAtrasoAcumulados += diasAtraso;

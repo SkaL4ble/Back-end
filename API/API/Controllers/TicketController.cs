@@ -66,11 +66,11 @@ namespace API.Controllers
         /// <response code="204">Ticket atualizado com sucesso</response>
         /// <response code="400">Dados inválidos, ticket não encontrado ou relacionamento não encontrado</response>
         [HttpPut("{id:int}")]
-        public ActionResult Atualizar(int id, AtualizarTicketDto dto)
+        public async Task<ActionResult> Atualizar(int id, AtualizarTicketDto dto)
         {
             try
             {
-                _service.Atualizar(id, dto);
+                await _service.Atualizar(id, dto);
                 return NoContent();
             }
             catch (DomainException ex)
@@ -109,11 +109,11 @@ namespace API.Controllers
         /// <response code="204">Status do ticket alterado com sucesso</response>
         /// <response code="400">Ticket ou status não encontrado, ou ticket já está com este status</response>
         [HttpPatch("{id:int}/status/{statusTicketId:int}")]
-        public ActionResult MudarEstadoTicket(int id, int statusTicketId)
+        public async Task<ActionResult> MudarEstadoTicket(int id, int statusTicketId)
         {
             try
             {
-                _service.MudarEstadoTicket(id, statusTicketId);
+                await _service.MudarEstadoTicket(id, statusTicketId);
                 return NoContent();
             }
             catch (DomainException ex)

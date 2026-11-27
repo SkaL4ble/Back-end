@@ -16,13 +16,15 @@ public class TicketService
     private readonly GameficacaoService _gameficacaoService;
     private readonly MetricaService _metricaService;
     private readonly ValidacoesGerais _validacoes;
+    private readonly IStatusTicketRepository _statusTicketRepository;
 
-    public TicketService(ITicketRepository repository, MetricaService metricaService, ValidacoesGerais validacoes, GameficacaoService gameficacaoService)
+    public TicketService(ITicketRepository repository, MetricaService metricaService, ValidacoesGerais validacoes, GameficacaoService gameficacaoService, IStatusTicketRepository statusTicketRepository)
     {
         _repository = repository;
         _metricaService = metricaService;
         _validacoes = validacoes;
         _gameficacaoService = gameficacaoService;
+        _statusTicketRepository = statusTicketRepository;
     }
 
     //================================= VALIDAÇÕES ==========================================
@@ -87,21 +89,19 @@ public class TicketService
     public async Task AdicionarTicket(CriarTicketDto dto)
     {
         var nome = _validacoes.NormalizarNome(dto.NomeTicket);
-
         ValidarPrioridade(dto.Prioridade);
         ValidarRelacionamentos(dto.ProjetoId, dto.TipoTicketId,
             dto.StatusTicketId, dto.UsuarioResponsavel);
-
         var agora = DateTime.UtcNow;
         ValidarDatas(agora, dto.DataPrazo, null);
-
+        bool concluido = _statusTicketRepository.StatusConcluido(dto.StatusTicketId);
         var ticket = new Ticket
         {
             NomeTicket = nome,
             Prioridade = dto.Prioridade,
             DataCriacao = agora,
             DataPrazo = dto.DataPrazo,
-            DataEntrega = null,
+            DataEntrega = concluido ? agora : null,
             Ativo = true,
             UsuarioResponsavel = dto.UsuarioResponsavel,
             ProjetoId = dto.ProjetoId,
@@ -109,35 +109,30 @@ public class TicketService
             StatusTicketId = dto.StatusTicketId
         };
         _repository.AdicionarTicket(ticket);
-
-        string status = _repository.PegarNomeStatusTicket(dto.StatusTicketId);
-
-        if (status == "Concluido")
+        if (concluido)
             await _metricaService.RegistrarTicketConcluidoAsync(ticket);
         else
-            _metricaService.RegistrarTicketAtribuidoAsync(ticket);
+            await _metricaService.RegistrarTicketAtribuidoAsync(ticket);
     }
-
     public async Task Atualizar(int id, AtualizarTicketDto dto)
     {
         var ticket = BuscarAtivoOuFalhar(id);
-        var nome = _validacoes.NormalizarNome(dto.NomeTicket);
-
+        _validacoes.NormalizarNome(dto.NomeTicket);
         ValidarPrioridade(dto.Prioridade);
         ValidarRelacionamentos(dto.ProjetoId, dto.TipoTicketId,
             dto.StatusTicketId, dto.UsuarioResponsavel);
         ValidarDatas(ticket.DataCriacao, dto.DataPrazo, dto.DataEntrega);
 
+        bool jaConcluido = _statusTicketRepository.StatusConcluido(ticket.StatusTicketId);
         ConversaoTicket.AplicarAtualizacao(ticket, dto);
-
-        string status = _repository.PegarNomeStatusTicket(id);
-
-        if (status == "Concluido")
-            await _metricaService.RegistrarTicketConcluidoAsync(ticket);
+        bool concluidoAgora = _statusTicketRepository.StatusConcluido(dto.StatusTicketId);
+        if (concluidoAgora && !jaConcluido && !ticket.DataEntrega.HasValue)
+            ticket.DataEntrega = DateTime.UtcNow;
 
         _repository.AtualizarTicket(ticket);
+        if (concluidoAgora && !jaConcluido)
+            await _metricaService.RegistrarTicketConcluidoAsync(ticket);
     }
-
     public void Deletar(int id)
     {
         // Ticket já inativo (ou inexistente) => 404, o que torna o DELETE repetido previsível.
@@ -146,23 +141,25 @@ public class TicketService
     }
 
     //==================================== FUNCOES ====================================
-    public void MudarEstadoTicket(int ticketId, int statusTicketId)
+    public async Task MudarEstadoTicket(int ticketId, int statusTicketId)
     {
         var ticket = BuscarOuFalhar(ticketId);
-
         _validacoes.ValidarStatusTicket(statusTicketId);
-
         if (!ticket.Ativo)
             throw new DomainException("Não é possível alterar um ticket inativo");
-
         if (ticket.StatusTicketId == statusTicketId)
             throw new DomainException("O ticket já está com este status");
 
-        _metricaService.RegistrarTicketConcluidoAsync(ticket);
+        bool jaConcluido = _statusTicketRepository.StatusConcluido(ticket.StatusTicketId);
+        bool concluidoAgora = _statusTicketRepository.StatusConcluido(statusTicketId);
+        ticket.StatusTicketId = statusTicketId;
+        if (concluidoAgora && !jaConcluido && !ticket.DataEntrega.HasValue)
+            ticket.DataEntrega = DateTime.UtcNow;
 
         _repository.MudarEstadoTicket(ticketId, statusTicketId);
+        if (concluidoAgora && !jaConcluido)
+            await _metricaService.RegistrarTicketConcluidoAsync(ticket);
     }
-
     public void TransferirResponsavel(int ticketId, Guid usuarioId)
     {
         var ticket = BuscarOuFalhar(ticketId);
