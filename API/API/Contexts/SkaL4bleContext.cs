@@ -54,6 +54,8 @@ public partial class SkaL4bleContext : DbContext
 
     public virtual DbSet<TipoTicket> TipoTicket { get; set; }
 
+    public virtual DbSet<TipoTicketUsuario> TipoTicketUsuario { get; set; }
+
     public virtual DbSet<TipoUsuario> TipoUsuario { get; set; }
 
     public virtual DbSet<TokenRedefinicaoSenha> TokenRedefinicaoSenha { get; set; }
@@ -61,6 +63,8 @@ public partial class SkaL4bleContext : DbContext
     public virtual DbSet<TrilhaTreinamento> TrilhaTreinamento { get; set; }
 
     public virtual DbSet<TrilhaTreinamentoTecnologia> TrilhaTreinamentoTecnologia { get; set; }
+
+    public virtual DbSet<TrilhaTreinamentoTipoTicket> TrilhaTreinamentoTipoTicket { get; set; }
 
     public virtual DbSet<Usuario> Usuario { get; set; }
 
@@ -407,6 +411,24 @@ public partial class SkaL4bleContext : DbContext
                 .IsUnicode(false);
         });
 
+        modelBuilder.Entity<TipoTicketUsuario>(entity =>
+        {
+            entity.HasKey(e => new { e.UsuarioId, e.TipoTicketId });
+
+            entity.Property(e => e.AfinidadeMedia).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.DataAtualizacao).HasDefaultValueSql("(sysutcdatetime())", "DF_TipoTicketUsuario_Data");
+            entity.Property(e => e.ValorAtribuicoes).HasColumnType("decimal(18, 2)");
+
+            entity.HasOne(d => d.TipoTicket).WithMany(p => p.TipoTicketUsuario)
+                .HasForeignKey(d => d.TipoTicketId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TipoTicketUsuario_TipoTicket");
+
+            entity.HasOne(d => d.Usuario).WithMany(p => p.TipoTicketUsuario)
+                .HasForeignKey(d => d.UsuarioId)
+                .HasConstraintName("FK_TipoTicketUsuario_Usuario");
+        });
+
         modelBuilder.Entity<TipoUsuario>(entity =>
         {
             entity.HasIndex(e => e.CodigoTipoUsuario, "UQ_TipoUsuario_Codigo").IsUnique();
@@ -464,6 +486,23 @@ public partial class SkaL4bleContext : DbContext
             entity.HasOne(d => d.TrilhaTreinamento).WithMany(p => p.TrilhaTreinamentoTecnologia)
                 .HasForeignKey(d => d.TrilhaTreinamentoId)
                 .HasConstraintName("FK_TrilhaTreinamentoTecnologia_Trilha");
+        });
+
+        modelBuilder.Entity<TrilhaTreinamentoTipoTicket>(entity =>
+        {
+            entity.HasKey(e => new { e.TrilhaTreinamentoId, e.TipoTicketId });
+
+            entity.Property(e => e.Obrigatoria).HasDefaultValue(true, "DF_TrilhaTipoTicket_Obrigatoria");
+            entity.Property(e => e.Ordem).HasDefaultValue(1, "DF_TrilhaTipoTicket_Ordem");
+
+            entity.HasOne(d => d.TipoTicket).WithMany(p => p.TrilhaTreinamentoTipoTicket)
+                .HasForeignKey(d => d.TipoTicketId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TrilhaTipoTicket_TipoTicket");
+
+            entity.HasOne(d => d.TrilhaTreinamento).WithMany(p => p.TrilhaTreinamentoTipoTicket)
+                .HasForeignKey(d => d.TrilhaTreinamentoId)
+                .HasConstraintName("FK_TrilhaTipoTicket_Trilha");
         });
 
         modelBuilder.Entity<Usuario>(entity =>

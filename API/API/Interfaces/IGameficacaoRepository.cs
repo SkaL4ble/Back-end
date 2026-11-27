@@ -1,27 +1,35 @@
 ﻿using API.Domains;
-using API.DTOs;
+using API.DTOs.GameficacaoDto;
 
 namespace API.Interfaces;
 
 public interface IGameficacaoRepository
 {
+    // ================================ CONSULTAS ================================
+
     UsuarioGameficacao? ObterPorUsuarioId(Guid usuarioId);
 
-    List<TecnologiaUsuario> ListarTecnologiasPorUsuarioId(Guid usuarioId);
+    List<TipoTicketUsuario>ListarTiposTicketPorUsuarioId(Guid usuarioId);
 
-    TecnologiaUsuario? ObterTecnologiaDoUsuario(Guid usuarioId, int tecnologiaId);
+    TipoTicketUsuario? ObterTipoTicketDoUsuario(Guid usuarioId, int tipoTicketId);
 
-    List<DemandaTecnologiaDto> ListarDemandasTecnologicas();
+    List<DemandaTipoTicketDto> ListarDemandasPorTipoTicket();
 
-    List<TrilhaTreinamento> ListarTrilhasPorTecnologia(int tecnologiaId);
+    List<TrilhaTreinamento> ListarTrilhasPorTipoTicket(int tipoTicketId);
+
+    // ================================ CADASTRO ================================
 
     void AdicionarGameficacao(UsuarioGameficacao gameficacao);
 
+    void AdicionarTipoTicketUsuario(TipoTicketUsuario tipoTicketUsuario);
+
+    // ================================ ATUALIZAÇÃO ================================
+
     void AtualizarGameficacao(UsuarioGameficacao gameficacao);
 
-    void AdicionarTecnologiaUsuario( TecnologiaUsuario tecnologiaUsuario);
+    void AtualizarTipoTicketUsuario(TipoTicketUsuario tipoTicketUsuario);
 
-    void AtualizarTecnologiaUsuario(TecnologiaUsuario tecnologiaUsuario);
+    // ================================ PERSISTÊNCIA ================================
 
     void Salvar();
 }

@@ -1,10 +1,10 @@
 ﻿namespace API.DTOs.GameficacaoDto
 {
-    public class RecomendacaoTecnologiaDto
+    public class RecomendacaoTipoTicketDto
     {
-        public int TecnologiaId { get; set; }
+        public int TipoTicketId { get; set; }
 
-        public string NomeTecnologia { get; set; } = string.Empty;
+        public string NomeTipoTicket { get; set; } = string.Empty;
 
         public string TipoRecomendacao { get; set; } = string.Empty;
 

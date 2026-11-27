@@ -1,7 +1,7 @@
 ﻿
 using API.Contexts;
 using API.Domains;
-using API.DTOs;
+using API.DTOs.GameficacaoDto;
 using API.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,48 +24,44 @@ public class GameficacaoRepository : IGameficacaoRepository
             .FirstOrDefault(x => x.UsuarioId == usuarioId);
     }
 
-    public List<TecnologiaUsuario> ListarTecnologiasPorUsuarioId(Guid usuarioId)
+    public List<TipoTicketUsuario> ListarTiposTicketPorUsuarioId(Guid usuarioId)
     {
-        return _context.TecnologiaUsuario
-            .Include(x => x.Tecnologia)
+        return _context.TipoTicketUsuario
+            .Include(x => x.TipoTicket)
             .Where(x => x.UsuarioId == usuarioId)
-            .OrderByDescending(x => x.NivelTecnologia)
+            .OrderByDescending(x => x.NivelTipoTicket)
             .ThenByDescending(x => x.AfinidadeMedia)
             .ToList();
     }
 
-    public TecnologiaUsuario? ObterTecnologiaDoUsuario(Guid usuarioId, int tecnologiaId)
+    public TipoTicketUsuario? ObterTipoTicketDoUsuario(Guid usuarioId, int tipoTicketId)
     {
-        return _context.TecnologiaUsuario
-            .Include(x => x.Tecnologia)
+        return _context.TipoTicketUsuario
+            .Include(x => x.TipoTicket)
             .FirstOrDefault(
                 x =>
                     x.UsuarioId == usuarioId &&
-                    x.TecnologiaId == tecnologiaId);
+                    x.TipoTicketId == tipoTicketId);
     }
 
-    public List<DemandaTecnologiaDto> ListarDemandasTecnologicas()
+    public List<DemandaTipoTicketDto> ListarDemandasPorTipoTicket()
     {
-        var demandas = _context.ProjetoTecnologia
+        return _context.Ticket
             .AsNoTracking()
-            .SelectMany(
-                projetoTecnologia =>
-                    _context.Ticket
-                        .Where(
-                            ticket =>
-                                ticket.Ativo &&
-                                ticket.ProjetoId == projetoTecnologia.ProjetoId)
-                        .Select(
-                            ticket => new
-                            {
-                                projetoTecnologia.TecnologiaId,
-                                ticket.ProjetoId
-                            }))
-            .GroupBy(x => x.TecnologiaId)
-            .Select(
-                grupo => new DemandaTecnologiaDto
+            .Include(x => x.TipoTicket)
+            .Where(x => x.Ativo)
+            .GroupBy(
+                x => new
                 {
-                    TecnologiaId = grupo.Key,
+                    x.TipoTicketId,
+                    x.TipoTicket.NomeTipoTicket
+                })
+            .Select(
+                grupo => new DemandaTipoTicketDto
+                {
+                    TipoTicketId = grupo.Key.TipoTicketId,
+
+                    NomeTipoTicket = grupo.Key.NomeTipoTicket,
 
                     QuantidadeTickets = grupo.Count(),
 
@@ -74,35 +70,19 @@ public class GameficacaoRepository : IGameficacaoRepository
                         .Distinct()
                         .Count()
                 })
+            .OrderByDescending(x => x.QuantidadeTickets)
             .ToList();
-
-        var tecnologiaIds = demandas
-            .Select(x => x.TecnologiaId)
-            .ToList();
-
-        var tecnologias = _context.Tecnologia
-            .Where(x => tecnologiaIds.Contains(x.TecnologiaId))
-            .ToDictionary(
-                x => x.TecnologiaId,
-                x => x.NomeTecnologia);
-
-        foreach (var demanda in demandas)
-        {
-            if (tecnologias.TryGetValue( demanda.TecnologiaId, out var nomeTecnologia))
-            {
-                demanda.NomeTecnologia = nomeTecnologia;
-            }
-        }
-
-        return demandas;
     }
 
-    public List<TrilhaTreinamento> ListarTrilhasPorTecnologia(int tecnologiaId)
+    public List<TrilhaTreinamento> ListarTrilhasPorTipoTicket(int tipoTicketId)
     {
         return _context.TrilhaTreinamento
-            .Include(x => x.TrilhaTreinamentoTecnologia
-                .Where(x => x.TecnologiaId == tecnologiaId))
-            .Where(x => x.Ativa)
+            .Include(x => x.TrilhaTreinamentoTipoTicket)
+            .Where(
+                x =>
+                    x.Ativa &&
+                    x.TrilhaTreinamentoTipoTicket
+                        .Any(y => y.TipoTicketId == tipoTicketId))
             .OrderBy(x => x.NivelInicial)
             .ToList();
     }
@@ -114,9 +94,9 @@ public class GameficacaoRepository : IGameficacaoRepository
         _context.UsuarioGameficacao.Add(gameficacao);
     }
 
-    public void AdicionarTecnologiaUsuario(TecnologiaUsuario tecnologiaUsuario)
+    public void AdicionarTipoTicketUsuario(TipoTicketUsuario tipoTicketUsuario)
     {
-        _context.TecnologiaUsuario.Add(tecnologiaUsuario);
+        _context.TipoTicketUsuario.Add(tipoTicketUsuario);
     }
 
     // ================================ ATUALIZAÇÃO ================================
@@ -126,9 +106,9 @@ public class GameficacaoRepository : IGameficacaoRepository
         _context.UsuarioGameficacao.Update(gameficacao);
     }
 
-    public void AtualizarTecnologiaUsuario(TecnologiaUsuario tecnologiaUsuario)
+    public void AtualizarTipoTicketUsuario(TipoTicketUsuario tipoTicketUsuario)
     {
-        _context.TecnologiaUsuario.Update(tecnologiaUsuario);
+        _context.TipoTicketUsuario.Update(tipoTicketUsuario);
     }
 
     // ================================ PERSISTÊNCIA ================================

@@ -138,7 +138,8 @@ public class ProjetoSonarService
 
     // ============================== CONSULTAS E TOKENS ==============================
 
-    public ListarProjetoSonarDto ObterPorId(Guid id) {
+    public ListarProjetoSonarDto ObterPorId(Guid id)
+    {
         var usuario = ConversaoSonarQube.ConverterParaDto(BuscarOuFalharSonar(id), _urlBase);
         if (usuario == null)
             throw new DomainException("ID invaliado");
@@ -181,7 +182,8 @@ public class ProjetoSonarService
             ProjetoSonarId = projetoSonar.ProjetoSonarId,
             ChaveSonar = projetoSonar.ChaveSonar,
             TokenSonar = token,
-            UrlSonarQube = _urlBase,            Branch = branch,
+            UrlSonarQube = _urlBase,
+            Branch = branch,
             ConteudoYaml = yaml,
             SecretsGithub = new List<SecretWorkFlowDto>
             {
@@ -327,144 +329,144 @@ public class ProjetoSonarService
     }
 
     private static bool EhIssueDeManutencao(IssueSonarDto issue)
-{
-    return string.Equals(
-        issue.Tipo,
-        "CODE_SMELL",
-        StringComparison.OrdinalIgnoreCase);
-}
-
-private static bool EhIssueDeConfiabilidade(IssueSonarDto issue)
-{
-    return string.Equals(
-        issue.Tipo,
-        "BUG",
-        StringComparison.OrdinalIgnoreCase);
-}
-
-private static bool EhIssueDeSeguranca(IssueSonarDto issue)
-{
-    return string.Equals(
-               issue.Tipo,
-               "VULNERABILITY",
-               StringComparison.OrdinalIgnoreCase)
-           ||
-           string.Equals(
-               issue.Tipo,
-               "SECURITY_HOTSPOT",
-               StringComparison.OrdinalIgnoreCase);
-}
-
-
-private static decimal CalcularNivel(
-    IReadOnlyCollection<IssueSonarDto> issues)
-{
-    if (issues.Count == 0)
-        return 100m;
-
-    var media = issues
-        .Select(issue => PontuacaoDaIssue(issue.Severidade))
-        .Average();
-
-    return Math.Round(
-        Math.Clamp((decimal)media, 0m, 100m),
-        2,
-        MidpointRounding.AwayFromZero);
-}
-
-private static decimal CalcularMediaGeral(
-    decimal manutencao,
-    decimal confiabilidade,
-    decimal seguranca)
-{
-    return Math.Round(
-        (manutencao + confiabilidade + seguranca) / 3m,
-        2,
-        MidpointRounding.AwayFromZero);
-}
-
-private static decimal PontuacaoDaIssue(string? severidade)
-{
-    var penalidade = severidade?.Trim().ToUpperInvariant() switch
     {
-        "INFO" => 2m,
-        "MINOR" => 10m,
-        "MAJOR" => 25m,
-        "CRITICAL" => 50m,
-        "BLOCKER" => 80m,
-        _ => 25m
-    };
-
-    return 100m - penalidade;
-}
-
-private static void AdicionarSeveridade(
-    MetricasAutorSonarDto metricas,
-    string? severidade)
-{
-    switch (severidade?.Trim().ToUpperInvariant())
-    {
-        case "INFO":
-            metricas.IssuesInfo++;
-            break;
-
-        case "MINOR":
-            metricas.IssuesBaixa++;
-            break;
-
-        case "MAJOR":
-            metricas.IssuesMedia++;
-            break;
-
-        case "CRITICAL":
-            metricas.IssuesAlta++;
-            break;
-
-        case "BLOCKER":
-            metricas.IssuesBloqueadora++;
-            break;
+        return string.Equals(
+            issue.Tipo,
+            "CODE_SMELL",
+            StringComparison.OrdinalIgnoreCase);
     }
-}
 
-private static int ConverterEsforcoParaMinutos(
-    string? esforco)
-{
-    if (string.IsNullOrWhiteSpace(esforco))
+    private static bool EhIssueDeConfiabilidade(IssueSonarDto issue)
+    {
+        return string.Equals(
+            issue.Tipo,
+            "BUG",
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool EhIssueDeSeguranca(IssueSonarDto issue)
+    {
+        return string.Equals(
+                   issue.Tipo,
+                   "VULNERABILITY",
+                   StringComparison.OrdinalIgnoreCase)
+               ||
+               string.Equals(
+                   issue.Tipo,
+                   "SECURITY_HOTSPOT",
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
+
+    private static decimal CalcularNivel(
+        IReadOnlyCollection<IssueSonarDto> issues)
+    {
+        if (issues.Count == 0)
+            return 100m;
+
+        var media = issues
+            .Select(issue => PontuacaoDaIssue(issue.Severidade))
+            .Average();
+
+        return Math.Round(
+            Math.Clamp((decimal)media, 0m, 100m),
+            2,
+            MidpointRounding.AwayFromZero);
+    }
+
+    private static decimal CalcularMediaGeral(
+        decimal manutencao,
+        decimal confiabilidade,
+        decimal seguranca)
+    {
+        return Math.Round(
+            (manutencao + confiabilidade + seguranca) / 3m,
+            2,
+            MidpointRounding.AwayFromZero);
+    }
+
+    private static decimal PontuacaoDaIssue(string? severidade)
+    {
+        var penalidade = severidade?.Trim().ToUpperInvariant() switch
+        {
+            "INFO" => 2m,
+            "MINOR" => 10m,
+            "MAJOR" => 25m,
+            "CRITICAL" => 50m,
+            "BLOCKER" => 80m,
+            _ => 25m
+        };
+
+        return 100m - penalidade;
+    }
+
+    private static void AdicionarSeveridade(
+        MetricasAutorSonarDto metricas,
+        string? severidade)
+    {
+        switch (severidade?.Trim().ToUpperInvariant())
+        {
+            case "INFO":
+                metricas.IssuesInfo++;
+                break;
+
+            case "MINOR":
+                metricas.IssuesBaixa++;
+                break;
+
+            case "MAJOR":
+                metricas.IssuesMedia++;
+                break;
+
+            case "CRITICAL":
+                metricas.IssuesAlta++;
+                break;
+
+            case "BLOCKER":
+                metricas.IssuesBloqueadora++;
+                break;
+        }
+    }
+
+    private static int ConverterEsforcoParaMinutos(
+        string? esforco)
+    {
+        if (string.IsNullOrWhiteSpace(esforco))
+            return 0;
+
+        var valor = esforco.Trim().ToLowerInvariant();
+
+        if (valor.EndsWith("min") &&
+            decimal.TryParse(
+                valor[..^3].Trim(),
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var minutos))
+        {
+            return (int)Math.Round(minutos);
+        }
+
+        if (valor.EndsWith("h") &&
+            decimal.TryParse(
+                valor[..^1].Trim(),
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var horas))
+        {
+            return (int)Math.Round(horas * 60m);
+        }
+
+        if (valor.EndsWith("d") &&
+            decimal.TryParse(
+                valor[..^1].Trim(),
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var dias))
+        {
+            // Um dia de trabalho do SonarQube equivale a 8 horas.
+            return (int)Math.Round(dias * 8m * 60m);
+        }
+
         return 0;
-
-    var valor = esforco.Trim().ToLowerInvariant();
-
-    if (valor.EndsWith("min") &&
-        decimal.TryParse(
-            valor[..^3].Trim(),
-            System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture,
-            out var minutos))
-    {
-        return (int)Math.Round(minutos);
     }
-
-    if (valor.EndsWith("h") &&
-        decimal.TryParse(
-            valor[..^1].Trim(),
-            System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture,
-            out var horas))
-    {
-        return (int)Math.Round(horas * 60m);
-    }
-
-    if (valor.EndsWith("d") &&
-        decimal.TryParse(
-            valor[..^1].Trim(),
-            System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture,
-            out var dias))
-    {
-        // Um dia de trabalho do SonarQube equivale a 8 horas.
-        return (int)Math.Round(dias * 8m * 60m);
-    }
-
-    return 0;
-}
 }

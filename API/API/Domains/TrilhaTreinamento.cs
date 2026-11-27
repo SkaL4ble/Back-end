@@ -18,4 +18,6 @@ public partial class TrilhaTreinamento
     public bool Ativa { get; set; }
 
     public virtual ICollection<TrilhaTreinamentoTecnologia> TrilhaTreinamentoTecnologia { get; set; } = new List<TrilhaTreinamentoTecnologia>();
+
+    public virtual ICollection<TrilhaTreinamentoTipoTicket> TrilhaTreinamentoTipoTicket { get; set; } = new List<TrilhaTreinamentoTipoTicket>();
 }

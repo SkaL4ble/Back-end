@@ -17,7 +17,7 @@ public class TicketService
     private readonly MetricaService _metricaService;
     private readonly ValidacoesGerais _validacoes;
 
-    public TicketService(ITicketRepository repository, MetricaService metricaService, ValidacoesGerais validacoes, GameficacaoService gameficacaoService) 
+    public TicketService(ITicketRepository repository, MetricaService metricaService, ValidacoesGerais validacoes, GameficacaoService gameficacaoService)
     {
         _repository = repository;
         _metricaService = metricaService;
@@ -38,7 +38,7 @@ public class TicketService
     {
         var ticket = BuscarOuFalhar(id);
         if (!ticket.Ativo)
-            throw new DomainException   ("Ticket não encontrado");
+            throw new DomainException("Ticket não encontrado");
 
         return ticket;
     }
@@ -68,7 +68,7 @@ public class TicketService
         if (usuarioResponsavel.HasValue)
         {
             _validacoes.ValidarUsuario(usuarioResponsavel);
-            if(!_repository.UsuarioParticipaDoProjeto(usuarioResponsavel.Value, projetoId))
+            if (!_repository.UsuarioParticipaDoProjeto(usuarioResponsavel.Value, projetoId))
             {
                 throw new DomainException("Usuario nao participa do projeto");
             }
@@ -79,7 +79,7 @@ public class TicketService
         tickets.Select(ConversaoTicket.ConverterParaDto).ToList();
 
     //========================================= CRUD =========================================
-    public ListarTicketDto ObterPorId(int id) 
+    public ListarTicketDto ObterPorId(int id)
     {
         return ConversaoTicket.ConverterParaDto(BuscarAtivoOuFalhar(id));
     }
@@ -115,7 +115,7 @@ public class TicketService
         if (status == "Concluido")
             await _metricaService.RegistrarTicketConcluidoAsync(ticket);
         else
-        _metricaService.RegistrarTicketAtribuidoAsync(ticket);
+            _metricaService.RegistrarTicketAtribuidoAsync(ticket);
     }
 
     public async Task Atualizar(int id, AtualizarTicketDto dto)
@@ -157,6 +157,8 @@ public class TicketService
 
         if (ticket.StatusTicketId == statusTicketId)
             throw new DomainException("O ticket já está com este status");
+
+        _metricaService.RegistrarTicketConcluidoAsync(ticket);
 
         _repository.MudarEstadoTicket(ticketId, statusTicketId);
     }

@@ -32,6 +32,18 @@ namespace API.Repositories
             return _context.StatusTicket.Any(s => s.NomeStatusTicket == nome);
         }
 
+        public bool StatusConcluido(int id)
+        {
+            if(_context.StatusTicket.Find(id).NomeStatusTicket == "Concluido")
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         public bool PossuiTickets(int id)
         {
             return _context.StatusTicket.Any(s =>

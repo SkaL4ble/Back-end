@@ -36,7 +36,7 @@ namespace API.Controllers
         {
             try
             {
-                var metricas = await _service .ObterMetricasPorFuncionarioAsync(usuarioId, cancellationToken);
+                var metricas = await _service.ObterMetricasPorFuncionarioAsync(usuarioId, cancellationToken);
                 return Ok(metricas);
             }
             catch (DomainException ex)

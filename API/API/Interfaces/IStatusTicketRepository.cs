@@ -8,6 +8,7 @@ namespace API.Interfaces
         StatusTicket? ObterPorId(int id);
         bool NomeStatusTicketExiste(string nome);
         bool PossuiTickets(int id);
+        bool StatusConcluido(int id);
         void Adicionar(StatusTicket statusTicket);
         void Atualizar(int id, StatusTicket statusTicket);
         void Deletar(int id);

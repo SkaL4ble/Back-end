@@ -1,113 +1,114 @@
-﻿using API.Applications.Auxiliares;
-using API.Domains;
+﻿using API.Domains;
 using API.DTOs;
 using API.DTOs.GameficacaoDto;
 
-namespace API.Applications.Conversoes.ConversoesDeDto
+namespace API.Applications.Conversoes.ConversoesDeDto;
+
+public class ConversaoGameficacao
 {
-    public class ConversaoGameficacao
+    public static ListarGameficacaoDto ConverterParaDto(
+        UsuarioGameficacao gameficacao,
+        List<TipoTicketUsuario> tiposTicket,
+        List<RecomendacaoTipoTicketDto> recomendacoes)
     {
-        public static ListarGameficacaoDto ConverterParaDto(UsuarioGameficacao gameficacao, List<TecnologiaUsuario> tecnologias, List<RecomendacaoTecnologiaDto> recomendacoes)
+        return new ListarGameficacaoDto
         {
-            return new ListarGameficacaoDto
-            {
-                UsuarioId = gameficacao.UsuarioId,
+            UsuarioId =
+                gameficacao.UsuarioId,
 
-                ExperienciaTotal = gameficacao.ExperienciaTotal,
+            ExperienciaTotal =
+                gameficacao.ExperienciaTotal,
 
-                NivelGeral = gameficacao.NivelGeral,
+            NivelGeral =
+                gameficacao.NivelGeral,
 
-                DataAtualizacao = gameficacao.DataAtualizacao,
+            DataAtualizacao =
+                gameficacao.DataAtualizacao,
 
-                Tecnologias = tecnologias
-                    .Select(ConverterTecnologia)
+            TiposTicket =
+                tiposTicket
+                    .Select(
+                        ConverterTipoTicket)
                     .ToList(),
 
-                Recomendacoes = recomendacoes
-            };
-        }
+            Recomendacoes =
+                recomendacoes
+        };
+    }
 
-        public static ListarTecnologiaGameficacaoDto ConverterTecnologia(TecnologiaUsuario tecnologia)
+    public static ListarTipoTicketGameficacaoDto
+        ConverterTipoTicket(
+            TipoTicketUsuario tipoTicket)
+    {
+        return new ListarTipoTicketGameficacaoDto
         {
-            return new ListarTecnologiaGameficacaoDto
-            {
-                TecnologiaId = tecnologia.TecnologiaId,
+            TipoTicketId =
+                tipoTicket.TipoTicketId,
 
-                NomeTecnologia = tecnologia.Tecnologia.NomeTecnologia,
+            NomeTipoTicket =
+                tipoTicket.TipoTicket
+                    .NomeTipoTicket,
 
-                AfinidadeMedia = tecnologia.AfinidadeMedia,
+            AfinidadeMedia =
+                tipoTicket.AfinidadeMedia,
 
-                ExperienciaTecnologia = tecnologia.ExperienciaTecnologia,
+            ExperienciaTipoTicket =
+                tipoTicket
+                    .ExperienciaTipoTicket,
 
-                NivelTecnologia = tecnologia.NivelTecnologia,
+            NivelTipoTicket =
+                tipoTicket
+                    .NivelTipoTicket,
 
-                NumeroAtribuicoes = tecnologia.NumeroAtribuicoes
-            };
-        }
+            NumeroAtribuicoes =
+                tipoTicket
+                    .NumeroAtribuicoes
+        };
+    }
 
-        public static RecomendacaoTecnologiaDto DemandaParaRecomendacao(DemandaTecnologiaDto demanda, int nivelAtual, string tipoRecomendacao, 
-            decimal prioridade, List<TrilhaTreinamento> trilhas, string justificativa, int nivelRecomendado)
+    public static TipoTicketUsuario
+        CriarTipoTicketUsuario(
+            Guid usuarioId,
+            int tipoTicketId,
+            int quantidade,
+            decimal? pontuacao)
+    {
+        var nota =
+            Math.Clamp(
+                pontuacao ?? 0,
+                0,
+                100);
+
+        return new TipoTicketUsuario
         {
-            return new RecomendacaoTecnologiaDto
-            {
-                TecnologiaId = demanda.TecnologiaId,
+            UsuarioId =
+                usuarioId,
 
-                NomeTecnologia = demanda.NomeTecnologia,
+            TipoTicketId =
+                tipoTicketId,
 
-                TipoRecomendacao = tipoRecomendacao,
+            AfinidadeMedia =
+                nota,
 
-                Justificativa = justificativa,
+            ExperienciaTipoTicket =
+                quantidade,
 
-                NivelAtual = nivelAtual,
+            NivelTipoTicket =
+                Applications.Auxiliares
+                    .CalcularNivelGameficacao
+                    .CalcularNivel(
+                        quantidade),
 
-                NivelRecomendado = nivelRecomendado,
+            NumeroAtribuicoes =
+                pontuacao.HasValue
+                    ? 1
+                    : 0,
 
-                QuantidadeTicketsRelacionados = demanda.QuantidadeTickets,
+            ValorAtribuicoes =
+                pontuacao ?? 0,
 
-                QuantidadeProjetosRelacionados = demanda.QuantidadeProjetos,
-
-                Prioridade = prioridade,
-
-                Trilhas = trilhas
-                    .Where(x => x.NivelFinal >= nivelAtual)
-                    .Select(x => new TrilhaRecomendadaDto
-                    {
-                        TrilhaTreinamentoId = x.TrilhaTreinamentoId,
-
-                        NomeTrilha = x.NomeTrilha,
-
-                        Descricao = x.Descricao,
-
-                        NivelInicial = x.NivelInicial,
-
-                        NivelFinal = x.NivelFinal
-                    })
-                    .ToList()
-            };
-        }
-
-        public static TecnologiaUsuario CriarTecnologiaUsuario(Guid usuarioId, int tecnologiaId, int quantidade, decimal? pontuacao)
-        {
-            var pontuacaoInicial = CalcularNivelGameficacao.LimitarNota(pontuacao ?? 0);
-
-            return new TecnologiaUsuario
-            {
-                UsuarioId = usuarioId,
-
-                TecnologiaId = tecnologiaId,
-
-                AfinidadeMedia = pontuacaoInicial,
-
-                ExperienciaTecnologia = quantidade,
-
-                NivelTecnologia = CalcularNivelGameficacao.CalcularNivel(quantidade),
-
-                NumeroAtribuicoes = pontuacao.HasValue ? 1 : 0,
-
-                ValorAtribuicoes = pontuacao ?? 0,
-
-                DataAtualizacao = DateTime.UtcNow
-            };
-        }
+            DataAtualizacao =
+                DateTime.UtcNow
+        };
     }
 }

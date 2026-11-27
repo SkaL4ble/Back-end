@@ -1,6 +1,4 @@
-﻿using API.DTOs.GameficacaoDto;
-
-namespace API.DTOs;
+﻿namespace API.DTOs.GameficacaoDto;
 
 public class ListarGameficacaoDto
 {
@@ -12,7 +10,11 @@ public class ListarGameficacaoDto
 
     public DateTime DataAtualizacao { get; set; }
 
-    public List<ListarTecnologiaGameficacaoDto> Tecnologias { get; set; } = new();
+    public List<ListarTipoTicketGameficacaoDto>
+        TiposTicket
+    { get; set; } = new();
 
-    public List<RecomendacaoTecnologiaDto> Recomendacoes { get; set; } = new();
+    public List<RecomendacaoTipoTicketDto>
+        Recomendacoes
+    { get; set; } = new();
 }

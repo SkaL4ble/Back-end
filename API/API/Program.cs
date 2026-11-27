@@ -1,5 +1,6 @@
 
 using API.Applications.Autenticacao;
+using API.Applications.Auxiliares;
 using API.Applications.Services;
 using API.Applications.Services.SonarCube;
 using API.Applications.Services.Status;
@@ -151,6 +152,7 @@ builder.Services.AddScoped<CriptografiaService>();
 // ====================== GAMEFICACAO ======================
 builder.Services.AddScoped<IGameficacaoRepository, GameficacaoRepository>();
 builder.Services.AddScoped<GameficacaoService>();
+builder.Services.AddScoped<CriarRecomendacaoTreinamento>();
 
 builder.Services.AddOpenApi();
 

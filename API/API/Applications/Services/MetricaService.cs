@@ -10,11 +10,13 @@ public class MetricaService
 {
     private readonly IMetricaRepository _repository;
     private readonly GameficacaoService _service;
+    private readonly IStatusTicketRepository _repositoryStatusTicket;
 
-    public MetricaService(IMetricaRepository repository, GameficacaoService service)
+    public MetricaService(IMetricaRepository repository, GameficacaoService service, IStatusTicketRepository repositoryStatusTicket)
     {
         _repository = repository;
         _service = service;
+        _repositoryStatusTicket = repositoryStatusTicket;
     }
 
     public async Task RegistrarTicketAtribuidoAsync(Ticket ticket, CancellationToken cancellationToken = default)
@@ -41,10 +43,18 @@ public class MetricaService
             return;
         }
 
+        if (!_repositoryStatusTicket.StatusConcluido(ticket.StatusTicketId))
+        {
+            return;
+        }
+
+        _service.RegistrarTicketConcluido(ticket);
+
+
         _service.AdicionarExperienciaGeral(ticket.UsuarioResponsavel.Value, 10);
 
         DateTime dataEntrega = ticket.DataEntrega ?? DateTime.UtcNow;
-        FuncionarioMetrica metrica = 
+        FuncionarioMetrica metrica =
             await ObterOuCriarAtualAsync(
                 ticket.UsuarioResponsavel.Value,
                 dataEntrega,

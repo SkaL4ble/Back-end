@@ -47,6 +47,8 @@ public partial class Usuario
 
     public virtual ICollection<TicketUsuario> TicketUsuario { get; set; } = new List<TicketUsuario>();
 
+    public virtual ICollection<TipoTicketUsuario> TipoTicketUsuario { get; set; } = new List<TipoTicketUsuario>();
+
     public virtual TipoUsuario TipoUsuario { get; set; } = null!;
 
     public virtual ICollection<TokenRedefinicaoSenha> TokenRedefinicaoSenha { get; set; } = new List<TokenRedefinicaoSenha>();

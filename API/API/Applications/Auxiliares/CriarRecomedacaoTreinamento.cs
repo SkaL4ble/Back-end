@@ -1,89 +1,187 @@
 ﻿using API.Applications.Conversoes.ConversoesDeDto;
 using API.Domains;
-using API.DTOs;
 using API.DTOs.GameficacaoDto;
 using API.Interfaces;
 
-namespace API.Applications.Auxiliares
+namespace API.Applications.Auxiliares;
+
+public class CriarRecomendacaoTreinamento
 {
-    public class CriarRecomedacaoTreinamento
+    private readonly IGameficacaoRepository
+        _repository;
+
+    public CriarRecomendacaoTreinamento(
+        IGameficacaoRepository repository)
     {
-        private readonly IGameficacaoRepository _repository;
-        public CriarRecomedacaoTreinamento(IGameficacaoRepository repository)
+        _repository = repository;
+    }
+
+    public List<RecomendacaoTipoTicketDto>
+        CriarRecomendacoes(
+            List<TipoTicketUsuario>
+                tiposTicketUsuario)
+    {
+        var demandas =
+            _repository.ListarDemandasPorTipoTicket();
+
+        var tiposConhecidos =
+            tiposTicketUsuario
+                .ToDictionary(
+                    x => x.TipoTicketId);
+
+        var recomendacoes =
+            new List<RecomendacaoTipoTicketDto>();
+
+        foreach (var demanda in demandas)
         {
-            _repository = repository;
+            tiposConhecidos.TryGetValue(
+                demanda.TipoTicketId,
+                out var tipoTicketUsuario);
+
+            var nivelAtual =
+                tipoTicketUsuario?
+                    .NivelTipoTicket ?? 0;
+
+            var tipoRecomendacao =
+                ObterTipoRecomendacao(
+                    nivelAtual);
+
+            if (tipoRecomendacao is null)
+                continue;
+
+            var prioridade =
+                CalcularPrioridade(
+                    demanda,
+                    nivelAtual);
+
+            var trilhas =
+                _repository.ListarTrilhasPorTipoTicket(
+                    demanda.TipoTicketId);
+
+            recomendacoes.Add(
+                CriarRecomendacao(
+                    demanda,
+                    nivelAtual,
+                    tipoRecomendacao,
+                    prioridade,
+                    trilhas));
         }
 
-        public RecomendacaoTecnologiaDto CriarRecomendacao(DemandaTecnologiaDto demanda, int nivelAtual, string tipoRecomendacao, decimal prioridade, List<TrilhaTreinamento> trilhas)
+        return recomendacoes
+            .OrderByDescending(
+                x => x.Prioridade)
+            .ThenByDescending(
+                x => x.QuantidadeTicketsRelacionados)
+            .Take(10)
+            .ToList();
+    }
+
+    private static string?
+        ObterTipoRecomendacao(
+            int nivelAtual)
+    {
+        if (nivelAtual == 0)
+            return "Aprender";
+
+        if (nivelAtual < 7)
+            return "Melhorar";
+
+        return null;
+    }
+
+    private static decimal CalcularPrioridade(
+        DemandaTipoTicketDto demanda,
+        int nivelAtual)
+    {
+        return demanda.QuantidadeTickets
+            * (11 - nivelAtual);
+    }
+
+    private static RecomendacaoTipoTicketDto
+        CriarRecomendacao(
+            DemandaTipoTicketDto demanda,
+            int nivelAtual,
+            string tipoRecomendacao,
+            decimal prioridade,
+            List<TrilhaTreinamento> trilhas)
+    {
+        var nivelRecomendado =
+            Math.Min(
+                10,
+                nivelAtual + 3);
+
+        var justificativa =
+            tipoRecomendacao == "Aprender"
+                ? $"O tipo de ticket " +
+                  $"{demanda.NomeTipoTicket} possui " +
+                  $"{demanda.QuantidadeTickets} " +
+                  $"ticket(s) em " +
+                  $"{demanda.QuantidadeProjetos} " +
+                  $"projeto(s). O funcionário " +
+                  $"está no nível 0."
+                : $"O tipo de ticket " +
+                  $"{demanda.NomeTipoTicket} possui " +
+                  $"{demanda.QuantidadeTickets} " +
+                  $"ticket(s) em " +
+                  $"{demanda.QuantidadeProjetos} " +
+                  $"projeto(s). O funcionário " +
+                  $"está no nível {nivelAtual} " +
+                  $"e pode melhorar.";
+
+        return new RecomendacaoTipoTicketDto
         {
-            var nivelRecomendado = Math.Min(10, nivelAtual + 3);
+            TipoTicketId =
+                demanda.TipoTicketId,
 
-            var justificativa =
-                tipoRecomendacao == "Aprender"
-                    ? $"A tecnologia {demanda.NomeTecnologia} " +
-                      $"está presente em " +
-                      $"{demanda.QuantidadeProjetos} projeto(s) " +
-                      $"e possui " +
-                      $"{demanda.QuantidadeTickets} ticket(s) " +
-                      $"relacionado(s). O funcionário está " +
-                      $"no nível 0."
-                    : $"A tecnologia {demanda.NomeTecnologia} " +
-                      $"possui demanda em " +
-                      $"{demanda.QuantidadeProjetos} projeto(s) " +
-                      $"e " +
-                      $"{demanda.QuantidadeTickets} ticket(s). " +
-                      $"O funcionário está no nível " +
-                      $"{nivelAtual} e pode melhorar.";
+            NomeTipoTicket =
+                demanda.NomeTipoTicket,
 
-            return ConversaoGameficacao.DemandaParaRecomendacao(demanda, nivelAtual, tipoRecomendacao, prioridade, trilhas, justificativa, nivelRecomendado);
-        }
-        private static string? ObterTipoRecomendacao(int nivelAtual)
-        {
-            if (nivelAtual == 0)
-                return "Aprender";
+            TipoRecomendacao =
+                tipoRecomendacao,
 
-            if (nivelAtual < 7)
-                return "Melhorar";
+            Justificativa =
+                justificativa,
 
-            return null;
-        }
+            NivelAtual =
+                nivelAtual,
 
-        private static decimal CalcularPrioridade(DemandaTecnologiaDto demanda, int nivelAtual)
-        {
-            return demanda.QuantidadeTickets * (11 - nivelAtual);
-        }
+            NivelRecomendado =
+                nivelRecomendado,
 
-        public List<RecomendacaoTecnologiaDto> CriarRecomendacoes(List<TecnologiaUsuario> tecnologiasUsuario)
-        {
-            var demandas = _repository.ListarDemandasTecnologicas();
+            QuantidadeTicketsRelacionados =
+                demanda.QuantidadeTickets,
 
-            var tecnologiasConhecidas = tecnologiasUsuario.ToDictionary(x => x.TecnologiaId);
+            QuantidadeProjetosRelacionados =
+                demanda.QuantidadeProjetos,
 
-            var recomendacoes = new List<RecomendacaoTecnologiaDto>();
+            Prioridade =
+                prioridade,
 
-            foreach (var demanda in demandas)
-            {
-                tecnologiasConhecidas.TryGetValue(demanda.TecnologiaId, out var tecnologiaUsuario);
+            Trilhas =
+                trilhas
+                    .Where(
+                        x =>
+                            x.NivelFinal >=
+                            nivelAtual)
+                    .Select(
+                        x => new TrilhaRecomendadaDto
+                        {
+                            TrilhaTreinamentoId =
+                                x.TrilhaTreinamentoId,
 
-                var nivelAtual = tecnologiaUsuario?.NivelTecnologia ?? 0;
+                            NomeTrilha =
+                                x.NomeTrilha,
 
-                var tipoRecomendacao = ObterTipoRecomendacao(nivelAtual);
+                            Descricao =
+                                x.Descricao,
 
-                if (tipoRecomendacao is null)
-                    continue;
+                            NivelInicial =
+                                x.NivelInicial,
 
-                var prioridade = CalcularPrioridade(demanda, nivelAtual);
-
-                var trilhas = _repository.ListarTrilhasPorTecnologia(demanda.TecnologiaId);
-
-                recomendacoes.Add(CriarRecomendacao(demanda, nivelAtual, tipoRecomendacao, prioridade, trilhas));
-            }
-
-            return recomendacoes
-                .OrderByDescending(x => x.Prioridade)
-                .ThenByDescending(x => x.QuantidadeTicketsRelacionados)
-                .Take(10)
-                .ToList();
-        }
+                            NivelFinal =
+                                x.NivelFinal
+                        })
+                    .ToList()
+        };
     }
 }

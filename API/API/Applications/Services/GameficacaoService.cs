@@ -1,5 +1,4 @@
-﻿
-using API.Applications.Auxiliares;
+﻿using API.Applications.Auxiliares;
 using API.Applications.Conversoes.ConversoesDeDto;
 using API.Domains;
 using API.DTOs;
@@ -12,149 +11,333 @@ namespace API.Applications.Services;
 public class GameficacaoService
 {
     private readonly IGameficacaoRepository _repository;
-    private readonly CriarRecomedacaoTreinamento _recomendacao;
+    private readonly CriarRecomendacaoTreinamento _recomendacao;
 
-    public GameficacaoService(IGameficacaoRepository repository, CriarRecomedacaoTreinamento recomendacao)
+    public GameficacaoService(
+        IGameficacaoRepository repository,
+        CriarRecomendacaoTreinamento recomendacao)
     {
         _repository = repository;
         _recomendacao = recomendacao;
     }
 
-        // ================================ VALIDAÇÕES ================================
+    // ================================ VALIDAÇÕES ================================
 
-    private static void ValidarQuantidadeExperiencia(int quantidade)
+    private static void ValidarQuantidadeExperiencia(
+        int quantidade)
     {
         if (quantidade <= 0)
         {
-            throw new DomainException("Quantidade não pode ser menor ou igual a zero.");
+            throw new DomainException(
+                "Quantidade não pode ser menor ou igual a zero.");
+        }
+    }
+
+    private static void ValidarPontuacao(
+        decimal? pontuacao)
+    {
+        if (!pontuacao.HasValue)
+            return;
+
+        if (pontuacao.Value < 0 ||
+            pontuacao.Value > 100)
+        {
+            throw new DomainException(
+                "A pontuação deve estar entre 0 e 100.");
         }
     }
 
     // ================================ LISTAGEM ================================
 
-    public ListarGameficacaoDto ListarPorFuncionario(Guid usuarioId)
+    public ListarGameficacaoDto ListarPorFuncionario(
+        Guid usuarioId)
     {
-        var gameficacao = ObterOuCriarGameficacao(usuarioId);
+        var gameficacao =
+            ObterOuCriarGameficacao(usuarioId);
 
-        var tecnologias = _repository.ListarTecnologiasPorUsuarioId(usuarioId);
+        var tiposTicket =
+            _repository.ListarTiposTicketPorUsuarioId(
+                usuarioId);
 
-        var recomendacoes = _recomendacao.CriarRecomendacoes(tecnologias);
+        var recomendacoes =
+            _recomendacao.CriarRecomendacoes(
+                tiposTicket);
 
-        return ConversaoGameficacao.ConverterParaDto(gameficacao, tecnologias, recomendacoes);
+        return ConversaoGameficacao.ConverterParaDto(
+            gameficacao,
+            tiposTicket,
+            recomendacoes);
     }
 
     // ================================ EXPERIÊNCIA ================================
 
-    public void AdicionarExperienciaGeral(Guid usuarioId, int quantidade)
+    public void AdicionarExperienciaGeral(
+        Guid usuarioId,
+        int quantidade)
     {
-        ValidarQuantidadeExperiencia(quantidade);
+        ValidarQuantidadeExperiencia(
+            quantidade);
 
-        var gameficacao = ObterOuCriarGameficacao(usuarioId);
+        var gameficacao =
+            ObterOuCriarGameficacao(usuarioId);
 
-        gameficacao.ExperienciaTotal += quantidade;
+        checked
+        {
+            gameficacao.ExperienciaTotal +=
+                quantidade;
+        }
 
-        gameficacao.DataAtualizacao = DateTime.UtcNow;
+        gameficacao.DataAtualizacao =
+            DateTime.UtcNow;
 
-        AtualizarNivelGeral(gameficacao, usuarioId);
-
-        _repository.AtualizarGameficacao(gameficacao);
+        _repository.AtualizarGameficacao(
+            gameficacao);
 
         _repository.Salvar();
     }
 
-    public void AdicionarExperienciaTecnologia(Guid usuarioId, int tecnologiaId, int quantidade, decimal? pontuacao = null)
+    public void AdicionarExperienciaTipoTicket(
+        Guid usuarioId,
+        int tipoTicketId,
+        int quantidade,
+        decimal? pontuacao = null)
     {
-        ValidarQuantidadeExperiencia(quantidade);
+        ValidarQuantidadeExperiencia(
+            quantidade);
 
-        var tecnologiaUsuario = _repository.ObterTecnologiaDoUsuario(usuarioId, tecnologiaId);
+        ValidarPontuacao(
+            pontuacao);
 
-        if (tecnologiaUsuario is null)
+        var tipoTicketUsuario =
+            _repository.ObterTipoTicketDoUsuario(
+                usuarioId,
+                tipoTicketId);
+
+        if (tipoTicketUsuario is null)
         {
-            tecnologiaUsuario = ConversaoGameficacao.CriarTecnologiaUsuario(usuarioId, tecnologiaId, quantidade, pontuacao);
+            tipoTicketUsuario =
+                ConversaoGameficacao
+                    .CriarTipoTicketUsuario(
+                        usuarioId,
+                        tipoTicketId,
+                        quantidade,
+                        pontuacao);
 
-            _repository.AdicionarTecnologiaUsuario(tecnologiaUsuario);
+            _repository.AdicionarTipoTicketUsuario(
+                tipoTicketUsuario);
         }
         else
         {
-            AtualizarTecnologiaUsuario(tecnologiaUsuario, quantidade, pontuacao);
+            AtualizarTipoTicketUsuario(
+                tipoTicketUsuario,
+                quantidade,
+                pontuacao);
 
-            _repository.AtualizarTecnologiaUsuario(tecnologiaUsuario);
+            _repository.AtualizarTipoTicketUsuario(
+                tipoTicketUsuario);
         }
 
-        var gameficacao = ObterOuCriarGameficacao(usuarioId);
+        _repository.Salvar();
 
-        AtualizarNivelGeral(gameficacao, usuarioId);
+        var gameficacao =
+            ObterOuCriarGameficacao(
+                usuarioId);
 
-        gameficacao.DataAtualizacao = DateTime.UtcNow;
+        AtualizarNivelGeral(
+            gameficacao,
+            usuarioId);
 
-        _repository.AtualizarGameficacao(gameficacao);
+        gameficacao.DataAtualizacao =
+            DateTime.UtcNow;
+
+        _repository.AtualizarGameficacao(
+            gameficacao);
 
         _repository.Salvar();
+    }
+
+    public void RegistrarTicketConcluido(
+        Ticket ticket)
+    {
+        if (!ticket.UsuarioResponsavel.HasValue)
+            return;
+
+        var usuarioId =
+            ticket.UsuarioResponsavel.Value;
+
+        AdicionarExperienciaGeral(
+            usuarioId,
+            10);
+
+        AdicionarExperienciaTipoTicket(
+            usuarioId,
+            ticket.TipoTicketId,
+            10,
+            CalcularPontuacaoTicket(
+                ticket));
+    }
+
+    public void RegistrarTicketEntregueNoPrazo(
+        Ticket ticket)
+    {
+        if (!ticket.UsuarioResponsavel.HasValue)
+            return;
+
+        if (!ticket.DataPrazo.HasValue ||
+            !ticket.DataEntrega.HasValue)
+        {
+            return;
+        }
+
+        if (ticket.DataEntrega.Value >
+            ticket.DataPrazo.Value)
+        {
+            return;
+        }
+
+        AdicionarExperienciaGeral(
+            ticket.UsuarioResponsavel.Value,
+            15);
     }
 
     // ================================ FUNÇÕES ================================
 
-    private UsuarioGameficacao ObterOuCriarGameficacao(Guid usuarioId)
+    private UsuarioGameficacao
+        ObterOuCriarGameficacao(
+            Guid usuarioId)
     {
-        var gameficacao = _repository.ObterPorUsuarioId(usuarioId);
+        var gameficacao =
+            _repository.ObterPorUsuarioId(
+                usuarioId);
 
         if (gameficacao is not null)
             return gameficacao;
 
-        gameficacao = new UsuarioGameficacao
-        {
-            UsuarioId = usuarioId,
+        gameficacao =
+            new UsuarioGameficacao
+            {
+                UsuarioId =
+                    usuarioId,
 
-            ExperienciaTotal = 0,
+                ExperienciaTotal =
+                    0,
 
-            NivelGeral = 0,
+                NivelGeral =
+                    0,
 
-            DataAtualizacao = DateTime.UtcNow
-        };
+                DataAtualizacao =
+                    DateTime.UtcNow
+            };
 
-        _repository.AdicionarGameficacao(gameficacao);
+        _repository.AdicionarGameficacao(
+            gameficacao);
 
         _repository.Salvar();
 
         return gameficacao;
     }
 
-    private void AtualizarNivelGeral(UsuarioGameficacao gameficacao, Guid usuarioId)
+    private void AtualizarNivelGeral(
+        UsuarioGameficacao gameficacao,
+        Guid usuarioId)
     {
-        var tecnologias = _repository.ListarTecnologiasPorUsuarioId(usuarioId);
+        var tiposTicket =
+            _repository.ListarTiposTicketPorUsuarioId(
+                usuarioId);
 
-        if (tecnologias.Count == 0)
+        if (tiposTicket.Count == 0)
         {
             gameficacao.NivelGeral = 0;
             return;
         }
 
-        var media = tecnologias.Average(x => x.NivelTecnologia);
+        var media =
+            tiposTicket.Average(
+                x => x.NivelTipoTicket);
 
-        gameficacao.NivelGeral = Math.Clamp( (int)Math.Round(media, MidpointRounding.AwayFromZero), 0, 10);
+        gameficacao.NivelGeral =
+            Math.Clamp(
+                (int)Math.Round(
+                    media,
+                    MidpointRounding.AwayFromZero),
+                0,
+                10);
     }
 
-    private static void AtualizarTecnologiaUsuario(TecnologiaUsuario tecnologia, int quantidade, decimal? pontuacao)
+    private static void AtualizarTipoTicketUsuario(
+        TipoTicketUsuario tipoTicketUsuario,
+        int quantidade,
+        decimal? pontuacao)
     {
         checked
         {
-            tecnologia.ExperienciaTecnologia += quantidade;
+            tipoTicketUsuario
+                .ExperienciaTipoTicket +=
+                quantidade;
         }
 
         if (pontuacao.HasValue)
         {
-            tecnologia.NumeroAtribuicoes++;
+            tipoTicketUsuario
+                .NumeroAtribuicoes++;
 
-            tecnologia.ValorAtribuicoes += pontuacao.Value;
+            tipoTicketUsuario
+                .ValorAtribuicoes +=
+                pontuacao.Value;
 
-            tecnologia.AfinidadeMedia = Math.Round(
-                tecnologia.ValorAtribuicoes / tecnologia.NumeroAtribuicoes,
-                2,
-                MidpointRounding.AwayFromZero);
+            tipoTicketUsuario
+                .AfinidadeMedia =
+                Math.Round(
+                    tipoTicketUsuario
+                        .ValorAtribuicoes
+                    / tipoTicketUsuario
+                        .NumeroAtribuicoes,
+                    2,
+                    MidpointRounding.AwayFromZero);
         }
 
-        tecnologia.NivelTecnologia = CalcularNivelGameficacao.CalcularNivel(tecnologia.ExperienciaTecnologia);
+        tipoTicketUsuario
+            .NivelTipoTicket =
+            CalcularNivelGameficacao
+                .CalcularNivel(
+                    tipoTicketUsuario
+                        .ExperienciaTipoTicket);
 
-        tecnologia.DataAtualizacao = DateTime.UtcNow;
+        tipoTicketUsuario.DataAtualizacao =
+            DateTime.UtcNow;
+    }
+
+    private static decimal CalcularPontuacaoTicket(
+        Ticket ticket)
+    {
+        decimal pontuacao = 50;
+
+        if (ticket.DataPrazo.HasValue &&
+            ticket.DataEntrega.HasValue)
+        {
+            if (ticket.DataEntrega.Value <=
+                ticket.DataPrazo.Value)
+            {
+                pontuacao += 30;
+            }
+            else
+            {
+                pontuacao -= 20;
+            }
+        }
+
+        if (ticket.Prioridade == 1)
+        {
+            pontuacao += 20;
+        }
+        else if (ticket.Prioridade == 2)
+        {
+            pontuacao += 10;
+        }
+
+        return Math.Clamp(
+            pontuacao,
+            0,
+            100);
     }
 }
